@@ -892,22 +892,30 @@ class AIService:
             return f"Dear {{name}}, opening for {job_role or 'Candidate'} in {location or 'Ahmedabad'}. Check details: {extracted_urls[0]}"
         return f"Dear {{name}}, Job Recruitment has an urgent opening for {job_role or 'Candidate'} in {location or 'Ahmedabad'}. Apply here: https://jobrecruitment.in/jobs"
 
+    def _get_anti_spam_system_prompt(self, url_text):
+        return (
+            "You are a professional HR Communication Engine for JobRecruitment.in. "
+            "Your sole objective is to write polite, clean, human-like SMS interview and job notifications for candidates. "
+            "CRITICAL ANTI-SPAM COMPLIANCE RULES: "
+            "1. NO spam trigger keywords: Do NOT use 'URGENT', 'HURRY', 'EARN MONEY', 'CLICK NOW', or words in ALL CAPS. "
+            "2. Tone must be professional, courteous, and authentic (e.g. 'Job opportunity', 'Interview invitation', 'Application update'). "
+            f"3. Must include the exact official URL: {url_text}. "
+            "4. Must include dynamic tag {name} for candidate personalization. "
+            "5. Keep total length strictly between 90 and 140 characters so dynamic tags and signature fit into 1 single SMS credit. "
+            "6. Output ONLY the raw SMS message body. Do NOT include quotation marks, markdown, explanations, notes, or intros."
+        )
+
     def _call_groq(self, prompt, job_role, location, company, url_text, specific_model=None):
         try:
             headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
-            system_msg = (
-                "You are an expert HR copywriter. Rules: "
-                f"1. Include exact URL: {url_text}. "
-                "2. Personalize with {name}. "
-                "3. Under 160 characters. Output ONLY raw SMS text."
-            )
+            system_msg = self._get_anti_spam_system_prompt(url_text)
             models_to_try = [specific_model] if specific_model else ["llama-3.3-70b-versatile", "qwen/qwen3.6-27b", "llama-3.1-8b-instant"]
             for m in models_to_try:
                 payload = {
                     "model": m,
                     "messages": [
                         {"role": "system", "content": system_msg},
-                        {"role": "user", "content": f"Goal: {prompt}, Role: {job_role}, City: {location}"}
+                        {"role": "user", "content": f"Candidate notification requirement: {prompt}. Target Job: {job_role} in {location}."}
                     ],
                     "temperature": 0.2,
                     "max_tokens": 100
@@ -925,10 +933,10 @@ class AIService:
     def _call_gemini(self, prompt, job_role, location, company, url_text, specific_model="gemini-2.5-flash"):
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{specific_model}:generateContent?key={self.gemini_key}"
-            sys_text = f"You are an expert HR copywriter. Include exact URL: {url_text} and dynamic tag {{name}}. Keep under 160 chars. Output ONLY raw SMS text."
+            sys_text = self._get_anti_spam_system_prompt(url_text)
             payload = {
                 "contents": [{
-                    "parts": [{"text": f"{sys_text}\nUser request: {prompt} for {job_role} in {location}"}]
+                    "parts": [{"text": f"{sys_text}\n\nTask: Draft SMS for {prompt}, Role: {job_role}, Location: {location}."}]
                 }]
             }
             r = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=6)
@@ -944,11 +952,12 @@ class AIService:
     def _call_nvidia(self, prompt, job_role, location, company, url_text, specific_model="meta/llama-3.3-70b-instruct"):
         try:
             headers = {"Authorization": f"Bearer {self.nvidia_key}", "Content-Type": "application/json"}
+            system_msg = self._get_anti_spam_system_prompt(url_text)
             payload = {
                 "model": specific_model,
                 "messages": [
-                    {"role": "system", "content": f"Output ONLY SMS text with {{name}} and {url_text}. Under 160 chars."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": f"Task: {prompt} for {job_role} in {location}."}
                 ],
                 "max_tokens": 100,
                 "temperature": 0.2
@@ -963,11 +972,12 @@ class AIService:
     def _call_openai(self, prompt, job_role, location, company, url_text, specific_model="gpt-4o-mini"):
         try:
             headers = {"Authorization": f"Bearer {self.openai_key}", "Content-Type": "application/json"}
+            system_msg = self._get_anti_spam_system_prompt(url_text)
             payload = {
                 "model": specific_model,
                 "messages": [
-                    {"role": "system", "content": f"Output ONLY SMS text with {{name}} and {url_text}. Under 160 chars."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": f"Task: {prompt} for {job_role} in {location}."}
                 ],
                 "max_tokens": 100,
                 "temperature": 0.2
@@ -2294,10 +2304,27 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
 
                 write_log(f"Starting SMS campaign '{campaign_title}' for {len(candidates)} candidate(s)...")
 
+                greetings_pool = ["Hi", "Hello", "Dear", "Greetings"]
+
                 for i, c in enumerate(candidates, 1):
                     c_name = c.get("name") or "Candidate"
                     c_phone = c.get("phone")
-                    final_msg = template.replace("{name}", c_name).replace("{role}", role).replace("{location}", location).replace("{company}", company)
+                    
+                    # 1. Dynamic Spintax Salutation Rotation
+                    chosen_salutation = greetings_pool[(i - 1) % len(greetings_pool)]
+                    cand_msg = template.replace("{name}", c_name).replace("{role}", role).replace("{location}", location).replace("{company}", company)
+                    
+                    # Ensure dynamic greeting replacement if message starts with standard salutations
+                    for g in ["Hi", "Hello", "Dear", "Greetings"]:
+                        if cand_msg.startswith(f"{g} "):
+                            cand_msg = f"{chosen_salutation} " + cand_msg[len(g) + 1:]
+                            break
+                    
+                    # 2. Authentic Company Sign-Off (If not already present)
+                    if "JobRecruitment" not in cand_msg and "HR" not in cand_msg:
+                        cand_msg = f"{cand_msg} - HR Team, JobRecruitment.in"
+
+                    final_msg = cand_msg
 
                     ok, resp = gateway_service.send_sms(c_phone, final_msg)
                     status_str = "SENT" if ok else "FAILED"
@@ -2334,7 +2361,10 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                             write_log(f"ERROR: {log_line}")
 
                     if i < len(candidates):
-                        time.sleep(DISPATCH_DELAY)
+                        import random
+                        # 3. Human Pacing Randomizer (Jio Firewall Anti-Throttling)
+                        human_jitter = random.uniform(DISPATCH_DELAY, DISPATCH_DELAY + 4.0)
+                        time.sleep(human_jitter)
 
                 with dispatch_lock:
                     current_dispatch["is_running"] = False
