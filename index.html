@@ -645,6 +645,17 @@
                 </button>
             </div>
 
+            <!-- Local Relay vs Cloud Banner -->
+            <div class="p-3 bg-cyan-950/60 border border-cyan-800/80 rounded-xl text-[11px] text-slate-300 space-y-1">
+                <div class="font-bold text-cyan-300 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm">info</span>
+                    <span>Wireless Wi-Fi Pairing Notice</span>
+                </div>
+                <p class="text-slate-400 leading-relaxed">
+                    Android Wi-Fi Pairing local network (LAN) par kaam karti hai. Render Cloud se direct pair karne ke bajaye, apne laptop par <b>start_relay.bat</b> run karein aur wahan <b>Option 2 (Wireless Wi-Fi)</b> choose karein!
+                </p>
+            </div>
+
             <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
                 <button onclick="switchWifiPairTab('direct')" id="tab-wifi-direct" class="py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center">🔌 Direct IP</button>
                 <button onclick="switchWifiPairTab('manual')" id="tab-wifi-manual" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">⚡ 6-Digit PIN</button>
