@@ -153,13 +153,19 @@
                     <span class="material-symbols-outlined text-sm">lock_open</span> Wake & Unlock
                 </button>
 
+                <!-- Connect My Phone / Download Agent Button -->
+                <button onclick="openModal('modal-connect-guide')" class="px-3 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-teal-500/20">
+                    <span class="material-symbols-outlined text-sm">phone_android</span>
+                    <span>Connect My Phone</span>
+                </button>
+
                 <!-- Wi-Fi Connect Trigger -->
                 <button onclick="openWifiPairModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
                     <span class="material-symbols-outlined text-sm">wifi_tethering</span> Wi-Fi Pair
                 </button>
 
                 <!-- Drawer Toggle -->
-                <button onclick="toggleDrawer()" class="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-teal-500/10">
+                <button onclick="toggleDrawer()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
                     <span class="material-symbols-outlined text-sm">tune</span>
                     <span>Tools & History</span>
                 </button>
@@ -487,6 +493,82 @@
     </div>
 
     <!-- MODALS -->
+    <!-- MODAL: CONNECT MY PHONE USER GUIDE & RELAY DOWNLOAD -->
+    <div id="modal-connect-guide" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto custom-scroll p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2 text-teal-400 font-black text-base">
+                    <span class="material-symbols-outlined">phonelink_setup</span>
+                    <h3>Connect Your Physical Phone (Any User / Laptop)</h3>
+                </div>
+                <button onclick="closeModal('modal-connect-guide')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Recruiter Pairing Code Banner -->
+            <div class="p-4 bg-teal-950/60 border border-teal-800/80 rounded-2xl flex items-center justify-between gap-3">
+                <div>
+                    <div class="text-[11px] text-teal-300 font-bold uppercase tracking-wider">Your Personal Recruiter Code:</div>
+                    <div class="text-xl font-mono font-black text-white mt-0.5" id="guide-display-pairing-code">JR-100001</div>
+                </div>
+                <button onclick="navigator.clipboard.writeText(document.getElementById('guide-display-pairing-code').textContent); showToast('Code copied to clipboard!');" class="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold rounded-xl flex items-center gap-1 transition">
+                    <span class="material-symbols-outlined text-xs">content_copy</span> Copy Code
+                </button>
+            </div>
+
+            <!-- Step-by-Step Instructions -->
+            <div class="space-y-3.5 text-xs text-slate-300">
+                <!-- STEP 1: DOWNLOAD RELAY -->
+                <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                    <div class="font-bold text-teal-300 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px] font-black">1</span>
+                        Download 1-Click Relay Agent (Run on your PC/Laptop)
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Is file ko apne kisi bhi computer ya laptop me download karein. Yeh automatic tool aapke phone ko Render Cloud se securely pair karta hai:
+                    </p>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <a href="/download/start_relay.bat" download class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl flex items-center gap-1.5 shadow-lg shadow-teal-500/20 transition">
+                            <span class="material-symbols-outlined text-sm">download</span>
+                            <span>Download start_relay.bat (Windows 1-Click)</span>
+                        </a>
+                        <a href="/download/start_relay.py" download class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl flex items-center gap-1.5 transition">
+                            <span class="material-symbols-outlined text-sm">code</span>
+                            <span>Python Source (Mac / Linux)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- STEP 2: PLUG PHONE -->
+                <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-1.5">
+                    <div class="font-bold text-teal-300 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px] font-black">2</span>
+                        Phone me USB Debugging ON karke connect karein
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Phone ➔ Settings ➔ <b>Developer Options</b> me <b>USB Debugging</b> ko <b>ON</b> karein aur USB cable se laptop me lagayein. Phone screen par <b>"Always allow"</b> tick karke <b>Allow</b> dabayein.
+                    </p>
+                </div>
+
+                <!-- STEP 3: RUN RELAY -->
+                <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-1.5">
+                    <div class="font-bold text-teal-300 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px] font-black">3</span>
+                        start_relay.bat ko double-click karein aur apna Code dalein
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Downloaded file ko run karein aur screen par apna Recruiter Code (<b class="text-teal-300 font-mono" id="guide-display-pairing-code-2">JR-100001</b>) dalein. Enter dabate hi website par <b class="text-emerald-400">[ 🟢 Cloud Relay Active ]</b> show ho jayega!
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeModal('modal-connect-guide')" class="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">Got It, Let's Connect!</button>
+            </div>
+        </div>
+    </div>
+
     <!-- WI-FI DEBUGGING MODAL -->
     <div id="modal-wifi-pair" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
@@ -660,6 +742,10 @@
             const pCode = currentUser.pairing_code || `JR-${Math.floor(100000 + Math.random() * 900000)}`;
             const pEl = document.getElementById('user-display-pairing-code');
             if (pEl) pEl.textContent = pCode;
+            const gEl1 = document.getElementById('guide-display-pairing-code');
+            if (gEl1) gEl1.textContent = pCode;
+            const gEl2 = document.getElementById('guide-display-pairing-code-2');
+            if (gEl2) gEl2.textContent = pCode;
 
             // Load studio data once unlocked
             loadAdminJobs();

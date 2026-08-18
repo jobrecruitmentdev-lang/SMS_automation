@@ -24,7 +24,27 @@ def find_local_adb():
         return local_pt
     import shutil
     sys_adb = shutil.which("adb")
-    return sys_adb or "adb"
+    if sys_adb:
+        return sys_adb
+    
+    # Auto-bootstrap official Google platform-tools if downloaded in any random folder
+    print("[*] ADB not found. Downloading official Google platform-tools...")
+    try:
+        import zipfile
+        url = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip" if sys.platform == "win32" else "https://dl.google.com/android/repository/platform-tools-latest-linux.zip"
+        zip_dest = os.path.join(base, "platform-tools.zip")
+        urllib.request.urlretrieve(url, zip_dest)
+        with zipfile.ZipFile(zip_dest, 'r') as zip_ref:
+            zip_ref.extractall(base)
+        if os.path.exists(zip_dest):
+            os.remove(zip_dest)
+        if os.path.exists(local_pt):
+            print("[+] Platform-tools configured successfully!")
+            return local_pt
+    except Exception as e:
+        print(f"[!] Auto-download warning: {e}")
+
+    return "adb"
 
 ADB_BIN = find_local_adb()
 

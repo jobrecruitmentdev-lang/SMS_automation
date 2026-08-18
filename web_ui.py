@@ -2038,6 +2038,30 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 self.wfile.write(HTML_TEMPLATE.encode("utf-8"))
             return
 
+        elif path == "/download/start_relay.bat":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-bat")
+            self.send_header("Content-Disposition", 'attachment; filename="start_relay.bat"')
+            self.end_headers()
+            bat_file = os.path.join(BASE_DIR, "start_relay.bat")
+            if os.path.exists(bat_file):
+                with open(bat_file, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self.wfile.write(b"@echo off\r\npython start_relay.py\r\npause\r\n")
+            return
+
+        elif path == "/download/start_relay.py":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/x-python")
+            self.send_header("Content-Disposition", 'attachment; filename="start_relay.py"')
+            self.end_headers()
+            py_file = os.path.join(BASE_DIR, "start_relay.py")
+            if os.path.exists(py_file):
+                with open(py_file, "rb") as f:
+                    self.wfile.write(f.read())
+            return
+
         elif path == "/favicon.ico":
             self.send_response(204)
             self.end_headers()
