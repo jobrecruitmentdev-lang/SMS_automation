@@ -741,11 +741,15 @@
             // 3. 360° Live Auto-Fetcher (every 8s)
             setInterval(runAutoFetchSync, 8000);
 
-            // Restore from cookies
+            // Restore from cookies (Sanitizing to prevent accidental email autofill)
             const savedPrompt = getCookie('jr_last_prompt');
-            if (savedPrompt) document.getElementById('ai-prompt').value = savedPrompt;
+            if (savedPrompt && !savedPrompt.includes('@') && savedPrompt.trim().length > 1) {
+                document.getElementById('ai-prompt').value = savedPrompt;
+            }
             const savedTpl = getCookie('jr_last_template');
-            if (savedTpl) document.getElementById('sms-body').value = savedTpl;
+            if (savedTpl && !savedTpl.includes('@') && savedTpl.trim().length > 5) {
+                document.getElementById('sms-body').value = savedTpl;
+            }
             const savedWifiIp = getCookie('jr_last_wifi_ip');
             if (savedWifiIp) document.getElementById('wifi-direct-ipport').value = savedWifiIp;
 
