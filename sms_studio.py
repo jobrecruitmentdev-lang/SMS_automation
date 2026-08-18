@@ -38,6 +38,7 @@ PLATFORM_TOOLS_DIR = os.path.join(BASE_DIR, "platform-tools")
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 LOG_FILE = os.path.join(BASE_DIR, "sms_dispatch.log")
 QUOTA_FILE = os.path.join(BASE_DIR, "quota_state.json")
+SERVER_START_TIME = str(time.time())
 
 # Prepend local platform-tools to PATH
 if os.path.exists(PLATFORM_TOOLS_DIR):
@@ -2078,6 +2079,13 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
         elif path == "/api/supabase_logs":
             logs = supabase_service.fetch_recent_logs(limit=50)
             self._send_json({"logs": logs, "connected": supabase_service.enabled})
+            return
+
+        elif path == "/api/server_version":
+            self._send_json({
+                "server_start_time": SERVER_START_TIME,
+                "max_mtime": get_watched_max_mtime()
+            })
             return
 
         elif path == "/api/campaign_history":

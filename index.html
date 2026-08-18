@@ -592,6 +592,55 @@
         function persistTemplateBody() { setCookie('jr_last_template', document.getElementById('sms-body').value); }
         function persistSelectedModel() { setCookie('jr_selected_model', document.getElementById('ai-model-select').value); }
 
+        // --- BROWSER HOT-RELOAD & LIVE AUTO-FETCHER ENGINE ---
+        let lastServerStartTime = null;
+        let lastMaxMtime = null;
+
+        async function checkHotReload() {
+            try {
+                const res = await fetch('/api/server_version');
+                const data = await res.json();
+                if (lastServerStartTime === null) {
+                    lastServerStartTime = data.server_start_time;
+                    lastMaxMtime = data.max_mtime;
+                } else if (lastServerStartTime !== data.server_start_time || lastMaxMtime !== data.max_mtime) {
+                    console.log("🔄 Code change detected! Hot-reloading browser view...");
+                    showToast("Code updated! Reloading view...");
+                    setTimeout(() => window.location.reload(), 400);
+                }
+            } catch(e) {}
+        }
+
+        async function runAutoFetchSync() {
+            // 1. Refresh Quota live
+            try {
+                const qRes = await fetch('/api/quota');
+                const qData = await qRes.json();
+                document.getElementById('hud-quota').textContent = `${qData.sent_today || 0} / ${qData.limit || 180} Sent`;
+            } catch(e) {}
+
+            // 2. Background sync Jobs list (silently preserves current selection)
+            try {
+                const curVal = document.getElementById('job-select').value;
+                const jRes = await fetch('/api/jobs');
+                const jData = await jRes.json();
+                const sel = document.getElementById('job-select');
+                if (jData.jobs && jData.jobs.length > 0 && sel.options.length <= 1) {
+                    loadAdminJobs();
+                }
+            } catch(e) {}
+
+            // 3. Auto-sync open Drawer Tab if active
+            const drawer = document.getElementById('slide-drawer');
+            if (drawer && !drawer.classList.contains('translate-x-full')) {
+                if (!document.getElementById('dsec-campaigns').classList.contains('hidden')) {
+                    loadCampaignHistory();
+                } else if (!document.getElementById('dsec-ledger').classList.contains('hidden')) {
+                    loadSupabaseLogs();
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadAdminJobs();
             loadFilterOptions();
@@ -599,7 +648,15 @@
             loadSettings();
             restoreUserSession();
             pollActiveGatewayStatus();
-            setInterval(pollActiveGatewayStatus, 4000);
+
+            // 1. Hardware Vitals Poller (every 3.5s)
+            setInterval(pollActiveGatewayStatus, 3500);
+
+            // 2. Browser Hot-Reload Watcher (every 1.5s - instant auto-refresh on edit)
+            setInterval(checkHotReload, 1500);
+
+            // 3. 360° Live Auto-Fetcher (every 8s - jobs, quota, ledger auto-sync)
+            setInterval(runAutoFetchSync, 8000);
 
             // Restore from cookies
             const savedPrompt = getCookie('jr_last_prompt');
