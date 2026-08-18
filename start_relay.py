@@ -145,6 +145,7 @@ def main():
     print("=" * 72)
 
     greetings_pool = ["Hi", "Hello", "Dear", "Greetings"]
+    device_printed = False
 
     while True:
         try:
@@ -161,6 +162,11 @@ def main():
                 print(f"[*] Waiting for local phone... (Connect USB or Wi-Fi to {ADB_BIN})", end="\r")
                 time.sleep(3)
                 continue
+
+            if not device_printed:
+                print(f"\n[🟢 PHONE DETECTED & LINKED TO CLOUD!] Device: {dev_name} | Carrier: {carrier} | Battery: {battery}")
+                print(f"[*] Cloud Relay is LIVE! You can now trigger SMS dispatches from the website.\n")
+                device_printed = True
 
             # 2. Poll for pending jobs specifically for this Recruiter
             res = get_json(f"/api/relay/poll_jobs?pairing_code={pairing_code}")

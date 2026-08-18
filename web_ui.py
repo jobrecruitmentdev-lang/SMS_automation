@@ -2237,8 +2237,10 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/relay/status":
-            uid = query.get("user_id", [""])[0] or query.get("email", [""])[0]
-            p_code = get_user_pairing_code(uid) if uid else "JR-DEFAULT"
+            p_code = query.get("pairing_code", [""])[0] or query.get("code", [""])[0]
+            if not p_code:
+                uid = query.get("user_id", [""])[0] or query.get("email", [""])[0]
+                p_code = get_user_pairing_code(uid) if uid else "JR-DEFAULT"
             with relay_lock:
                 dev = user_relay_devices.get(p_code, {})
                 is_alive = (time.time() - dev.get("last_heartbeat", 0)) < 15 and dev.get("is_online", False)
