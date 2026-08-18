@@ -50,8 +50,16 @@ ADB_BIN = find_local_adb()
 
 def get_phone_diagnostics():
     try:
-        r = subprocess.run([ADB_BIN, "devices"], capture_output=True, text=True, timeout=3)
-        devs = [l.split()[0] for l in r.stdout.splitlines()[1:] if "\tdevice" in l]
+        r = subprocess.run([ADB_BIN, "devices"], capture_output=True, text=True, timeout=4)
+        devs = []
+        for line in r.stdout.splitlines()[1:]:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            if len(parts) >= 2 and parts[1] == "device":
+                devs.append(parts[0])
+                
         if not devs:
             return False, "No device connected", "None", "--%"
         
@@ -204,6 +212,13 @@ def main():
     greetings_pool = ["Hi", "Hello", "Dear", "Greetings"]
     device_printed = False
 
+    # Check connection right away
+    is_connected, dev_name, carrier, battery = get_phone_diagnostics()
+    if is_connected:
+        print(f"\n[🟢 PHONE DETECTED & LINKED TO CLOUD!] Device: {dev_name} | Carrier: {carrier} | Battery: {battery}")
+        print(f"[*] Cloud Relay is LIVE! You can now trigger SMS dispatches from the website.\n")
+        device_printed = True
+
     while True:
         try:
             # 1. Heartbeat to Cloud Server for this specific Recruiter
@@ -216,7 +231,8 @@ def main():
             })
 
             if not is_connected:
-                print(f"[*] Waiting for phone... (Plug USB or enable Wireless Debugging)", end="\r")
+                device_printed = False
+                print(f"[*] Waiting for phone... (Plug USB or enable Wireless Debugging)   ", end="\r")
                 time.sleep(3)
                 continue
 
