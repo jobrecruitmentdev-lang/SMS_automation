@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: sms-automation-studio
+    runtime: docker
+    plan: free
+    region: oregon
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: PORT
+        value: 8050
+      - key: SMS_STUDIO_WORKER
+        value: 1
+      - key: WORKER_API_URL
+        sync: false
+      - key: WORKER_API_KEY
+        sync: false
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SMS_MODE
+        value: adb

@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobRecruitment AI SMS Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-6 antialiased">
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Header & Nav Menu -->
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-lg shadow-teal-500/20 font-black text-xl">
+                    JR
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        AI SMS Campaign Studio
+                        <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Hot Reload Active
+                        </span>
+                    </h1>
+                    <p class="text-xs text-slate-400">100% Free Physical Android Phone SIM Radio Gateway</p>
+                </div>
+            </div>
+
+            <!-- Top Navigation Menu -->
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+                <button onclick="openModal('modal-guide')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm" title="Step-by-Step Prerequisites Guide">
+                    <span class="material-symbols-outlined text-base">menu_book</span>
+                    <span>Quick Guide</span>
+                </button>
+
+                <button onclick="openQuotaModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm" title="TRAI Quota & Reset History">
+                    <span class="material-symbols-outlined text-base text-emerald-400">stacked_bar_chart</span>
+                    <span id="nav-quota-badge">0 / 180</span>
+                </button>
+
+                <button onclick="openLogsModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm" title="View Full System Logs">
+                    <span class="material-symbols-outlined text-base text-amber-400">terminal</span>
+                    <span>Logs</span>
+                </button>
+
+                <button onclick="openSettingsModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm" title="Configure API Keys & Settings">
+                    <span class="material-symbols-outlined text-base text-purple-400">settings</span>
+                    <span>Config</span>
+                </button>
+
+                <!-- 5. 1-Click Hardware & Radio Diagnostics Modal Button -->
+                <button onclick="openHealthCheckModal()" class="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-teal-500/20" title="1-Click Comprehensive Hardware Diagnostics">
+                    <span class="material-symbols-outlined text-base">health_and_safety</span>
+                    <span>Device Health</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left: Audience & Candidate Selector -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-teal-400 text-base">group</span>
+                        1. Select Target Audience
+                    </h2>
+
+                    <div class="grid grid-cols-3 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800/80">
+                        <button onclick="switchSource('jobs')" id="tab-jobs" class="py-2 text-xs font-bold rounded-lg transition text-slate-200 bg-slate-800 shadow">Manage Jobs</button>
+                        <button onclick="switchSource('search')" id="tab-search" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-slate-200">Global Search</button>
+                        <button onclick="switchSource('single')" id="tab-single" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-slate-200">Single Test</button>
+                    </div>
+
+                    <div id="section-jobs" class="space-y-3">
+                        <label class="text-xs font-semibold text-slate-300">Select Job Posting from Portal:</label>
+                        <div class="flex gap-2">
+                            <select id="job-select" onchange="loadJobApplicants()" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:border-teal-500 outline-none">
+                                <option value="">Loading live jobs...</option>
+                            </select>
+                            <button onclick="loadAdminJobs()" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-1" title="Refresh Jobs">
+                                <span class="material-symbols-outlined text-sm">refresh</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="section-search" class="space-y-3 hidden">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[11px] font-semibold text-slate-400">Role Filter (from Live DB)</label>
+                                <select id="filter-role" onchange="searchGlobalCandidates()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none mt-1">
+                                    <option value="">-- All Roles (Entire Database) --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-semibold text-slate-400">City / Location</label>
+                                <input type="text" id="filter-city" list="city-list" placeholder="e.g. Ahmedabad" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none mt-1">
+                                <datalist id="city-list">
+                                    <option value="Ahmedabad">
+                                    <option value="Gandhinagar">
+                                    <option value="Surat">
+                                    <option value="Vadodara">
+                                    <option value="Rajkot">
+                                </datalist>
+                            </div>
+                        </div>
+                        <button onclick="searchGlobalCandidates()" class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm font-bold">search</span> Search Live Database
+                        </button>
+                    </div>
+
+                    <div id="section-single" class="space-y-3 hidden">
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-400">10-Digit Mobile Number</label>
+                            <input type="text" id="single-phone" oninput="updateSingleCandidate()" placeholder="e.g. 9099960782" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none mt-1 font-mono">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-400">Candidate Name (Optional)</label>
+                            <input type="text" id="single-name" oninput="updateSingleCandidate()" placeholder="e.g. Ayaan" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none mt-1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candidates Table -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-teal-400 text-base">checklist</span>
+                            2. Candidates (<span id="cand-count" class="text-teal-400">0</span> Selected)
+                        </h2>
+                        <div class="flex items-center gap-2 text-xs">
+                            <button onclick="toggleSelectAll(true)" class="text-slate-400 hover:text-teal-400 transition">Select All</button>
+                            <span class="text-slate-700">|</span>
+                            <button onclick="toggleSelectAll(false)" class="text-slate-400 hover:text-red-400 transition">Deselect</button>
+                        </div>
+                    </div>
+
+                    <div class="max-h-[340px] overflow-y-auto custom-scroll border border-slate-800/80 rounded-xl bg-slate-950">
+                        <table class="w-full text-left text-xs">
+                            <thead class="sticky top-0 bg-slate-900/90 backdrop-blur border-b border-slate-800 text-slate-400 font-semibold">
+                                <tr>
+                                    <th class="p-2.5 w-8 text-center"><input type="checkbox" id="check-master" onchange="toggleSelectAll(this.checked)"></th>
+                                    <th class="p-2.5">Candidate Name</th>
+                                    <th class="p-2.5">Mobile</th>
+                                    <th class="p-2.5">Role</th>
+                                    <th class="p-2.5">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cand-tbody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td colspan="5" class="p-6 text-center text-slate-500">No candidates loaded yet. Select a job or search above.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: AI Copywriting & Dispatch -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-purple-400 text-base">auto_awesome</span>
+                        3. AI Message Copywriter
+                    </h2>
+
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold text-slate-300">Describe what you want to send in Hindi/English:</label>
+                        <textarea id="ai-prompt" rows="2" placeholder="e.g. Join WhatsApp group for job alerts https://whatsapp.com/channel/0029Va5h1CTAe5VzQcW60V2p..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:border-purple-500 outline-none resize-none"></textarea>
+                        
+                        <div class="flex flex-wrap gap-1.5 text-[11px]">
+                            <button onclick="setPrompt('Send WhatsApp jobs channel link to join for latest updates: https://whatsapp.com/channel/0029Va5h1CTAe5VzQcW60V2p')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-lg border border-slate-700/80 transition">💬 WhatsApp Invite</button>
+                            <button onclick="setPrompt('Urgent interview call for {role} in {location}. Immediate joining.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700/80 transition">⚡ Urgent Interview</button>
+                            <button onclick="setPrompt('Update regarding your application. Confirm interview availability.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700/80 transition">📋 Status Followup</button>
+                        </div>
+
+                        <button onclick="generateAiDraft()" id="btn-generate-ai" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/20 transition flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">bolt</span> Generate with AI (Groq/Gemini)
+                        </button>
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <div class="flex items-center justify-between text-xs font-semibold">
+                            <span class="text-slate-300">SMS Template:</span>
+                            <span id="char-count" class="text-slate-400 font-mono text-[11px]">0 chars (1 Credit)</span>
+                        </div>
+                        <textarea id="sms-body" rows="3" oninput="updatePreview()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed"></textarea>
+                        <div class="text-[10px] text-slate-500 flex gap-2">
+                            <span>Tags:</span>
+                            <button onclick="insertTag('{name}')" class="text-teal-400 hover:underline">{name}</button>
+                            <button onclick="insertTag('{role}')" class="text-teal-400 hover:underline">{role}</button>
+                            <button onclick="insertTag('{location}')" class="text-teal-400 hover:underline">{location}</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl space-y-1">
+                        <div class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Live Sample Preview:</div>
+                        <p id="sample-preview" class="text-xs text-slate-300 italic">"Sample preview will appear here..."</p>
+                    </div>
+                </div>
+
+                <!-- Controls & Live Console -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-400 text-base">send</span>
+                        4. Dispatch Controls (Android SIM)
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button onclick="startDispatch(5)" id="btn-test-run" class="py-3 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <span class="material-symbols-outlined text-base">science</span>
+                            TEST RUN (FIRST 5)
+                        </button>
+                        <button onclick="startDispatch(0)" id="btn-send-all" class="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <span class="material-symbols-outlined text-base">rocket_launch</span>
+                            SEND ALL SELECTED
+                        </button>
+                    </div>
+
+                    <!-- Live Progress & Console Box -->
+                    <div id="progress-container" class="space-y-2.5 hidden">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span id="progress-label" class="text-slate-300">Dispatching via SIM...</span>
+                            <span id="progress-stats" class="text-teal-400 font-mono">0 / 0</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-2.5 border border-slate-800 overflow-hidden">
+                            <div id="progress-bar" class="bg-gradient-to-r from-teal-500 to-emerald-400 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="live-log" class="text-[11px] font-mono text-slate-400 truncate">Ready.</div>
+                        <div class="space-y-1 pt-1">
+                            <div class="flex items-center justify-between text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                                <span>📜 Execution Logs (sms_dispatch.log)</span>
+                            </div>
+                            <div id="log-console" class="bg-slate-950 border border-slate-800/90 rounded-xl p-2.5 max-h-36 overflow-y-auto custom-scroll font-mono text-[11px] space-y-1">
+                                <div class="text-slate-500 italic">Logs will appear here...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: STEP-BY-STEP PREREQUISITES & GUIDE -->
+    <div id="modal-guide" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scroll p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2 text-teal-400 font-bold text-base">
+                    <span class="material-symbols-outlined">menu_book</span>
+                    <h3>How to Setup & Run SMS Automation (Step-by-Step)</h3>
+                </div>
+                <button onclick="closeModal('modal-guide')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-300 leading-relaxed">
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="font-bold text-teal-400 flex items-center gap-1.5">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px]">1</span>
+                        Phone Developer Options Unlock Karein
+                    </div>
+                    <p class="text-slate-400">Settings ➔ About Phone ➔ <b>Build Number</b> (ya OS version) par 7 baar tap karein jab tak "You are a developer" na aaye.</p>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="font-bold text-teal-400 flex items-center gap-1.5">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px]">2</span>
+                        USB Debugging Enable Karein
+                    </div>
+                    <p class="text-slate-400">Settings ➔ Developer Options me <b>USB Debugging</b> ko <b>ON</b> karein.<br>
+                    <span class="text-amber-400 font-semibold">⚠️ Xiaomi / Realme / Oppo users:</span> "USB Debugging (Security settings)" ko bhi ON karein.</p>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="font-bold text-teal-400 flex items-center gap-1.5">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px]">3</span>
+                        USB Cable Connect & Permission Allow Karein
+                    </div>
+                    <p class="text-slate-400">Phone ko USB cable se PC me lagayein. Screen par popup aane par <b>"Always allow from this computer"</b> tick karke <b>Allow</b> karein.</p>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <div class="font-bold text-teal-400 flex items-center gap-1.5">
+                        <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px]">4</span>
+                        Single Test Run Karein
+                    </div>
+                    <p class="text-slate-400">"Single Test" tab me apna number dalein aur <b>TEST RUN</b> button dabayein taaki SIM se instant SMS test ho jaye.</p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeModal('modal-guide')" class="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">Got It, Let's Start!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: TRAI QUOTA & RESET HISTORY -->
+    <div id="modal-quota" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto custom-scroll p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2 text-emerald-400 font-bold text-base">
+                    <span class="material-symbols-outlined">stacked_bar_chart</span>
+                    <h3>TRAI Daily Quota & Midnight Reset History</h3>
+                </div>
+                <button onclick="closeModal('modal-quota')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center">
+                        <div class="text-[11px] text-slate-400 uppercase font-semibold">Sent Today</div>
+                        <div class="text-2xl font-black text-emerald-400 mt-1" id="modal-quota-sent">0</div>
+                        <div class="text-[10px] text-slate-500 mt-1">Limit: 180 SMS/day</div>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center">
+                        <div class="text-[11px] text-slate-400 uppercase font-semibold">Remaining Quota</div>
+                        <div class="text-2xl font-black text-teal-400 mt-1" id="modal-quota-remaining">180</div>
+                        <div class="text-[10px] text-slate-500 mt-1">Midnight auto-reset</div>
+                    </div>
+                </div>
+
+                <div class="text-xs text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <span>Last Reset Timestamp:</span>
+                    <span class="font-mono text-slate-200" id="modal-quota-last-reset">-</span>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="text-xs font-bold text-slate-300">Last 30 Days Reset Ledger:</div>
+                    <div class="max-h-40 overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-950">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900 border-b border-slate-800 text-slate-400">
+                                <tr>
+                                    <th class="p-2">Date</th>
+                                    <th class="p-2">Sent Count</th>
+                                    <th class="p-2">Reset At</th>
+                                    <th class="p-2">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quota-history-tbody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td colspan="4" class="p-4 text-center text-slate-500">No previous reset logs found.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-between items-center">
+                    <button onclick="manualResetQuota()" class="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 rounded-xl text-xs font-semibold transition flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">restart_alt</span>
+                        Manual Reset to 0 (Switch SIM)
+                    </button>
+                    <button onclick="closeModal('modal-quota')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: CONFIGURATION & SETTINGS -->
+    <div id="modal-settings" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto custom-scroll p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2 text-purple-400 font-bold text-base">
+                    <span class="material-symbols-outlined">settings</span>
+                    <h3>Studio Settings & API Configuration</h3>
+                </div>
+                <button onclick="closeModal('modal-settings')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-300">Worker API Endpoint (JobRecruitment Portal)</label>
+                    <input type="text" id="cfg-worker-url" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 font-mono mt-1">
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-300">Worker API Key</label>
+                    <input type="password" id="cfg-worker-key" placeholder="Optional bearer key" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 font-mono mt-1">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-300">Groq API Key (AI Copywriter)</label>
+                        <input type="password" id="cfg-groq-key" placeholder="gsk_..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 font-mono mt-1">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-300">Nvidia NIM API Key</label>
+                        <input type="password" id="cfg-nvidia-key" placeholder="nvapi-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 font-mono mt-1">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-semibold text-slate-300">Daily SMS Limit (TRAI Cap)</label>
+                        <input type="number" id="cfg-daily-limit" value="180" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 font-mono mt-1">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-300">Dispatch Delay Pacing (Seconds)</label>
+                        <input type="number" id="cfg-delay" value="5" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 font-mono mt-1">
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-300">SMS Mode</label>
+                    <select id="cfg-sms-mode" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-purple-500 mt-1">
+                        <option value="adb">Android ADB Mode (Native USB / Wi-Fi Debugging)</option>
+                        <option value="http">Android HTTP Gateway APK (Local Wi-Fi)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeModal('modal-settings')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">Cancel</button>
+                <button onclick="saveSettings()" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: SYSTEM LOGS VIEWER -->
+    <div id="modal-logs" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scroll p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2 text-amber-400 font-bold text-base">
+                    <span class="material-symbols-outlined">terminal</span>
+                    <h3>Full Dispatch & System Audit Logs (sms_dispatch.log)</h3>
+                </div>
+                <button onclick="closeModal('modal-logs')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+                <input type="text" id="logs-search" oninput="filterLogs()" placeholder="Search logs (e.g. phone, SUCCESS, ERROR)..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none">
+                <button onclick="loadFullLogs()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">refresh</span> Refresh
+                </button>
+                <button onclick="clearLogsFile()" class="px-3 py-2 bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 rounded-xl text-xs font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">delete</span> Clear
+                </button>
+            </div>
+
+            <pre id="full-logs-content" class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-slate-300 max-h-96 overflow-y-auto custom-scroll whitespace-pre-wrap leading-relaxed">Loading logs...</pre>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeModal('modal-logs')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: 1-CLICK COMPREHENSIVE HARDWARE DIAGNOSTICS & HEALTH CHECK -->
+    <div id="modal-health" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto custom-scroll p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2 text-emerald-400 font-bold text-base">
+                    <span class="material-symbols-outlined">health_and_safety</span>
+                    <h3>Android Hardware & Radio Health Check</h3>
+                </div>
+                <button onclick="closeModal('modal-health')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Diagnostics Scorecard -->
+            <div class="space-y-3 text-xs">
+                <!-- 1. ADB Bridge -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/90 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-base text-teal-400">usb</span>
+                        <div>
+                            <div class="font-bold text-slate-200">USB / ADB Connection</div>
+                            <div class="text-[11px] text-slate-400 font-mono" id="diag-device-id">Checking...</div>
+                        </div>
+                    </div>
+                    <span id="badge-adb" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">...</span>
+                </div>
+
+                <!-- 2. Phone Model & OS -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/90 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-base text-purple-400">smartphone</span>
+                        <div>
+                            <div class="font-bold text-slate-200">Device Hardware & OS</div>
+                            <div class="text-[11px] text-slate-400 font-mono" id="diag-model">Checking...</div>
+                        </div>
+                    </div>
+                    <span id="badge-model" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">...</span>
+                </div>
+
+                <!-- 3. SIM Carrier & 5G Radio -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/90 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-base text-emerald-400">signal_cellular_alt</span>
+                        <div>
+                            <div class="font-bold text-slate-200">Active SIM Carrier (Physical Tower)</div>
+                            <div class="text-[11px] text-slate-400 font-mono" id="diag-carrier">Checking...</div>
+                        </div>
+                    </div>
+                    <span id="badge-carrier" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">...</span>
+                </div>
+
+                <!-- 4. Screen Lock & Display State -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/90 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-base text-amber-400">lock_open</span>
+                        <div>
+                            <div class="font-bold text-slate-200">Screen Lock & Automation State</div>
+                            <div class="text-[11px] text-slate-400 font-mono" id="diag-screen">Checking...</div>
+                        </div>
+                    </div>
+                    <span id="badge-screen" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">...</span>
+                </div>
+            </div>
+
+            <!-- Overall Verdict Banner -->
+            <div id="diag-verdict-box" class="p-3.5 rounded-xl border text-xs font-semibold bg-slate-950 border-slate-800 text-slate-300">
+                Checking overall system readiness...
+            </div>
+
+            <div class="pt-2 flex justify-between items-center">
+                <button onclick="runHealthCheck()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+                    <span class="material-symbols-outlined text-sm">refresh</span> Re-Scan Device
+                </button>
+                <button onclick="closeModal('modal-health')" class="px-5 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none z-50"></div>
+
+    <script>
+        let currentCandidates = [];
+        let activeJobContext = { role: 'Candidate', location: 'Ahmedabad', company: 'Job Recruitment' };
+        let rawLogText = "";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAdminJobs();
+            loadFilterOptions();
+            loadQuota();
+            updatePreview();
+            startHeartbeat();
+        });
+
+        function startHeartbeat() {
+            setInterval(async () => {
+                try {
+                    await fetch('/api/quota', { cache: 'no-store' });
+                } catch(e) {}
+            }, 5000);
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `fixed bottom-5 right-5 px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold transition-all duration-300 z-50 border ${isError ? 'bg-red-950 border-red-800 text-red-200' : 'bg-slate-900 border-slate-700 text-emerald-400'}`;
+            t.style.opacity = '1';
+            t.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(10px)';
+            }, 3500);
+        }
+
+        async function loadQuota() {
+            try {
+                const res = await fetch('/api/quota');
+                const data = await res.json();
+                document.getElementById('quota-sent').textContent = data.sent_today;
+                document.getElementById('quota-limit').textContent = data.limit;
+                document.getElementById('nav-quota-badge').textContent = `${data.sent_today} / ${data.limit} Sent`;
+            } catch (e) {}
+        }
+
+        async function openQuotaModal() {
+            openModal('modal-quota');
+            try {
+                const res = await fetch('/api/quota_history');
+                const data = await res.json();
+                document.getElementById('modal-quota-sent').textContent = data.sent_today;
+                document.getElementById('modal-quota-remaining').textContent = Math.max(0, data.limit - data.sent_today);
+                document.getElementById('modal-quota-last-reset').textContent = data.last_reset || 'N/A';
+
+                const tbody = document.getElementById('quota-history-tbody');
+                tbody.innerHTML = '';
+                if (!data.history || data.history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No reset entries recorded yet.</td></tr>';
+                } else {
+                    data.history.slice().reverse().forEach(h => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="p-2 font-mono">${escapeHtml(h.to_date || h.from_date || '-')}</td>
+                            <td class="p-2 font-bold text-emerald-400">${h.final_count || 0}</td>
+                            <td class="p-2 font-mono text-[11px] text-slate-400">${escapeHtml(h.reset_at || '-')}</td>
+                            <td class="p-2"><span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-teal-300 border border-slate-700">${escapeHtml(h.status || 'OK')}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (e) { showToast("Failed to load quota ledger.", true); }
+        }
+
+        async function manualResetQuota() {
+            if (!confirm("Are you sure you want to reset today's quota to 0/180? (Useful if you switched physical SIM).")) return;
+            try {
+                const res = await fetch('/api/reset_quota', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.message || "Quota reset!");
+                loadQuota();
+                openQuotaModal();
+            } catch (e) { showToast("Reset failed.", true); }
+        }
+
+        async function openSettingsModal() {
+            openModal('modal-settings');
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                document.getElementById('cfg-worker-url').value = data.WORKER_API_URL || '';
+                document.getElementById('cfg-worker-key').value = data.WORKER_API_KEY || '';
+                document.getElementById('cfg-groq-key').value = data.GROQ_API_KEY || '';
+                document.getElementById('cfg-nvidia-key').value = data.NVIDIA_API_KEY || '';
+                document.getElementById('cfg-daily-limit').value = data.DAILY_SMS_LIMIT || 180;
+                document.getElementById('cfg-delay').value = data.DISPATCH_DELAY_SECONDS || 5;
+                document.getElementById('cfg-sms-mode').value = data.SMS_MODE || 'adb';
+            } catch (e) { showToast("Could not load config.", true); }
+        }
+
+        async function saveSettings() {
+            const payload = {
+                WORKER_API_URL: document.getElementById('cfg-worker-url').value.trim(),
+                WORKER_API_KEY: document.getElementById('cfg-worker-key').value.trim(),
+                GROQ_API_KEY: document.getElementById('cfg-groq-key').value.trim(),
+                NVIDIA_API_KEY: document.getElementById('cfg-nvidia-key').value.trim(),
+                DAILY_SMS_LIMIT: document.getElementById('cfg-daily-limit').value.trim(),
+                DISPATCH_DELAY_SECONDS: document.getElementById('cfg-delay').value.trim(),
+                SMS_MODE: document.getElementById('cfg-sms-mode').value
+            };
+            try {
+                const res = await fetch('/api/save_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                showToast(data.message || "Settings saved successfully!");
+                closeModal('modal-settings');
+                loadQuota();
+            } catch (e) { showToast("Error saving settings.", true); }
+        }
+
+        async function openLogsModal() {
+            openModal('modal-logs');
+            loadFullLogs();
+        }
+
+        async function loadFullLogs() {
+            const el = document.getElementById('full-logs-content');
+            el.textContent = "Loading logs...";
+            try {
+                const res = await fetch('/api/logs');
+                rawLogText = await res.text();
+                el.textContent = rawLogText || "(No logs recorded yet)";
+                el.scrollTop = el.scrollHeight;
+            } catch (e) { el.textContent = "Failed to load log file."; }
+        }
+
+        function filterLogs() {
+            const q = document.getElementById('logs-search').value.toLowerCase();
+            const el = document.getElementById('full-logs-content');
+            if (!q) {
+                el.textContent = rawLogText;
+                return;
+            }
+            const nlRegex = new RegExp('[\\r\\n]+');
+            const lines = rawLogText.split(nlRegex).filter(l => l.toLowerCase().includes(q));
+            el.textContent = lines.join(String.fromCharCode(10)) || "(No matching log entries found)";
+        }
+
+        async function clearLogsFile() {
+            if (!confirm("Are you sure you want to clear sms_dispatch.log?")) return;
+            try {
+                await fetch('/api/clear_logs', { method: 'POST' });
+                showToast("Logs cleared!");
+                loadFullLogs();
+            } catch (e) { showToast("Error clearing logs.", true); }
+        }
+
+                async function openHealthCheckModal() {
+            openModal('modal-health');
+            runHealthCheck();
+        }
+
+        async function runHealthCheck() {
+            document.getElementById('diag-device-id').textContent = 'Probing ADB socket...';
+            document.getElementById('diag-model').textContent = 'Reading getprop...';
+            document.getElementById('diag-carrier').textContent = 'Reading dumpsys telephony...';
+            document.getElementById('diag-screen').textContent = 'Probing keyguard window...';
+            
+            try {
+                const res = await fetch('/api/health_check');
+                const d = await res.json();
+
+                // 1. ADB
+                document.getElementById('diag-device-id').textContent = d.device_id || 'Not connected';
+                const bAdb = document.getElementById('badge-adb');
+                bAdb.className = `px-2.5 py-1 rounded-full text-[10px] font-bold ${d.adb_connected ? 'bg-emerald-950 border border-emerald-800 text-emerald-300' : 'bg-red-950 border border-red-800 text-red-300'}`;
+                bAdb.textContent = d.adb_connected ? 'CONNECTED' : 'DISCONNECTED';
+
+                // 2. Model
+                document.getElementById('diag-model').textContent = `${d.device_name} (${d.android_version}) - ${d.screen_width}x${d.screen_height}`;
+                const bModel = document.getElementById('badge-model');
+                bModel.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950 border border-emerald-800 text-emerald-300';
+                bModel.textContent = 'DETECTED';
+
+                // 3. Carrier
+                document.getElementById('diag-carrier').textContent = d.carrier || 'No SIM detected';
+                const bCar = document.getElementById('badge-carrier');
+                bCar.className = `px-2.5 py-1 rounded-full text-[10px] font-bold ${d.is_sim_ready ? 'bg-emerald-950 border border-emerald-800 text-emerald-300' : 'bg-red-950 border border-red-800 text-red-300'}`;
+                bCar.textContent = d.is_sim_ready ? 'IN SERVICE' : 'NO SERVICE';
+
+                // 4. Screen Lock
+                document.getElementById('diag-screen').textContent = d.screen_state_text || 'Unknown';
+                const bScr = document.getElementById('badge-screen');
+                bScr.className = `px-2.5 py-1 rounded-full text-[10px] font-bold ${!d.is_screen_locked ? 'bg-emerald-950 border border-emerald-800 text-emerald-300' : 'bg-amber-950 border border-amber-800 text-amber-300'}`;
+                bScr.textContent = !d.is_screen_locked ? 'READY' : 'ACTION NEEDED';
+
+                // Overall Verdict
+                const vBox = document.getElementById('diag-verdict-box');
+                if (d.all_ok && !d.is_screen_locked) {
+                    vBox.className = 'p-3.5 rounded-xl border text-xs font-semibold bg-emerald-950/40 border-emerald-800/80 text-emerald-300 flex items-center gap-2';
+                    vBox.innerHTML = '<span class="material-symbols-outlined text-base text-emerald-400">check_circle</span> <span><b>100% READY:</b> Phone is unlocked and SIM radio is active. SMS will dispatch instantly!</span>';
+                } else if (d.is_screen_locked) {
+                    vBox.className = 'p-3.5 rounded-xl border text-xs font-semibold bg-amber-950/40 border-amber-800/80 text-amber-300 flex items-center gap-2';
+                    vBox.innerHTML = '<span class="material-symbols-outlined text-base text-amber-400">warning</span> <span><b>PHONE LOCKED:</b> Please swipe/unlock your phone screen so the automatic click can send the SMS.</span>';
+                } else {
+                    vBox.className = 'p-3.5 rounded-xl border text-xs font-semibold bg-red-950/40 border-red-800/80 text-red-300 flex items-center gap-2';
+                    vBox.innerHTML = `<span class="material-symbols-outlined text-base text-red-400">error</span> <span>${escapeHtml(d.status_message)}</span>`;
+                }
+            } catch (e) {
+                showToast("Health check failed.", true);
+            }
+        }
+
+        async function checkHardware() {
+            showToast("Testing Android Phone connection...");
+            try {
+                const res = await fetch('/api/check_hardware');
+                const data = await res.json();
+                showToast(data.message, !data.ok);
+            } catch (e) { showToast("Error connecting to hardware server.", true); }
+        }
+
+        function updateSingleCandidate() {
+            const phone = document.getElementById('single-phone').value.trim() || '9898012345';
+            const name = document.getElementById('single-name').value.trim() || 'Candidate';
+            currentCandidates = [{ name: name, phone: phone, role: 'Candidate', status: 'Test' }];
+            renderCandidates(currentCandidates);
+            updatePreview();
+        }
+
+        function switchSource(type) {
+            ['jobs', 'search', 'single'].forEach(t => {
+                document.getElementById(`tab-${t}`).className = t === type ? 'py-2 text-xs font-bold rounded-lg transition text-slate-200 bg-slate-800 shadow' : 'py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-slate-200';
+                document.getElementById(`section-${t}`).classList.toggle('hidden', t !== type);
+            });
+            if (type === 'single') {
+                updateSingleCandidate();
+            }
+        }
+
+        async function loadAdminJobs() {
+            const sel = document.getElementById('job-select');
+            sel.innerHTML = '<option value="">Loading live jobs...</option>';
+            try {
+                const res = await fetch('/api/jobs');
+                const data = await res.json();
+                sel.innerHTML = '<option value="">-- Select a Job Posting --</option>';
+                (data.jobs || []).forEach(j => {
+                    const opt = document.createElement('option');
+                    opt.value = j.id;
+                    opt.textContent = `${j.jobRole} @ ${j.companyName} (${j.location}) — ${j.total_applicants} applicants [${j.status}]`;
+                    opt.dataset.role = j.jobRole;
+                    opt.dataset.location = j.location;
+                    opt.dataset.company = j.companyName;
+                    sel.appendChild(opt);
+                });
+            } catch (e) {
+                sel.innerHTML = '<option value="">Error loading jobs</option>';
+                showToast("Failed to fetch jobs.", true);
+            }
+        }
+
+        async function loadFilterOptions() {
+            const roleSel = document.getElementById('filter-role');
+            if (!roleSel) return;
+            try {
+                const res = await fetch('/api/filter_options');
+                const data = await res.json();
+                roleSel.innerHTML = '<option value="">-- All Roles (Entire Database) --</option>';
+                (data.roles || []).forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r;
+                    opt.textContent = r;
+                    roleSel.appendChild(opt);
+                });
+
+                const cityList = document.getElementById('city-list');
+                if (cityList && data.cities && data.cities.length) {
+                    cityList.innerHTML = '';
+                    data.cities.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c;
+                        cityList.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error("Error loading filter options:", e);
+            }
+        }
+
+        async function loadJobApplicants() {
+            const sel = document.getElementById('job-select');
+            const jobId = sel.value;
+            if (!jobId) return;
+
+            const selectedOpt = sel.options[sel.selectedIndex];
+            activeJobContext = {
+                role: selectedOpt.dataset.role || 'Candidate',
+                location: selectedOpt.dataset.location || 'Ahmedabad',
+                company: selectedOpt.dataset.company || 'Job Recruitment'
+            };
+
+            showToast("Fetching candidates for " + activeJobContext.role + "...");
+            try {
+                const res = await fetch(`/api/job_applicants?job_id=${encodeURIComponent(jobId)}`);
+                const data = await res.json();
+                currentCandidates = data.cands || [];
+                renderCandidates(currentCandidates);
+                updatePreview();
+            } catch (e) { showToast("Error loading applicants.", true); }
+        }
+
+        async function searchGlobalCandidates() {
+            const role = document.getElementById('filter-role').value.trim();
+            const city = document.getElementById('filter-city').value.trim();
+            activeJobContext = { role: role || 'Candidate', location: city || 'Ahmedabad', company: 'Job Recruitment' };
+
+            showToast("Searching database...");
+            try {
+                const res = await fetch(`/api/search_candidates?role=${encodeURIComponent(role)}&city=${encodeURIComponent(city)}`);
+                const data = await res.json();
+                currentCandidates = data.cands || [];
+                renderCandidates(currentCandidates);
+                updatePreview();
+            } catch (e) { showToast("Search failed.", true); }
+        }
+
+        function renderCandidates(cands) {
+            const tbody = document.getElementById('cand-tbody');
+            tbody.innerHTML = '';
+            if (!cands || cands.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500">No candidates with valid mobile numbers found.</td></tr>';
+                document.getElementById('cand-count').textContent = '0';
+                return;
+            }
+
+            cands.forEach((c, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/60 transition';
+                tr.innerHTML = `
+                    <td class="p-2.5 text-center"><input type="checkbox" class="cand-checkbox" data-idx="${idx}" checked onchange="updateSelectedCount()"></td>
+                    <td class="p-2.5 font-semibold text-slate-200">${escapeHtml(c.name || 'Candidate')}</td>
+                    <td class="p-2.5 font-mono text-teal-400">+91-${escapeHtml(c.phone || '')}</td>
+                    <td class="p-2.5 text-slate-400">${escapeHtml(c.role || '-')}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">${escapeHtml(c.status || 'Active')}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checked = document.querySelectorAll('.cand-checkbox:checked').length;
+            document.getElementById('cand-count').textContent = checked;
+        }
+
+        function toggleSelectAll(checked) {
+            document.querySelectorAll('.cand-checkbox').forEach(cb => cb.checked = checked);
+            document.getElementById('check-master').checked = checked;
+            updateSelectedCount();
+        }
+
+        function setPrompt(text) {
+            document.getElementById('ai-prompt').value = text;
+            generateAiDraft();
+        }
+
+        async function generateAiDraft() {
+            const prompt = document.getElementById('ai-prompt').value.trim() || `Urgent opening for ${activeJobContext.role} in ${activeJobContext.location}. Salary competitive.`;
+            const btn = document.getElementById('btn-generate-ai');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Generating...';
+
+            try {
+                const res = await fetch('/api/ai_draft', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt, role: activeJobContext.role, location: activeJobContext.location, company: activeJobContext.company })
+                });
+                const data = await res.json();
+                if (data.template) {
+                    document.getElementById('sms-body').value = data.template;
+                    updatePreview();
+                    showToast("AI Template Generated!");
+                }
+            } catch (e) { showToast("AI generation failed.", true); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">bolt</span> Generate with AI (Groq/Gemini)';
+            }
+        }
+
+        function updatePreview() {
+            const body = document.getElementById('sms-body').value || `Dear {name}, Job Recruitment has an opening for {role} in {location}. Apply here: https://jobrecruitment.in/jobs`;
+            if (!document.getElementById('sms-body').value) document.getElementById('sms-body').value = body;
+            
+            document.getElementById('char-count').textContent = `${body.length} chars (1 Credit)`;
+
+            const sampleCand = currentCandidates[0] || { name: 'Rahul Verma', phone: '9898011223' };
+            const preview = body
+                .replace('{name}', sampleCand.name || 'Candidate')
+                .replace('{role}', activeJobContext.role || 'Senior Accountant')
+                .replace('{location}', activeJobContext.location || 'Ahmedabad')
+                .replace('{company}', activeJobContext.company || 'Job Recruitment');
+
+            document.getElementById('sample-preview').textContent = `"${preview}"`;
+        }
+
+        function insertTag(tag) {
+            const textarea = document.getElementById('sms-body');
+            textarea.value += tag;
+            updatePreview();
+        }
+
+        async function startDispatch(limitCount = 0) {
+            const selectedIndices = Array.from(document.querySelectorAll('.cand-checkbox:checked')).map(cb => parseInt(cb.dataset.idx));
+            if (selectedIndices.length === 0) {
+                showToast("Please select at least 1 candidate!", true);
+                return;
+            }
+
+            let toSend = selectedIndices.map(idx => currentCandidates[idx]);
+            if (limitCount > 0) {
+                toSend = toSend.slice(0, limitCount);
+            }
+
+            const template = document.getElementById('sms-body').value.trim();
+            if (!template) {
+                showToast("SMS message body cannot be empty!", true);
+                return;
+            }
+
+            const isTest = limitCount > 0;
+            const isSingle = toSend.length === 1;
+            const confirmMsg = isSingle
+                ? `Send test SMS to +91-${toSend[0].phone} (${toSend[0].name}) via Android SIM?`
+                : (isTest 
+                    ? `Run TEST DISPATCH to first ${toSend.length} candidates via Android SIM?`
+                    : `DISPATCH TO ALL ${toSend.length} CANDIDATES via Android SIM?`);
+
+            if (!confirm(confirmMsg)) return;
+
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('btn-test-run').disabled = true;
+            document.getElementById('btn-send-all').disabled = true;
+
+            const res = await fetch('/api/start_dispatch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidates: toSend,
+                    template: template,
+                    role: activeJobContext.role,
+                    location: activeJobContext.location,
+                    company: activeJobContext.company
+                })
+            });
+
+            pollDispatchProgress();
+        }
+
+        async function pollDispatchProgress() {
+            const interval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/dispatch_status');
+                    const data = await res.json();
+                    
+                    const pct = data.total > 0 ? Math.round((data.current_index / data.total) * 100) : 0;
+                    document.getElementById('progress-bar').style.width = pct + '%';
+                    document.getElementById('progress-stats').textContent = `${data.current_index} / ${data.total}`;
+                    document.getElementById('live-log').textContent = data.last_log || 'Processing...';
+
+                    if (data.logs && data.logs.length) {
+                        const consoleEl = document.getElementById('log-console');
+                        consoleEl.innerHTML = data.logs.map(l => {
+                            const isFail = l.includes('Failed') || l.includes('ERROR');
+                            return `<div class="${isFail ? 'text-red-400 font-semibold' : 'text-emerald-400'}">${escapeHtml(l)}</div>`;
+                        }).join('');
+                        consoleEl.scrollTop = consoleEl.scrollHeight;
+                    }
+
+                    if (!data.is_running) {
+                        clearInterval(interval);
+                        document.getElementById('btn-test-run').disabled = false;
+                        document.getElementById('btn-send-all').disabled = false;
+                        loadQuota();
+                        showToast(`Dispatch Complete! ${data.sent_count} sent, ${data.failed_count} failed.`);
+                    }
+                } catch (e) { console.error('Poll error:', e); }
+            }, 1200);
+        }
+
+        function escapeHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>

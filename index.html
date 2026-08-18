@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobRecruitment AI SMS Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdfa', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.2s ease, color 0.2s ease; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 md:p-5 antialiased selection:bg-teal-500/30 selection:text-teal-300">
+    <div class="max-w-7xl mx-auto space-y-4">
+        
+        <!-- ========================================================================= -->
+        <!-- 1. UNIFIED TOP HARDWARE HUD & CONTROL RIBBON                              -->
+        <!-- ========================================================================= -->
+        <header class="p-3.5 md:p-4 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+            <!-- Left: Brand & Gateway Badge -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-md font-black text-lg">
+                    JR
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm font-bold tracking-tight text-white">AI SMS Studio</h1>
+                        <span id="hud-conn-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="hud-conn-text">Checking Device...</span>
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-400" id="hud-device-details">Probing USB / Wi-Fi ADB socket...</p>
+                </div>
+            </div>
+
+            <!-- Center: Real-Time Hardware Vitals Pill -->
+            <div class="hidden sm:flex items-center gap-3 bg-slate-950 px-3.5 py-1.5 rounded-xl border border-slate-800 text-xs font-mono">
+                <div class="flex items-center gap-1.5" title="Battery Level">
+                    <span class="material-symbols-outlined text-sm text-emerald-400">battery_charging_full</span>
+                    <span id="hud-battery">--%</span>
+                </div>
+                <span class="text-slate-700">|</span>
+                <div class="flex items-center gap-1.5" title="Screen Status">
+                    <span id="hud-lock-icon" class="material-symbols-outlined text-sm text-emerald-400">lock_open</span>
+                    <span id="hud-lock-status">UNLOCKED</span>
+                </div>
+                <span class="text-slate-700">|</span>
+                <div class="flex items-center gap-1.5" title="Daily TRAI Quota Sent">
+                    <span class="material-symbols-outlined text-sm text-teal-400">stacked_bar_chart</span>
+                    <span id="hud-quota">0 / 180 Sent</span>
+                </div>
+            </div>
+
+            <!-- Right: Quick Actions & Drawer Opener -->
+            <div class="flex items-center gap-2">
+                <!-- 1-Click Screen Unlock (if locked) -->
+                <button onclick="triggerScreenUnlock()" id="hud-btn-unlock" class="hidden px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-lg shadow-amber-500/20 animate-pulse">
+                    <span class="material-symbols-outlined text-sm">lock_open</span> Wake & Unlock
+                </button>
+
+                <!-- Wi-Fi Connect Trigger -->
+                <button onclick="openWifiPairModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
+                    <span class="material-symbols-outlined text-sm">wifi_tethering</span> Wi-Fi Pair
+                </button>
+
+                <!-- Drawer Toggle -->
+                <button onclick="toggleDrawer()" class="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-teal-500/10">
+                    <span class="material-symbols-outlined text-sm">tune</span>
+                    <span>Tools & History</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ========================================================================= -->
+        <!-- 2. ZERO-COGNITIVE-LOAD 3-STEP GUIDED WORKFLOW                             -->
+        <!-- ========================================================================= -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- STEP 1: TARGET AUDIENCE (4 Columns) -->
+            <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                            <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[11px] font-black">1</span>
+                            Target Audience
+                        </h2>
+                        <span class="text-xs font-mono font-bold text-teal-300"><span id="cand-count">0</span> Selected</span>
+                    </div>
+
+                    <!-- Source Selector Sub-Tabs -->
+                    <div class="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
+                        <button onclick="switchSource('jobs')" id="tab-jobs" class="py-1.5 font-bold rounded-lg text-slate-200 bg-slate-800 shadow text-center">Jobs</button>
+                        <button onclick="switchSource('search')" id="tab-search" class="py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center">Search</button>
+                        <button onclick="switchSource('import')" id="tab-import" class="py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center">CSV</button>
+                        <button onclick="switchSource('single')" id="tab-single" class="py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center">Single</button>
+                    </div>
+
+                    <!-- Source 1: Active Job Selector -->
+                    <div id="section-jobs" class="space-y-2">
+                        <select id="job-select" onchange="loadJobApplicants()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none">
+                            <option value="">Loading live jobs...</option>
+                        </select>
+                    </div>
+
+                    <!-- Source 2: Global Candidate Search -->
+                    <div id="section-search" class="space-y-2 hidden">
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="filter-role" onchange="searchGlobalCandidates()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 outline-none">
+                                <option value="">-- All Roles --</option>
+                            </select>
+                            <input type="text" id="filter-city" list="city-list" placeholder="City (e.g. Ahmedabad)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 outline-none">
+                            <datalist id="city-list"></datalist>
+                        </div>
+                        <button onclick="searchGlobalCandidates()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-xl text-xs font-semibold">Search DB</button>
+                    </div>
+
+                    <!-- Source 3: CSV Import / Paste -->
+                    <div id="section-import" class="space-y-2 hidden">
+                        <textarea id="import-paste-box" rows="2" oninput="parseCustomInput()" placeholder="9099876985, Omear, Candidate" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs font-mono text-slate-200 outline-none"></textarea>
+                    </div>
+
+                    <!-- Source 4: Single Mobile Number Test -->
+                    <div id="section-single" class="space-y-2 hidden">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="single-phone" oninput="updateSingleCandidate()" placeholder="9099876985" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 font-mono outline-none">
+                            <input type="text" id="single-name" oninput="updateSingleCandidate()" placeholder="Omear" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Candidates Preview List -->
+                    <div class="max-h-[220px] overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-950">
+                        <table class="w-full text-left text-xs">
+                            <tbody id="cand-tbody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td class="p-4 text-center text-slate-500 text-xs">Select job or paste number above.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800">
+                    <button onclick="toggleSelectAll(true)" class="hover:text-teal-400">Select All</button>
+                    <button onclick="toggleSelectAll(false)" class="hover:text-red-400">Deselect</button>
+                </div>
+            </section>
+
+            <!-- STEP 2: WHAT TO SEND (4 Columns) -->
+            <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                            <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center text-[11px] font-black">2</span>
+                            Message & AI Copy
+                        </h2>
+                        <span id="char-count" class="text-xs font-mono text-slate-400">0c (1 Cr)</span>
+                    </div>
+
+                    <!-- Model Selector Dropdown & Cloud Template -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-1">
+                            <label class="text-[11px] text-purple-300 font-semibold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs">psychology</span> Select AI Model:
+                            </label>
+                            <button onclick="loadAvailableAiModels()" class="text-[10px] text-slate-400 hover:text-purple-300 flex items-center gap-0.5">
+                                <span class="material-symbols-outlined text-[11px]">refresh</span> Reload
+                            </button>
+                        </div>
+                        <select id="ai-model-select" onchange="persistSelectedModel()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-purple-300 font-semibold outline-none focus:border-purple-500">
+                            <option value="">Loading AI models...</option>
+                        </select>
+
+                        <select id="template-select" onchange="applySavedTemplate()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
+                            <option value="">-- Or Select Saved Cloud Template --</option>
+                        </select>
+                    </div>
+
+                    <!-- AI Prompt Input -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>AI Prompt (Hindi / English):</span>
+                            <button onclick="generateAiDraft()" id="btn-generate-ai" class="text-purple-400 font-bold hover:underline flex items-center gap-0.5">
+                                <span class="material-symbols-outlined text-xs">bolt</span> Generate
+                            </button>
+                        </div>
+                        <input type="text" id="ai-prompt" oninput="persistPrompt()" placeholder="e.g. Urgent interview for {role} in {location}..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
+                    </div>
+
+                    <!-- Live Editable SMS Textarea -->
+                    <div>
+                        <textarea id="sms-body" rows="3" oninput="updatePreview(); persistTemplateBody();" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed" placeholder="Enter SMS text or use tags {name}, {role}, {location}..."></textarea>
+                    </div>
+
+                    <!-- Live Bubble Preview -->
+                    <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl text-xs space-y-1">
+                        <div class="text-[10px] uppercase font-bold text-slate-500">Live Bubble Preview:</div>
+                        <p id="sample-preview" class="text-slate-300 italic text-[11px]">"Sample preview will appear here..."</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800">
+                    <div class="flex gap-2">
+                        <button onclick="insertTag('{name}')" class="text-teal-400 font-mono">{name}</button>
+                        <button onclick="insertTag('{role}')" class="text-teal-400 font-mono">{role}</button>
+                        <button onclick="insertTag('{location}')" class="text-teal-400 font-mono">{location}</button>
+                    </div>
+                    <button onclick="openSaveTemplateModal()" class="text-cyan-400 font-bold hover:underline">Save to Cloud</button>
+                </div>
+            </section>
+
+            <!-- STEP 3: SMART DISPATCH STATION (4 Columns) -->
+            <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[11px] font-black">3</span>
+                            Dispatch Station
+                        </h2>
+                        <span class="text-xs font-bold text-emerald-400 font-mono">SIM Physical Gateway</span>
+                    </div>
+
+                    <!-- Hardware Pre-Flight Summary Card -->
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Target Device:</span>
+                            <span class="font-bold text-slate-200 font-mono" id="disp-device-name">Samsung SM-G781B</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">SIM Carrier:</span>
+                            <span class="font-bold text-teal-400" id="disp-carrier">Jio True5G</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Screen Automation:</span>
+                            <span class="font-bold text-emerald-400" id="disp-screen-state">Unlocked & Ready</span>
+                        </div>
+                    </div>
+
+                    <!-- Big Smart Dispatch Trigger -->
+                    <div class="space-y-2 pt-1">
+                        <button onclick="startDispatch(0)" id="btn-send-all" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <span class="material-symbols-outlined text-lg">rocket_launch</span>
+                            <span>SEND ALL SELECTED (<span id="btn-send-count">0</span>)</span>
+                        </button>
+                        
+                        <button onclick="startDispatch(1)" id="btn-test-run" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-sm">science</span>
+                            <span>Test Single Message (1 SMS)</span>
+                        </button>
+                    </div>
+
+                    <!-- Progress Bar & Live Execution Log -->
+                    <div id="progress-container" class="space-y-2 hidden pt-2">
+                        <div class="flex items-center justify-between text-xs font-bold">
+                            <span id="progress-label" class="text-slate-300">Dispatching...</span>
+                            <span id="progress-stats" class="text-teal-400 font-mono">0 / 0</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
+                            <div id="progress-bar" class="bg-gradient-to-r from-teal-500 to-emerald-400 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="live-log" class="text-[11px] font-mono text-slate-400 truncate">Ready.</div>
+                    </div>
+                </div>
+
+                <div class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800">
+                    Auto-calibrated dual coordinates: 1080x2400 (X: 982, Y: 2256 / 1344)
+                </div>
+            </section>
+        </main>
+
+        <!-- ========================================================================= -->
+        <!-- 3. SLIDE-OVER DRAWER (CAMPAIGNS, TOOLS, LEDGER, QUOTA, SETTINGS)          -->
+        <!-- ========================================================================= -->
+        <div id="slide-drawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+            <!-- Drawer Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-teal-400 font-bold text-sm">
+                    <span class="material-symbols-outlined">tune</span>
+                    <h3>Studio Tools & Cloud History</h3>
+                </div>
+                <button onclick="toggleDrawer()" class="text-slate-400 hover:text-white p-1">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Drawer Tabs -->
+            <div class="grid grid-cols-4 gap-1 bg-slate-950 p-1 m-4 rounded-xl border border-slate-800 text-xs font-semibold">
+                <button onclick="switchDrawerTab('campaigns')" id="dtab-campaigns" class="py-1.5 rounded-lg text-slate-200 bg-slate-800 shadow text-center">Campaigns</button>
+                <button onclick="switchDrawerTab('settings')" id="dtab-settings" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">AI Config</button>
+                <button onclick="switchDrawerTab('ledger')" id="dtab-ledger" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">Ledger</button>
+                <button onclick="switchDrawerTab('health')" id="dtab-health" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">Hardware</button>
+            </div>
+
+            <!-- Drawer Content Container -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4 text-xs">
+                
+                <!-- TAB 1: PREVIOUS CAMPAIGN HISTORY & RE-USE TEMPLATES -->
+                <div id="dsec-campaigns" class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-300">Previous Dispatched Campaigns:</span>
+                        <button onclick="loadCampaignHistory()" class="text-teal-400 hover:underline">Refresh</button>
+                    </div>
+                    <div id="campaigns-container" class="space-y-2.5 max-h-[420px] overflow-y-auto custom-scroll pr-1">
+                        <div class="p-4 text-center text-slate-500">Loading campaign history...</div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: PER-USER AI MODEL CONFIGURATION (Groq, Gemini, NVIDIA, OpenAI) -->
+                <div id="dsec-settings" class="space-y-3 hidden">
+                    <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                        <div class="text-[11px] font-bold text-teal-300 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">lock</span> Production Worker API
+                        </div>
+                        <div class="text-[10px] text-slate-400 font-mono truncate">Connected to Backend Server (.env locked)</div>
+                    </div>
+
+                    <div class="space-y-2.5 pt-1">
+                        <div>
+                            <label class="text-slate-400 font-semibold flex items-center justify-between">
+                                <span>Groq API Key</span>
+                                <span class="text-[10px] text-purple-400">Cookie & Env</span>
+                            </label>
+                            <input type="password" id="cfg-groq-key" placeholder="gsk_..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                        </div>
+
+                        <div>
+                            <label class="text-slate-400 font-semibold flex items-center justify-between">
+                                <span>Google Gemini API Key</span>
+                                <span class="text-[10px] text-blue-400">Cookie & Env</span>
+                            </label>
+                            <input type="password" id="cfg-gemini-key" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                        </div>
+
+                        <div>
+                            <label class="text-slate-400 font-semibold flex items-center justify-between">
+                                <span>NVIDIA NIM API Key</span>
+                                <span class="text-[10px] text-emerald-400">Cookie & Env</span>
+                            </label>
+                            <input type="password" id="cfg-nvidia-key" placeholder="nvapi-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                        </div>
+
+                        <div>
+                            <label class="text-slate-400 font-semibold flex items-center justify-between">
+                                <span>OpenAI API Key</span>
+                                <span class="text-[10px] text-cyan-400">Cookie & Env</span>
+                            </label>
+                            <input type="password" id="cfg-openai-key" placeholder="sk-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                        </div>
+                    </div>
+
+                    <button onclick="saveSettings()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-500 hover:to-teal-500 text-white font-bold rounded-xl transition shadow-lg">
+                        Save Keys to Cookies & Server
+                    </button>
+                </div>
+
+                <!-- TAB 3: CLOUD AUDIT LEDGER -->
+                <div id="dsec-ledger" class="space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-300">Supabase PostgreSQL Ledger:</span>
+                        <button onclick="loadSupabaseLogs()" class="text-teal-400 hover:underline">Refresh</button>
+                    </div>
+                    <div class="max-h-[380px] overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-950">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-slate-400">
+                                <tr><th class="p-2">Time</th><th class="p-2">Name</th><th class="p-2">Phone</th><th class="p-2">Status</th></tr>
+                            </thead>
+                            <tbody id="supabase-logs-tbody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td colspan="4" class="p-4 text-center text-slate-500">Loading audit rows...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 4: HARDWARE DIAGNOSTICS & TELEMETRY -->
+                <div id="dsec-health" class="space-y-3 hidden">
+                    <div class="space-y-2">
+                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">Connection Socket</span>
+                            <span id="d-diag-id" class="font-mono text-teal-400">192.168.1.13</span>
+                        </div>
+                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">Battery & Power</span>
+                            <span id="d-diag-bat" class="text-emerald-400">54% (Healthy)</span>
+                        </div>
+                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">Thermals</span>
+                            <span id="d-diag-temp" class="text-cyan-400">33.0°C (Normal)</span>
+                        </div>
+                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                            <span class="text-slate-400">Database Latency</span>
+                            <span id="d-diag-db" class="text-emerald-400">Online</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="triggerAutoReconnect()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-teal-400 font-bold rounded-xl">Auto-Reconnect</button>
+                        <button onclick="triggerScreenUnlock()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl">Wake & Unlock</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODALS SECTION: 3-WAY WI-FI DEBUGGING STATION                             -->
+    <!-- ========================================================================= -->
+
+    <!-- NATIVE WI-FI PAIRING & DIRECT CONNECT MODAL -->
+    <div id="modal-wifi-pair" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                    <span class="material-symbols-outlined">wifi_tethering</span>
+                    <h3>Wi-Fi Wireless Debugging Station</h3>
+                </div>
+                <button onclick="closeModal('modal-wifi-pair')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- 3-Way Tab Switcher -->
+            <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+                <button onclick="switchWifiPairTab('direct')" id="tab-wifi-direct" class="py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center">🔌 Direct IP</button>
+                <button onclick="switchWifiPairTab('manual')" id="tab-wifi-manual" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">⚡ 6-Digit PIN</button>
+                <button onclick="switchWifiPairTab('qr')" id="tab-wifi-qr" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">📱 Native QR</button>
+            </div>
+
+            <!-- TAB 1: DIRECT CONNECT (IP:PORT) - FASTEST -->
+            <div id="sec-wifi-direct" class="space-y-3 text-xs">
+                <div>
+                    <label class="text-slate-400 font-semibold flex items-center justify-between">
+                        <span>Main Screen IP address & Port:</span>
+                        <span class="text-[10px] text-teal-400">Settings > Wireless Debugging</span>
+                    </label>
+                    <input type="text" id="wifi-direct-ipport" placeholder="192.168.1.13:44711" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-teal-300 text-sm mt-1 outline-none focus:border-teal-500">
+                </div>
+                <button onclick="submitWifiDirectConnect()" id="btn-submit-wifi-direct" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/20">
+                    <span class="material-symbols-outlined text-sm">link</span> Connect to Phone
+                </button>
+                <p class="text-[10px] text-slate-500 text-center">Use this if phone is already paired once. Fast 1-click reconnect.</p>
+            </div>
+
+            <!-- TAB 2: MANUAL 6-DIGIT PIN PAIR -->
+            <div id="sec-wifi-manual" class="space-y-3 text-xs hidden">
+                <div>
+                    <label class="text-slate-400 font-semibold">Pairing Screen IP:Port ("Pair with code")</label>
+                    <input type="text" id="wifi-pair-ipport" placeholder="192.168.1.13:37891" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                </div>
+                <div>
+                    <label class="text-slate-400 font-semibold">6-Digit Pairing Code</label>
+                    <input type="text" id="wifi-pair-code" placeholder="482910" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                </div>
+                <button onclick="submitWifiPairing()" id="btn-submit-wifi-pair" class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl transition">Pair & Connect Instantly</button>
+            </div>
+
+            <!-- TAB 3: QR SCAN -->
+            <div id="sec-wifi-qr" class="space-y-3 text-center text-xs hidden">
+                <div class="flex justify-center p-3 bg-white rounded-xl max-w-[180px] mx-auto">
+                    <div id="wifi-qrcode-container"></div>
+                </div>
+                <div class="text-[11px] text-slate-400 font-mono" id="wifi-qr-service">Connecting mDNS...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVE TEMPLATE MODAL -->
+    <div id="modal-save-template" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-3 shadow-2xl text-xs">
+            <h3 class="font-bold text-teal-400 text-sm">Save SMS Template to Cloud</h3>
+            <input type="text" id="tpl-title" placeholder="Template Title (e.g. WhatsApp Invite)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-slate-200">
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModal('modal-save-template')" class="px-3 py-1.5 bg-slate-800 rounded-xl">Cancel</button>
+                <button onclick="confirmSaveTemplate()" class="px-4 py-1.5 bg-teal-500 text-slate-950 font-bold rounded-xl">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none z-50"></div>
+
+    <!-- ========================================================================= -->
+    <!-- CLIENT JAVASCRIPT CONTROLLER                                              -->
+    <!-- ========================================================================= -->
+    <script>
+        let currentCandidates = [];
+        let activeJobContext = { role: 'Candidate', location: 'Ahmedabad', company: 'Job Recruitment' };
+        let currentUser = null;
+        let savedTemplatesList = [];
+        let rawSupabaseLogs = [];
+
+        // --- COOKIES & LOCALSTORAGE PERSISTENCE HELPERS ---
+        function setCookie(name, val, days = 30) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+            localStorage.setItem(name, val);
+        }
+
+        function getCookie(name) {
+            const local = localStorage.getItem(name);
+            if (local !== null) return local;
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? decodeURIComponent(match[2]) : '';
+        }
+
+        function persistPrompt() { setCookie('jr_last_prompt', document.getElementById('ai-prompt').value); }
+        function persistTemplateBody() { setCookie('jr_last_template', document.getElementById('sms-body').value); }
+        function persistSelectedModel() { setCookie('jr_selected_model', document.getElementById('ai-model-select').value); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAdminJobs();
+            loadFilterOptions();
+            loadCloudTemplates();
+            loadAvailableAiModels();
+            loadSettings();
+            pollActiveGatewayStatus();
+            setInterval(pollActiveGatewayStatus, 4000);
+
+            // Restore from cookies
+            const savedPrompt = getCookie('jr_last_prompt');
+            if (savedPrompt) document.getElementById('ai-prompt').value = savedPrompt;
+            const savedTpl = getCookie('jr_last_template');
+            if (savedTpl) document.getElementById('sms-body').value = savedTpl;
+            const savedWifiIp = getCookie('jr_last_wifi_ip');
+            if (savedWifiIp) document.getElementById('wifi-direct-ipport').value = savedWifiIp;
+
+            updatePreview();
+        });
+
+        // --- DRAWER CONTROLLER ---
+        function toggleDrawer() {
+            const drawer = document.getElementById('slide-drawer');
+            drawer.classList.toggle('translate-x-full');
+            if (!drawer.classList.contains('translate-x-full')) {
+                loadCampaignHistory();
+                loadSupabaseLogs();
+                loadSettings();
+            }
+        }
+
+        function switchDrawerTab(tab) {
+            ['campaigns', 'settings', 'ledger', 'health'].forEach(t => {
+                document.getElementById(`dtab-${t}`).className = t === tab ? 'py-1.5 rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center';
+                document.getElementById(`dsec-${t}`).classList.toggle('hidden', t !== tab);
+            });
+            if (tab === 'campaigns') loadCampaignHistory();
+        }
+
+        // --- CAMPAIGN HISTORY LOADER ---
+        async function loadCampaignHistory() {
+            const container = document.getElementById('campaigns-container');
+            container.innerHTML = '<div class="p-4 text-center text-slate-500">Querying past campaigns...</div>';
+            try {
+                const res = await fetch('/api/campaign_history');
+                const data = await res.json();
+                const campaigns = data.campaigns || [];
+                if (campaigns.length === 0) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No campaigns dispatched yet.</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                campaigns.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2 hover:border-teal-500/40 transition';
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-200 text-xs">${escapeHtml(c.title)}</span>
+                            <span class="text-[10px] font-mono text-slate-400">${escapeHtml(c.timestamp)}</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-400 font-mono line-clamp-2 italic bg-slate-900/60 p-1.5 rounded-lg border border-slate-800/60">"${escapeHtml(c.template)}"</p>
+                        <div class="flex items-center justify-between text-[11px] pt-1">
+                            <span class="text-teal-400 font-bold font-mono">✅ ${c.sent} / ${c.total} Sent</span>
+                            <button onclick="reuseCampaignTemplate(${JSON.stringify(c.template).replace(/"/g, '&quot;')})" class="px-2.5 py-1 bg-teal-500/20 hover:bg-teal-500 text-teal-300 hover:text-slate-950 font-bold rounded-lg transition flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs">replay</span> Re-use Template
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch(e) {
+                container.innerHTML = '<div class="p-4 text-center text-red-400">Failed to load campaigns.</div>';
+            }
+        }
+
+        function reuseCampaignTemplate(tpl) {
+            document.getElementById('sms-body').value = tpl;
+            updatePreview();
+            persistTemplateBody();
+            toggleDrawer();
+            showToast("Template loaded into Step 2!");
+        }
+
+        // --- UNIFIED HARDWARE HUD POLLER ---
+        async function pollActiveGatewayStatus() {
+            try {
+                const res = await fetch('/api/health_check');
+                const d = await res.json();
+
+                const connBadge = document.getElementById('hud-conn-badge');
+                const connText = document.getElementById('hud-conn-text');
+                const devDetails = document.getElementById('hud-device-details');
+                const batText = document.getElementById('hud-battery');
+                const lockIcon = document.getElementById('hud-lock-icon');
+                const lockText = document.getElementById('hud-lock-status');
+                const unlockBtn = document.getElementById('hud-btn-unlock');
+
+                const dispDev = document.getElementById('disp-device-name');
+                const dispCarrier = document.getElementById('disp-carrier');
+                const dispScreen = document.getElementById('disp-screen-state');
+
+                if (d.adb_connected) {
+                    connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1';
+                    connText.textContent = 'Connected';
+                    devDetails.textContent = `${d.device_name} (${d.carrier || 'SIM Active'})`;
+                    batText.textContent = d.battery_text || '100%';
+                    
+                    if (dispDev) dispDev.textContent = d.device_name;
+                    if (dispCarrier) dispCarrier.textContent = d.carrier || 'Jio True5G';
+
+                    if (d.is_screen_locked) {
+                        lockIcon.textContent = 'lock';
+                        lockIcon.className = 'material-symbols-outlined text-sm text-amber-400';
+                        lockText.textContent = 'LOCKED';
+                        lockText.className = 'text-amber-400 font-bold';
+                        unlockBtn.classList.remove('hidden');
+                        if (dispScreen) {
+                            dispScreen.textContent = 'Phone Locked (Click Unlock)';
+                            dispScreen.className = 'font-bold text-amber-400';
+                        }
+                    } else {
+                        lockIcon.textContent = 'lock_open';
+                        lockIcon.className = 'material-symbols-outlined text-sm text-emerald-400';
+                        lockText.textContent = 'UNLOCKED';
+                        lockText.className = 'text-emerald-400 font-bold';
+                        unlockBtn.classList.add('hidden');
+                        if (dispScreen) {
+                            dispScreen.textContent = 'Unlocked & Ready';
+                            dispScreen.className = 'font-bold text-emerald-400';
+                        }
+                    }
+
+                    // Populate Drawer Diagnostics
+                    document.getElementById('d-diag-id').textContent = d.device_id;
+                    document.getElementById('d-diag-bat').textContent = d.battery_text;
+                    document.getElementById('d-diag-temp').textContent = d.temperature_text;
+                    document.getElementById('d-diag-db').textContent = d.db_status_text;
+
+                } else {
+                    connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950 text-red-400 border border-red-800 flex items-center gap-1';
+                    connText.textContent = 'Disconnected';
+                    devDetails.textContent = 'Connect phone via USB or Wi-Fi';
+                    batText.textContent = '--%';
+                    lockText.textContent = 'OFFLINE';
+                    unlockBtn.classList.add('hidden');
+                }
+            } catch(e) {}
+        }
+
+        async function triggerScreenUnlock() {
+            showToast("Sending wake and unlock signal...");
+            try {
+                const res = await fetch('/api/unlock_screen', { method: 'POST' });
+                const d = await res.json();
+                showToast(d.message || "Unlock signal sent!");
+                setTimeout(pollActiveGatewayStatus, 800);
+            } catch(e) { showToast("Unlock failed.", true); }
+        }
+
+        async function triggerAutoReconnect() {
+            showToast("Refreshing Wi-Fi sockets...");
+            try {
+                const res = await fetch('/api/adb_reconnect', { method: 'POST' });
+                const d = await res.json();
+                showToast(d.message || "Refreshed!");
+                setTimeout(pollActiveGatewayStatus, 800);
+            } catch(e) { showToast("Reconnect error.", true); }
+        }
+
+        // --- AUDIENCE CONTROLLER ---
+        function switchSource(type) {
+            ['jobs', 'search', 'import', 'single'].forEach(t => {
+                document.getElementById(`tab-${t}`).className = t === type ? 'py-1.5 font-bold rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center';
+                document.getElementById(`section-${t}`).classList.toggle('hidden', t !== type);
+            });
+            if (type === 'single') updateSingleCandidate();
+        }
+
+        async function loadAdminJobs() {
+            const sel = document.getElementById('job-select');
+            try {
+                const res = await fetch('/api/jobs');
+                const data = await res.json();
+                sel.innerHTML = '<option value="">-- Select Active Job --</option>';
+                (data.jobs || []).forEach(j => {
+                    const opt = document.createElement('option');
+                    opt.value = j.id;
+                    opt.textContent = `${j.jobRole} @ ${j.companyName || 'Job Recruitment'} (${j.total_applicants} cands)`;
+                    opt.dataset.role = j.jobRole;
+                    opt.dataset.location = j.location;
+                    opt.dataset.company = j.companyName || 'Job Recruitment';
+                    sel.appendChild(opt);
+                });
+            } catch (e) {}
+        }
+
+        async function loadFilterOptions() {
+            try {
+                const res = await fetch('/api/filter_options');
+                const data = await res.json();
+                const roleSel = document.getElementById('filter-role');
+                roleSel.innerHTML = '<option value="">-- All Roles --</option>';
+                (data.roles || []).forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r;
+                    opt.textContent = r;
+                    roleSel.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        async function loadJobApplicants() {
+            const sel = document.getElementById('job-select');
+            const jobId = sel.value;
+            if (!jobId) return;
+
+            const selectedOpt = sel.options[sel.selectedIndex];
+            activeJobContext = {
+                role: selectedOpt.dataset.role || 'Candidate',
+                location: selectedOpt.dataset.location || 'Ahmedabad',
+                company: selectedOpt.dataset.company || 'Job Recruitment'
+            };
+
+            showToast("Loading candidates...");
+            try {
+                const res = await fetch(`/api/job_applicants?job_id=${encodeURIComponent(jobId)}`);
+                const data = await res.json();
+                currentCandidates = data.cands || [];
+                renderCandidates(currentCandidates);
+                updatePreview();
+            } catch (e) {}
+        }
+
+        async function searchGlobalCandidates() {
+            const role = document.getElementById('filter-role').value.trim();
+            const city = document.getElementById('filter-city').value.trim();
+            activeJobContext = { role: role || 'Candidate', location: city || 'Ahmedabad', company: 'Job Recruitment' };
+
+            showToast("Searching...");
+            try {
+                const res = await fetch(`/api/search_candidates?role=${encodeURIComponent(role)}&city=${encodeURIComponent(city)}`);
+                const data = await res.json();
+                currentCandidates = data.cands || [];
+                renderCandidates(currentCandidates);
+                updatePreview();
+            } catch (e) {}
+        }
+
+        function parseCustomInput() {
+            const raw = document.getElementById('import-paste-box').value.trim();
+            if (!raw) { currentCandidates = []; renderCandidates([]); return; }
+            const parsed = [];
+            raw.split('\n').forEach(l => {
+                const parts = l.split(/[,\t|]/).map(p => p.trim());
+                if (parts[0]) {
+                    const phone = parts[0].replace(/[^0-9]/g, '');
+                    if (phone.length >= 10) parsed.push({ name: parts[1] || 'Candidate', phone: phone.slice(-10), role: parts[2] || 'Candidate' });
+                }
+            });
+            currentCandidates = parsed;
+            renderCandidates(currentCandidates);
+            updatePreview();
+        }
+
+        function updateSingleCandidate() {
+            const phone = document.getElementById('single-phone').value.trim() || '9099876985';
+            const name = document.getElementById('single-name').value.trim() || 'Omear';
+            currentCandidates = [{ name: name, phone: phone, role: 'Candidate' }];
+            renderCandidates(currentCandidates);
+            updatePreview();
+        }
+
+        function renderCandidates(cands) {
+            const tbody = document.getElementById('cand-tbody');
+            tbody.innerHTML = '';
+            if (!cands || cands.length === 0) {
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-500 text-xs">No candidates selected.</td></tr>';
+                updateSelectedCount();
+                return;
+            }
+            cands.forEach((c, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/60 transition';
+                tr.innerHTML = `
+                    <td class="p-2 text-center w-6"><input type="checkbox" class="cand-checkbox" data-idx="${idx}" checked onchange="updateSelectedCount()"></td>
+                    <td class="p-2 font-semibold text-slate-200">${escapeHtml(c.name || 'Candidate')}</td>
+                    <td class="p-2 font-mono text-teal-400">+91-${escapeHtml(c.phone || '')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            updateSelectedCount();
+        }
+
+        function toggleSelectAll(checked) {
+            document.querySelectorAll('.cand-checkbox').forEach(cb => cb.checked = checked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checked = document.querySelectorAll('.cand-checkbox:checked').length;
+            document.getElementById('cand-count').textContent = checked;
+            document.getElementById('btn-send-count').textContent = checked;
+        }
+
+        // --- MESSAGE & AI CONTROLLER ---
+        async function loadAvailableAiModels() {
+            const sel = document.getElementById('ai-model-select');
+            try {
+                const res = await fetch('/api/ai_models');
+                const data = await res.json();
+                sel.innerHTML = '';
+                (data.models || []).forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name;
+                    sel.appendChild(opt);
+                });
+                const savedModel = getCookie('jr_selected_model');
+                if (savedModel && sel.querySelector(`option[value="${savedModel}"]`)) {
+                    sel.value = savedModel;
+                }
+            } catch(e) {
+                sel.innerHTML = '<option value="default">Built-in Rule Engine (Free)</option>';
+            }
+        }
+
+        async function loadCloudTemplates() {
+            const sel = document.getElementById('template-select');
+            try {
+                const res = await fetch('/api/templates');
+                const data = await res.json();
+                savedTemplatesList = data.templates || [];
+                sel.innerHTML = '<option value="">-- Select Saved Cloud Template --</option>';
+                savedTemplatesList.forEach((t, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `${t.title} (${t.char_count}c)`;
+                    sel.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        function applySavedTemplate() {
+            const idx = document.getElementById('template-select').value;
+            if (idx === '') return;
+            const t = savedTemplatesList[parseInt(idx)];
+            if (t) {
+                document.getElementById('sms-body').value = t.body;
+                updatePreview();
+                persistTemplateBody();
+                showToast(`Applied "${t.title}"!`);
+            }
+        }
+
+        function insertTag(tag) {
+            document.getElementById('sms-body').value += tag;
+            updatePreview();
+            persistTemplateBody();
+        }
+
+        function updatePreview() {
+            const body = document.getElementById('sms-body').value;
+            const len = body.length;
+            const credits = Math.max(1, Math.ceil(len / 160));
+            document.getElementById('char-count').textContent = `${len}c (${credits} Cr)`;
+
+            const sampleName = (currentCandidates[0] && currentCandidates[0].name) || 'Omear';
+            const rendered = body
+                .replace(/{name}/g, sampleName)
+                .replace(/{role}/g, activeJobContext.role || 'Candidate')
+                .replace(/{location}/g, activeJobContext.location || 'Ahmedabad')
+                .replace(/{company}/g, activeJobContext.company || 'Job Recruitment');
+            
+            document.getElementById('sample-preview').textContent = rendered ? `"${rendered}"` : '"Sample preview will appear here..."';
+        }
+
+        async function generateAiDraft() {
+            const prompt = document.getElementById('ai-prompt').value.trim();
+            if (!prompt) { showToast("Please enter an AI prompt.", true); return; }
+            persistPrompt();
+            const model_id = document.getElementById('ai-model-select').value;
+            const btn = document.getElementById('btn-generate-ai');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> AI Writing...';
+            try {
+                const res = await fetch('/api/ai_draft', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, role: activeJobContext.role, location: activeJobContext.location, company: activeJobContext.company, model_id })
+                });
+                const data = await res.json();
+                if (data.template) {
+                    document.getElementById('sms-body').value = data.template;
+                    updatePreview();
+                    persistTemplateBody();
+                    showToast("AI Template Ready!");
+                }
+            } catch(e) { showToast("AI generation failed.", true); }
+            finally { btn.innerHTML = '<span class="material-symbols-outlined text-xs">bolt</span> Generate'; }
+        }
+
+        // --- DISPATCH RUNNER ---
+        async function startDispatch(limit = 0) {
+            const template = document.getElementById('sms-body').value.trim();
+            if (!template) { showToast("Please enter an SMS template.", true); return; }
+
+            const checked = Array.from(document.querySelectorAll('.cand-checkbox:checked'));
+            if (checked.length === 0) { showToast("No candidates selected.", true); return; }
+
+            let selected = checked.map(cb => currentCandidates[parseInt(cb.dataset.idx)]).filter(Boolean);
+            if (limit > 0) selected = selected.slice(0, limit);
+
+            if (!confirm(`Dispatch ${selected.length} SMS via phone SIM?`)) return;
+
+            document.getElementById('btn-send-all').disabled = true;
+            document.getElementById('btn-test-run').disabled = true;
+            document.getElementById('progress-container').classList.remove('hidden');
+
+            try {
+                await fetch('/api/start_dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ candidates: selected, template, role: activeJobContext.role, location: activeJobContext.location, company: activeJobContext.company })
+                });
+                pollDispatchProgress();
+            } catch(e) {
+                showToast("Dispatch start error.", true);
+                document.getElementById('btn-send-all').disabled = false;
+                document.getElementById('btn-test-run').disabled = false;
+            }
+        }
+
+        async function pollDispatchProgress() {
+            const interval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/dispatch_status');
+                    const data = await res.json();
+                    
+                    const pct = data.total > 0 ? Math.round((data.current_index / data.total) * 100) : 0;
+                    document.getElementById('progress-bar').style.width = pct + '%';
+                    document.getElementById('progress-stats').textContent = `${data.current_index} / ${data.total}`;
+                    document.getElementById('live-log').textContent = data.last_log || 'Dispatching...';
+
+                    if (!data.is_running) {
+                        clearInterval(interval);
+                        document.getElementById('btn-send-all').disabled = false;
+                        document.getElementById('btn-test-run').disabled = false;
+                        showToast(`Campaign Complete! ${data.sent_count} sent.`);
+                    }
+                } catch(e) {}
+            }, 1200);
+        }
+
+        // --- SUPABASE LEDGER & SETTINGS ---
+        async function loadSupabaseLogs() {
+            const tbody = document.getElementById('supabase-logs-tbody');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-slate-500">Querying Supabase...</td></tr>';
+            try {
+                const res = await fetch('/api/supabase_logs');
+                const data = await res.json();
+                tbody.innerHTML = '';
+                (data.logs || []).forEach(l => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 font-mono text-slate-400 text-[10px]">${escapeHtml(l.timestamp)}</td>
+                        <td class="p-2 font-semibold text-slate-200">${escapeHtml(l.name || 'Candidate')}</td>
+                        <td class="p-2 font-mono text-teal-400">+91-${escapeHtml(l.phone)}</td>
+                        <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${l.status === 'SENT' ? 'bg-emerald-950 text-emerald-300' : 'bg-red-950 text-red-300'}">${escapeHtml(l.status)}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) {}
+        }
+
+        async function loadSettings() {
+            // Priority: Cookies/LocalStorage, then server fallback
+            const groq = getCookie('jr_groq_key');
+            const gemini = getCookie('jr_gemini_key');
+            const nvidia = getCookie('jr_nvidia_key');
+            const openai = getCookie('jr_openai_key');
+
+            if (groq) document.getElementById('cfg-groq-key').value = groq;
+            if (gemini) document.getElementById('cfg-gemini-key').value = gemini;
+            if (nvidia) document.getElementById('cfg-nvidia-key').value = nvidia;
+            if (openai) document.getElementById('cfg-openai-key').value = openai;
+
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                if (!groq && data.GROQ_API_KEY) document.getElementById('cfg-groq-key').value = data.GROQ_API_KEY;
+                if (!gemini && data.GEMINI_API_KEY) document.getElementById('cfg-gemini-key').value = data.GEMINI_API_KEY;
+                if (!nvidia && data.NVIDIA_API_KEY) document.getElementById('cfg-nvidia-key').value = data.NVIDIA_API_KEY;
+                if (!openai && data.OPENAI_API_KEY) document.getElementById('cfg-openai-key').value = data.OPENAI_API_KEY;
+            } catch(e) {}
+        }
+
+        async function saveSettings() {
+            const groq = document.getElementById('cfg-groq-key').value.trim();
+            const gemini = document.getElementById('cfg-gemini-key').value.trim();
+            const nvidia = document.getElementById('cfg-nvidia-key').value.trim();
+            const openai = document.getElementById('cfg-openai-key').value.trim();
+
+            setCookie('jr_groq_key', groq);
+            setCookie('jr_gemini_key', gemini);
+            setCookie('jr_nvidia_key', nvidia);
+            setCookie('jr_openai_key', openai);
+
+            try {
+                await fetch('/api/save_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        GROQ_API_KEY: groq,
+                        GEMINI_API_KEY: gemini,
+                        NVIDIA_API_KEY: nvidia,
+                        OPENAI_API_KEY: openai
+                    })
+                });
+                showToast("Saved to Cookies & Server!");
+                loadAvailableAiModels();
+            } catch(e) { showToast("Error saving keys.", true); }
+        }
+
+        // --- 3-WAY WI-FI PAIRING & DIRECT CONNECT ---
+        function openWifiPairModal() { 
+            openModal('modal-wifi-pair'); 
+            const savedIp = getCookie('jr_last_wifi_ip');
+            if (savedIp) document.getElementById('wifi-direct-ipport').value = savedIp;
+        }
+
+        function switchWifiPairTab(tab) {
+            ['direct', 'manual', 'qr'].forEach(t => {
+                document.getElementById(`tab-wifi-${t}`).className = t === tab ? 'py-2 font-bold rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-2 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center';
+                document.getElementById(`sec-wifi-${t}`).classList.toggle('hidden', t !== tab);
+            });
+            if (tab === 'qr') regenerateWifiQR();
+        }
+
+        async function submitWifiDirectConnect() {
+            const ip_port = document.getElementById('wifi-direct-ipport').value.trim();
+            if (!ip_port) { showToast("Enter IP:Port (e.g. 192.168.1.13:44711)", true); return; }
+            setCookie('jr_last_wifi_ip', ip_port);
+
+            const btn = document.getElementById('btn-submit-wifi-direct');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Connecting...';
+            try {
+                const res = await fetch('/api/adb_wifi_connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip_port })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || "Connected successfully!");
+                    closeModal('modal-wifi-pair');
+                    pollActiveGatewayStatus();
+                } else {
+                    showToast(data.message || "Connection failed. Verify IP:Port on phone.", true);
+                }
+            } catch(e) {
+                showToast("Connect error.", true);
+            } finally {
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">link</span> Connect to Phone';
+            }
+        }
+
+        async function regenerateWifiQR() {
+            const container = document.getElementById('wifi-qrcode-container');
+            const svcEl = document.getElementById('wifi-qr-service');
+            try {
+                const res = await fetch('/api/adb_wifi_qr_params');
+                const data = await res.json();
+                if (data.ok) {
+                    container.innerHTML = '';
+                    new QRCode(container, { text: data.qr_payload, width: 150, height: 150 });
+                    svcEl.textContent = `mDNS: ${data.service_name}`;
+                }
+            } catch(e) {}
+        }
+
+        async function submitWifiPairing() {
+            const ip_port = document.getElementById('wifi-pair-ipport').value.trim();
+            const code = document.getElementById('wifi-pair-code').value.trim();
+            if (!ip_port || !code) { showToast("Enter Pairing IP:Port and 6-digit Code.", true); return; }
+            const btn = document.getElementById('btn-submit-wifi-pair');
+            btn.innerHTML = 'Connecting...';
+            try {
+                const res = await fetch('/api/adb_wifi_pair', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip_port, code })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast("Connected wirelessly over Wi-Fi!");
+                    closeModal('modal-wifi-pair');
+                    pollActiveGatewayStatus();
+                } else { showToast(data.message, true); }
+            } catch(e) {}
+            finally { btn.innerHTML = 'Pair & Connect Instantly'; }
+        }
+
+        function openSaveTemplateModal() { openModal('modal-save-template'); }
+        async function confirmSaveTemplate() {
+            const title = document.getElementById('tpl-title').value.trim();
+            const body = document.getElementById('sms-body').value.trim();
+            if (!title) { showToast("Enter a title.", true); return; }
+            try {
+                await fetch('/api/templates/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, template_body: body, category: 'general', visibility: 'public' })
+                });
+                closeModal('modal-save-template');
+                showToast("Template saved to Supabase Cloud!");
+                loadCloudTemplates();
+            } catch(e) {}
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `fixed bottom-5 right-5 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold z-50 border ${isError ? 'bg-red-950 border-red-800 text-red-200' : 'bg-slate-900 border-slate-700 text-emerald-400'}`;
+            t.style.opacity = '1';
+            t.style.transform = 'translateY(0)';
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; }, 3500);
+        }
+
+        function escapeHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.local
+.env.*
+*.env
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+env/
+venv/
+ENV/
+
+# Logs & Runtime State
+*.log
+logs/
+quota_state.json
+sms_dispatch.log
+
+# Windows ADB Binaries (Linux containers use apt android-tools-adb)
+platform-tools/
+*.exe
+*.dll
+*.zip
+
+# OS artifacts
+.DS_Store
+Thumbs.db
