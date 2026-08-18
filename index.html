@@ -1093,8 +1093,6 @@
                 }
             } catch(e) {}
         }
-            } catch(e) {}
-        }
 
         async function triggerScreenUnlock() {
             showToast("Sending wake and unlock signal...");
@@ -1300,6 +1298,20 @@
                 persistTemplateBody();
                 showToast(`Applied "${t.title}"!`);
             }
+        }
+
+        function persistPrompt() {
+            try {
+                const p = document.getElementById('ai-prompt').value;
+                sessionStorage.setItem('jr_saved_prompt', p);
+            } catch(e) {}
+        }
+
+        function persistTemplateBody() {
+            try {
+                const b = document.getElementById('sms-body').value;
+                sessionStorage.setItem('jr_saved_body', b);
+            } catch(e) {}
         }
 
         function insertTag(tag) {
