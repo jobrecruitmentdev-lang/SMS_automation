@@ -185,9 +185,24 @@ def main():
     print(f" 📱 Local ADB Engine:   {ADB_BIN}")
     print("=" * 72)
 
+    # Pre-check if phone is already attached
+    is_connected, dev_name, carrier, battery = get_phone_diagnostics()
+    if not is_connected:
+        print("\n" + "=" * 70)
+        print(" 📱 NO PHONE DETECTED YET! HOW WOULD YOU LIKE TO CONNECT?")
+        print(" [1] 🔌 USB Cable (Plug in phone & tap 'Allow' on screen)")
+        print(" [2] 📶 Wireless Wi-Fi (No cable - enter IP & 6-digit PIN)")
+        print("=" * 70)
+        choice = input(" Select option [1 or 2, default=1]: ").strip()
+        if choice == "2":
+            connected_ip = try_wifi_pair_interactive()
+            if connected_ip:
+                config_file, data = get_relay_config()
+                data["saved_wifi_ip"] = connected_ip
+                save_relay_config(config_file, data)
+
     greetings_pool = ["Hi", "Hello", "Dear", "Greetings"]
     device_printed = False
-    wifi_prompt_shown = False
 
     while True:
         try:
@@ -201,10 +216,7 @@ def main():
             })
 
             if not is_connected:
-                if not wifi_prompt_shown:
-                    print("\n[*] Waiting for phone...")
-                    print("    💡 Tip: Plug USB Cable OR press 'W' to connect wirelessly over Wi-Fi.")
-                    wifi_prompt_shown = True
+                print(f"[*] Waiting for phone... (Plug USB or enable Wireless Debugging)", end="\r")
                 time.sleep(3)
                 continue
 
