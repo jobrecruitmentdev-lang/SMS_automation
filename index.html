@@ -31,7 +31,7 @@
     <div class="max-w-7xl mx-auto space-y-4">
         
         <!-- ========================================================================= -->
-        <!-- 1. UNIFIED TOP HARDWARE HUD & CONTROL RIBBON                              -->
+        <!-- 1. UNIFIED TOP HARDWARE HUD, AUTH STATION & CONTROL RIBBON                -->
         <!-- ========================================================================= -->
         <header class="p-3.5 md:p-4 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
             <!-- Left: Brand & Gateway Badge -->
@@ -69,8 +69,27 @@
                 </div>
             </div>
 
-            <!-- Right: Quick Actions & Drawer Opener -->
+            <!-- Right: Auth Station, Wi-Fi Trigger & Drawer Opener -->
             <div class="flex items-center gap-2">
+                <!-- Logged In User Avatar / Logged Out Button -->
+                <div id="auth-header-container" class="flex items-center gap-2">
+                    <button onclick="openAuthModal('login')" id="btn-header-login" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+                        <span class="material-symbols-outlined text-sm">account_circle</span>
+                        <span>Sign In / Register</span>
+                    </button>
+                    
+                    <div id="user-profile-badge" class="hidden flex items-center gap-2 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-xl text-xs">
+                        <div class="w-6 h-6 rounded-lg bg-teal-500/20 text-teal-300 font-bold flex items-center justify-center text-[10px]" id="user-initials">VA</div>
+                        <div class="leading-tight">
+                            <div class="font-bold text-slate-200 text-[11px] truncate max-w-[90px]" id="user-display-name">Vishwa Admin</div>
+                            <div class="text-[9px] text-teal-400 font-mono uppercase" id="user-display-role">Recruiter</div>
+                        </div>
+                        <button onclick="logoutUser()" title="Logout" class="text-slate-500 hover:text-red-400 p-0.5">
+                            <span class="material-symbols-outlined text-xs">logout</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 1-Click Screen Unlock (if locked) -->
                 <button onclick="triggerScreenUnlock()" id="hud-btn-unlock" class="hidden px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-lg shadow-amber-500/20 animate-pulse">
                     <span class="material-symbols-outlined text-sm">lock_open</span> Wake & Unlock
@@ -416,10 +435,62 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODALS SECTION: 3-WAY WI-FI DEBUGGING STATION                             -->
+    <!-- MODALS SECTION                                                            -->
     <!-- ========================================================================= -->
 
-    <!-- NATIVE WI-FI PAIRING & DIRECT CONNECT MODAL -->
+    <!-- 1. TEAM AUTH MODAL (LOGIN & REGISTER) -->
+    <div id="modal-auth" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-teal-400 font-bold text-sm">
+                    <span class="material-symbols-outlined">lock</span>
+                    <h3 id="auth-modal-title">Recruiter Workspace Sign In</h3>
+                </div>
+                <button onclick="closeModal('modal-auth')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+                <button onclick="switchAuthTab('login')" id="tab-auth-login" class="py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center">🔑 Sign In</button>
+                <button onclick="switchAuthTab('signup')" id="tab-auth-signup" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">📝 Register Team Member</button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
+                <div id="auth-field-name" class="space-y-1 hidden">
+                    <label class="text-slate-400 font-semibold">Full Name</label>
+                    <input type="text" id="auth-name" placeholder="e.g. Vishwa Patel" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Work Email</label>
+                    <input type="email" id="auth-email" required placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-slate-400 font-semibold">Password</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+
+                <div id="auth-field-role" class="space-y-1 hidden">
+                    <label class="text-slate-400 font-semibold">Workspace Role</label>
+                    <select id="auth-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
+                        <option value="recruiter">Recruiter</option>
+                        <option value="admin">Administrator</option>
+                        <option value="manager">Hiring Manager</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-lg shadow-teal-500/20 text-sm mt-2">
+                    Sign In to Workspace
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. NATIVE WI-FI PAIRING & DIRECT CONNECT MODAL -->
     <div id="modal-wifi-pair" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -477,7 +548,7 @@
         </div>
     </div>
 
-    <!-- SAVE TEMPLATE MODAL -->
+    <!-- 3. SAVE TEMPLATE MODAL -->
     <div id="modal-save-template" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-3 shadow-2xl text-xs">
             <h3 class="font-bold text-teal-400 text-sm">Save SMS Template to Cloud</h3>
@@ -524,9 +595,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadAdminJobs();
             loadFilterOptions();
-            loadCloudTemplates();
             loadAvailableAiModels();
             loadSettings();
+            restoreUserSession();
             pollActiveGatewayStatus();
             setInterval(pollActiveGatewayStatus, 4000);
 
@@ -540,6 +611,99 @@
 
             updatePreview();
         });
+
+        // --- AUTH CONTROLLER ---
+        let currentAuthMode = 'login';
+
+        function openAuthModal(mode = 'login') {
+            switchAuthTab(mode);
+            openModal('modal-auth');
+        }
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const isLogin = mode === 'login';
+            document.getElementById('tab-auth-login').className = isLogin ? 'py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center';
+            document.getElementById('tab-auth-signup').className = !isLogin ? 'py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center';
+            
+            document.getElementById('auth-modal-title').textContent = isLogin ? 'Recruiter Workspace Sign In' : 'Register New Team Member';
+            document.getElementById('auth-field-name').classList.toggle('hidden', isLogin);
+            document.getElementById('auth-field-role').classList.toggle('hidden', isLogin);
+            document.getElementById('btn-auth-submit').textContent = isLogin ? 'Sign In to Workspace' : 'Create Recruiter Account';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            const name = document.getElementById('auth-name').value.trim();
+            const role = document.getElementById('auth-role').value;
+
+            const endpoint = currentAuthMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+            const payload = currentAuthMode === 'login' ? { email, password } : { email, password, full_name: name, role };
+
+            const btn = document.getElementById('btn-auth-submit');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Authenticating...';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.ok && data.user) {
+                    currentUser = data.user;
+                    setCookie('jr_user_session', JSON.stringify(currentUser));
+                    updateAuthUI();
+                    closeModal('modal-auth');
+                    showToast(`Welcome back, ${currentUser.name}!`);
+                    loadCloudTemplates();
+                } else {
+                    showToast(data.message || "Authentication failed.", true);
+                }
+            } catch(e) {
+                showToast("Network authentication error.", true);
+            } finally {
+                btn.textContent = currentAuthMode === 'login' ? 'Sign In to Workspace' : 'Create Recruiter Account';
+            }
+        }
+
+        function restoreUserSession() {
+            const raw = getCookie('jr_user_session');
+            if (raw) {
+                try {
+                    currentUser = JSON.parse(raw);
+                    updateAuthUI();
+                } catch(e) {}
+            }
+            loadCloudTemplates();
+        }
+
+        function updateAuthUI() {
+            const btnLogin = document.getElementById('btn-header-login');
+            const badge = document.getElementById('user-profile-badge');
+            if (currentUser) {
+                btnLogin.classList.add('hidden');
+                badge.classList.remove('hidden');
+                document.getElementById('user-display-name').textContent = currentUser.name;
+                document.getElementById('user-display-role').textContent = currentUser.role || 'Recruiter';
+                const initials = (currentUser.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                document.getElementById('user-initials').textContent = initials;
+            } else {
+                btnLogin.classList.remove('hidden');
+                badge.classList.add('hidden');
+            }
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            setCookie('jr_user_session', '', -1);
+            localStorage.removeItem('jr_user_session');
+            updateAuthUI();
+            loadCloudTemplates();
+            showToast("Logged out of workspace.");
+        }
 
         // --- DRAWER CONTROLLER ---
         function toggleDrawer() {
@@ -850,14 +1014,15 @@
         async function loadCloudTemplates() {
             const sel = document.getElementById('template-select');
             try {
-                const res = await fetch('/api/templates');
+                const uid = currentUser ? currentUser.id : '';
+                const res = await fetch(`/api/templates?user_id=${encodeURIComponent(uid)}`);
                 const data = await res.json();
                 savedTemplatesList = data.templates || [];
                 sel.innerHTML = '<option value="">-- Select Saved Cloud Template --</option>';
                 savedTemplatesList.forEach((t, i) => {
                     const opt = document.createElement('option');
                     opt.value = i;
-                    opt.textContent = `${t.title} (${t.char_count}c)`;
+                    opt.textContent = `${t.title} (${t.char_count}c)${t.is_mine ? ' [Private]' : ''}`;
                     sel.appendChild(opt);
                 });
             } catch(e) {}
@@ -1128,10 +1293,11 @@
             const body = document.getElementById('sms-body').value.trim();
             if (!title) { showToast("Enter a title.", true); return; }
             try {
+                const uid = currentUser ? currentUser.id : null;
                 await fetch('/api/templates/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, template_body: body, category: 'general', visibility: 'public' })
+                    body: JSON.stringify({ title, template_body: body, category: 'recruitment', visibility: 'public', user_id: uid })
                 });
                 closeModal('modal-save-template');
                 showToast("Template saved to Supabase Cloud!");
