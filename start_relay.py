@@ -108,16 +108,50 @@ def get_json(endpoint):
     with urllib.request.urlopen(req, timeout=8) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
-def get_saved_pairing_code():
+def get_relay_config():
     config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "relay_config.json")
+    data = {}
     if os.path.exists(config_file):
         try:
             with open(config_file, "r") as f:
                 data = json.load(f)
-                if data.get("pairing_code"):
-                    return data["pairing_code"]
         except Exception:
             pass
+    return config_file, data
+
+def save_relay_config(config_file, data):
+    try:
+        with open(config_file, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+def try_wifi_pair_interactive():
+    print("\n" + "=" * 70)
+    print(" 📶 1-CLICK WIRELESS WI-FI PAIRING (NO USB CABLE NEEDED)")
+    print(" 1. Phone me Settings > Developer Options > Wireless Debugging ko ON karein.")
+    print(" 2. 'Pair device with pairing code' par tap karein.")
+    print("=" * 70)
+    pair_ip = input(" Enter Pairing IP:Port (e.g. 192.168.1.13:37891): ").strip()
+    pair_pin = input(" Enter 6-Digit Pairing PIN (e.g. 482910): ").strip()
+
+    if pair_ip and pair_pin:
+        print(f"[*] Pairing with {pair_ip}...")
+        subprocess.run([ADB_BIN, "pair", pair_ip, pair_pin], timeout=10)
+    
+    print("-" * 70)
+    main_ip = input(" Enter Main Wireless Debugging IP:Port (e.g. 192.168.1.13:44711): ").strip()
+    if main_ip:
+        print(f"[*] Connecting to {main_ip}...")
+        r = subprocess.run([ADB_BIN, "connect", main_ip], capture_output=True, text=True, timeout=10)
+        print(f"[+] Output: {r.stdout.strip()}")
+        return main_ip
+    return None
+
+def get_saved_pairing_code():
+    config_file, data = get_relay_config()
+    if data.get("pairing_code"):
+        return data["pairing_code"]
     
     print("\n" + "=" * 60)
     print(" 🔑 RECRUITER PAIRING CODE SETUP")
@@ -127,15 +161,22 @@ def get_saved_pairing_code():
     if not code:
         code = "JR-DEFAULT"
     
-    try:
-        with open(config_file, "w") as f:
-            json.dump({"pairing_code": code}, f, indent=2)
-    except Exception:
-        pass
+    data["pairing_code"] = code
+    save_relay_config(config_file, data)
     return code
+
+def auto_connect_saved_wifi():
+    config_file, data = get_relay_config()
+    saved_ip = data.get("saved_wifi_ip")
+    if saved_ip:
+        try:
+            subprocess.run([ADB_BIN, "connect", saved_ip], capture_output=True, text=True, timeout=4)
+        except Exception:
+            pass
 
 def main():
     pairing_code = get_saved_pairing_code()
+    auto_connect_saved_wifi()
 
     print("=" * 72)
     print(" 🚀 JobRecruitment Cloud-to-Phone Local Relay Bridge")
@@ -146,6 +187,7 @@ def main():
 
     greetings_pool = ["Hi", "Hello", "Dear", "Greetings"]
     device_printed = False
+    wifi_prompt_shown = False
 
     while True:
         try:
@@ -159,7 +201,10 @@ def main():
             })
 
             if not is_connected:
-                print(f"[*] Waiting for local phone... (Connect USB or Wi-Fi to {ADB_BIN})", end="\r")
+                if not wifi_prompt_shown:
+                    print("\n[*] Waiting for phone...")
+                    print("    💡 Tip: Plug USB Cable OR press 'W' to connect wirelessly over Wi-Fi.")
+                    wifi_prompt_shown = True
                 time.sleep(3)
                 continue
 
