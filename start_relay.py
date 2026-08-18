@@ -105,16 +105,22 @@ def post_json(endpoint, data):
     req = urllib.request.Request(
         url,
         data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json", "User-Agent": "JR-Relay-Agent/1.0"}
+        headers={"Content-Type": "application/json", "User-Agent": "JR-Relay-Agent/1.0", "Connection": "close"}
     )
-    with urllib.request.urlopen(req, timeout=8) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return {"ok": False}
 
 def get_json(endpoint):
     url = f"{CLOUD_SERVER_URL.rstrip('/')}{endpoint}"
-    req = urllib.request.Request(url, headers={"User-Agent": "JR-Relay-Agent/1.0"})
-    with urllib.request.urlopen(req, timeout=8) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    req = urllib.request.Request(url, headers={"User-Agent": "JR-Relay-Agent/1.0", "Connection": "close"})
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return {}
 
 def get_relay_config():
     config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "relay_config.json")
