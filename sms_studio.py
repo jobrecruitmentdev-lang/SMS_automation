@@ -2735,7 +2735,7 @@ def run_hot_reloader(port=8050):
             time.sleep(1.5)
 
 if __name__ == "__main__":
-    if os.getenv("SMS_STUDIO_WORKER") == "1":
+    if os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SMS_STUDIO_WORKER") == "1":
         start_server_worker()
     else:
         run_hot_reloader()
