@@ -862,9 +862,30 @@
                     document.getElementById('d-diag-db').textContent = d.db_status_text;
 
                 } else {
+                    // Check if Local Relay Daemon is connected over cloud
+                    try {
+                        const rRes = await fetch('/api/relay/status');
+                        const rData = await rRes.json();
+                        if (rData.is_online) {
+                            connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 flex items-center gap-1';
+                            connText.textContent = 'Cloud Relay Active';
+                            devDetails.textContent = `${rData.device_name} (Via Local Bridge)`;
+                            batText.textContent = rData.battery || '100%';
+                            lockText.textContent = 'BRIDGE OK';
+                            unlockBtn.classList.add('hidden');
+                            if (dispDev) dispDev.textContent = rData.device_name;
+                            if (dispCarrier) dispCarrier.textContent = rData.carrier || 'Physical SIM (Relay)';
+                            if (dispScreen) {
+                                dispScreen.textContent = 'Cloud Relay Connected';
+                                dispScreen.className = 'font-bold text-cyan-400';
+                            }
+                            return;
+                        }
+                    } catch(re) {}
+
                     connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950 text-red-400 border border-red-800 flex items-center gap-1';
                     connText.textContent = 'Disconnected';
-                    devDetails.textContent = 'Connect phone via USB or Wi-Fi';
+                    devDetails.textContent = 'Run start_relay.bat or connect USB/Wi-Fi';
                     batText.textContent = '--%';
                     lockText.textContent = 'OFFLINE';
                     unlockBtn.classList.add('hidden');

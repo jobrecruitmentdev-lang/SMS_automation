@@ -40,6 +40,11 @@ LOG_FILE = os.path.join(BASE_DIR, "sms_dispatch.log")
 QUOTA_FILE = os.path.join(BASE_DIR, "quota_state.json")
 SERVER_START_TIME = str(time.time())
 
+# Cloud-to-Local Relay Queue State
+pending_relay_jobs = []
+active_relay = {"is_online": False, "last_heartbeat": 0, "device_name": "None", "carrier": "None", "battery": "--%"}
+relay_lock = threading.Lock()
+
 # Prepend local platform-tools to PATH
 if os.path.exists(PLATFORM_TOOLS_DIR):
     os.environ["PATH"] = PLATFORM_TOOLS_DIR + os.pathsep + os.environ.get("PATH", "")
@@ -2155,6 +2160,26 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"campaigns": campaigns, "connected": supabase_service.enabled})
             return
 
+        elif path == "/api/relay/poll_jobs":
+            # Cloud Relay agent polling for pending dispatch jobs
+            with relay_lock:
+                active_relay["last_heartbeat"] = time.time()
+                active_relay["is_online"] = True
+                job = pending_relay_jobs.pop(0) if pending_relay_jobs else None
+                self._send_json({"job": job, "has_job": bool(job)})
+            return
+
+        elif path == "/api/relay/status":
+            with relay_lock:
+                is_alive = (time.time() - active_relay.get("last_heartbeat", 0)) < 15
+                self._send_json({
+                    "is_online": is_alive and active_relay.get("is_online", False),
+                    "device_name": active_relay.get("device_name", "Local Relay Daemon"),
+                    "carrier": active_relay.get("carrier", "Physical SIM"),
+                    "battery": active_relay.get("battery", "100%")
+                })
+            return
+
         elif path == "/api/templates":
             user_id = query.get("user_id", [""])[0] or None
             templates = supabase_service.fetch_templates(user_id=user_id)
@@ -2206,6 +2231,34 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 return
             ok, res = supabase_service.signup_user(email, password, name, role)
             self._send_json({"ok": ok, "user" if ok else "message": res})
+            return
+
+        elif path == "/api/relay/heartbeat":
+            with relay_lock:
+                active_relay["last_heartbeat"] = time.time()
+                active_relay["is_online"] = True
+                active_relay["device_name"] = data.get("device_name", "Local Relay Phone")
+                active_relay["carrier"] = data.get("carrier", "Physical SIM")
+                active_relay["battery"] = data.get("battery", "100%")
+            self._send_json({"ok": True})
+            return
+
+        elif path == "/api/relay/report_status":
+            # Update dispatch status from local relay execution
+            log_line = data.get("log_line", "")
+            is_sent = data.get("is_sent", True)
+            with dispatch_lock:
+                current_dispatch["current_index"] = data.get("current_index", current_dispatch["current_index"])
+                if is_sent:
+                    current_dispatch["sent_count"] += 1
+                else:
+                    current_dispatch["failed_count"] += 1
+                if log_line:
+                    current_dispatch["logs"].append(log_line)
+                    current_dispatch["last_log"] = log_line
+                if data.get("is_finished"):
+                    current_dispatch["is_running"] = False
+            self._send_json({"ok": True})
             return
 
         elif path == "/api/auth/login":
@@ -2383,6 +2436,33 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 role=role,
                 location=location
             )
+
+            # Check if Local Relay is active (Cloud Mode)
+            with relay_lock:
+                relay_online = (time.time() - active_relay.get("last_heartbeat", 0)) < 15 and active_relay.get("is_online", False)
+
+            if relay_online and not gateway_service.is_connected():
+                # Enqueue for local daemon
+                with relay_lock:
+                    pending_relay_jobs.append({
+                        "campaign_id": campaign_id,
+                        "campaign_title": campaign_title,
+                        "candidates": candidates,
+                        "template": template,
+                        "role": role,
+                        "location": location,
+                        "company": company,
+                        "delay": DISPATCH_DELAY
+                    })
+                with dispatch_lock:
+                    current_dispatch["is_running"] = True
+                    current_dispatch["total"] = len(candidates)
+                    current_dispatch["current_index"] = 0
+                    current_dispatch["sent_count"] = 0
+                    current_dispatch["failed_count"] = 0
+                    current_dispatch["logs"] = [f"Job queued for Local Relay Daemon ({active_relay.get('device_name')})..."]
+                self._send_json({"status": "started", "mode": "cloud_relay", "campaign_id": campaign_id})
+                return
 
             def run_dispatch():
                 with dispatch_lock:
