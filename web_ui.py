@@ -1969,7 +1969,7 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             })
             return
 
-        elif path == "/api/health_check":
+        elif path in ["/api/health_check", "/healthz"]:
             diag = gateway_service.get_full_diagnostics()
             self._send_json(diag)
             return
