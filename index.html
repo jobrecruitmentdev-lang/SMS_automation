@@ -997,9 +997,6 @@
         // --- UNIFIED HARDWARE HUD POLLER ---
         async function pollActiveGatewayStatus() {
             try {
-                const res = await fetch('/api/health_check');
-                const d = await res.json();
-
                 const connBadge = document.getElementById('hud-conn-badge');
                 const connText = document.getElementById('hud-conn-text');
                 const devDetails = document.getElementById('hud-device-details');
@@ -1011,6 +1008,39 @@
                 const dispDev = document.getElementById('disp-device-name');
                 const dispCarrier = document.getElementById('disp-carrier');
                 const dispScreen = document.getElementById('disp-screen-state');
+
+                // 1. FIRST: Check if Local Relay Daemon is connected over cloud for this specific recruiter
+                try {
+                    const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : '';
+                    const uid = currentUser ? (currentUser.id || currentUser.email) : '';
+                    const rRes = await fetch(`/api/relay/status?pairing_code=${encodeURIComponent(pCode)}&user_id=${encodeURIComponent(uid)}`);
+                    const rData = await rRes.json();
+                    if (rData.is_online) {
+                        connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 flex items-center gap-1';
+                        connText.textContent = 'Cloud Relay Active';
+                        devDetails.textContent = `${rData.device_name} (Via Local Bridge)`;
+                        batText.textContent = rData.battery || '100%';
+                        lockText.textContent = 'BRIDGE OK';
+                        lockIcon.textContent = 'cell_tower';
+                        lockIcon.className = 'material-symbols-outlined text-sm text-cyan-400';
+                        unlockBtn.classList.add('hidden');
+                        if (dispDev) dispDev.textContent = rData.device_name;
+                        if (dispCarrier) dispCarrier.textContent = rData.carrier || 'Physical SIM (Relay)';
+                        if (dispScreen) {
+                            dispScreen.textContent = 'Cloud Relay Connected & Ready';
+                            dispScreen.className = 'font-bold text-cyan-400';
+                        }
+                        const s3Badge = document.getElementById('step3-health-badge');
+                        const s3Text = document.getElementById('step3-health-text');
+                        if (s3Badge) s3Badge.className = 'px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800 flex items-center gap-1';
+                        if (s3Text) s3Text.textContent = `${rData.device_name} • ${rData.carrier || 'Jio'}`;
+                        return;
+                    }
+                } catch(re) {}
+
+                // 2. SECOND: Check Direct Server Hardware (Localhost development mode)
+                const res = await fetch('/api/health_check');
+                const d = await res.json();
 
                 if (d.adb_connected) {
                     connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1';
@@ -1053,34 +1083,7 @@
                     document.getElementById('d-diag-bat').textContent = d.battery_text;
                     document.getElementById('d-diag-temp').textContent = d.temperature_text;
                     document.getElementById('d-diag-db').textContent = d.db_status_text;
-
-                    // Check if Local Relay Daemon is connected over cloud for this specific recruiter
-                    try {
-                        const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : '';
-                        const uid = currentUser ? (currentUser.id || currentUser.email) : '';
-                        const rRes = await fetch(`/api/relay/status?pairing_code=${encodeURIComponent(pCode)}&user_id=${encodeURIComponent(uid)}`);
-                        const rData = await rRes.json();
-                        if (rData.is_online) {
-                            connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 flex items-center gap-1';
-                            connText.textContent = 'Cloud Relay Active';
-                            devDetails.textContent = `${rData.device_name} (Via Local Bridge)`;
-                            batText.textContent = rData.battery || '100%';
-                            lockText.textContent = 'BRIDGE OK';
-                            unlockBtn.classList.add('hidden');
-                            if (dispDev) dispDev.textContent = rData.device_name;
-                            if (dispCarrier) dispCarrier.textContent = rData.carrier || 'Physical SIM (Relay)';
-                            if (dispScreen) {
-                                dispScreen.textContent = 'Cloud Relay Connected';
-                                dispScreen.className = 'font-bold text-cyan-400';
-                            }
-                            const s3Badge = document.getElementById('step3-health-badge');
-                            const s3Text = document.getElementById('step3-health-text');
-                            if (s3Badge) s3Badge.className = 'px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800 flex items-center gap-1';
-                            if (s3Text) s3Text.textContent = `${rData.device_name || 'Relay Active'}`;
-                            return;
-                        }
-                    } catch(re) {}
-
+                } else {
                     connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950 text-red-400 border border-red-800 flex items-center gap-1';
                     connText.textContent = 'Disconnected';
                     devDetails.textContent = 'Run start_relay.bat or connect USB/Wi-Fi';
@@ -1088,6 +1091,8 @@
                     lockText.textContent = 'OFFLINE';
                     unlockBtn.classList.add('hidden');
                 }
+            } catch(e) {}
+        }
             } catch(e) {}
         }
 
