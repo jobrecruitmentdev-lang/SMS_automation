@@ -179,10 +179,16 @@
             <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                        <h2 class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                            <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[11px] font-black">1</span>
-                            Target Audience
-                        </h2>
+                        <div class="flex items-center gap-1.5">
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[11px] font-black">1</span>
+                                Target Audience
+                            </h2>
+                            <span id="step1-health-badge" class="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-teal-950/80 text-teal-300 border border-teal-800 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+                                <span id="step1-health-text">Portal Live</span>
+                            </span>
+                        </div>
                         <span class="text-xs font-mono font-bold text-teal-300"><span id="cand-count">0</span> Selected</span>
                     </div>
 
@@ -246,10 +252,16 @@
             <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                        <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                            <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center text-[11px] font-black">2</span>
-                            Message & AI Copy
-                        </h2>
+                        <div class="flex items-center gap-1.5">
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center text-[11px] font-black">2</span>
+                                Message & AI Copy
+                            </h2>
+                            <span id="step2-health-badge" class="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-purple-950/80 text-purple-300 border border-purple-800 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                                <span id="step2-health-text">AI Ready</span>
+                            </span>
+                        </div>
                         <span id="char-count" class="text-xs font-mono text-slate-400">0c (1 Cr)</span>
                     </div>
 
@@ -309,10 +321,16 @@
             <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                        <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[11px] font-black">3</span>
-                            Dispatch Station
-                        </h2>
+                        <div class="flex items-center gap-1.5">
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[11px] font-black">3</span>
+                                Dispatch Station
+                            </h2>
+                            <span id="step3-health-badge" class="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span id="step3-health-text">SIM Ready</span>
+                            </span>
+                        </div>
                         <span class="text-xs font-bold text-emerald-400 font-mono">SIM Physical Gateway</span>
                     </div>
 
@@ -499,7 +517,7 @@
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-2 text-teal-400 font-black text-base">
                     <span class="material-symbols-outlined">phonelink_setup</span>
-                    <h3>Connect Your Physical Phone (Any User / Laptop)</h3>
+                    <h3>Connect Your Physical Phone (Any Brand • Zero Setup)</h3>
                 </div>
                 <button onclick="closeModal('modal-connect-guide')" class="text-slate-400 hover:text-white p-1 rounded-lg">
                     <span class="material-symbols-outlined">close</span>
@@ -517,7 +535,19 @@
                 </button>
             </div>
 
-            <!-- Step-by-Step Instructions -->
+            <!-- 1-Click Brand Selector Tabs -->
+            <div class="space-y-2">
+                <div class="text-[11px] text-slate-400 font-bold uppercase">Select Your Phone Brand:</div>
+                <div class="grid grid-cols-5 gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-[11px] font-bold">
+                    <button onclick="switchBrandTab('samsung')" id="btab-samsung" class="py-2 rounded-xl text-teal-300 bg-slate-800 shadow text-center">Samsung</button>
+                    <button onclick="switchBrandTab('xiaomi')" id="btab-xiaomi" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Xiaomi/Poco</button>
+                    <button onclick="switchBrandTab('vivo')" id="btab-vivo" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Vivo/iQOO</button>
+                    <button onclick="switchBrandTab('oneplus')" id="btab-oneplus" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">OnePlus/Realme</button>
+                    <button onclick="switchBrandTab('other')" id="btab-other" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Pixel/Moto</button>
+                </div>
+            </div>
+
+            <!-- Brand-Specific Visual Instructions -->
             <div class="space-y-3.5 text-xs text-slate-300">
                 <!-- STEP 1: DOWNLOAD RELAY -->
                 <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
@@ -526,7 +556,7 @@
                         Download 1-Click Relay Agent (Run on your PC/Laptop)
                     </div>
                     <p class="text-slate-400 leading-relaxed">
-                        Is file ko apne kisi bhi computer ya laptop me download karein. Yeh automatic tool aapke phone ko Render Cloud se securely pair karta hai:
+                        Is file ko kisi bhi folder (Downloads/Desktop) me download karke double-click karein:
                     </p>
                     <div class="flex flex-wrap gap-2 pt-1">
                         <a href="/download/start_relay.bat" download class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl flex items-center gap-1.5 shadow-lg shadow-teal-500/20 transition">
@@ -540,15 +570,48 @@
                     </div>
                 </div>
 
-                <!-- STEP 2: PLUG PHONE -->
-                <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-1.5">
+                <!-- STEP 2: BRAND-SPECIFIC SETTINGS -->
+                <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
                     <div class="font-bold text-teal-300 flex items-center gap-2">
                         <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px] font-black">2</span>
-                        Phone me USB Debugging ON karke connect karein
+                        <span id="brand-step2-title">Phone USB Debugging Settings</span>
                     </div>
-                    <p class="text-slate-400 leading-relaxed">
-                        Phone ➔ Settings ➔ <b>Developer Options</b> me <b>USB Debugging</b> ko <b>ON</b> karein aur USB cable se laptop me lagayein. Phone screen par <b>"Always allow"</b> tick karke <b>Allow</b> dabayein.
-                    </p>
+
+                    <!-- Samsung Content -->
+                    <div id="bguide-samsung" class="space-y-1.5 text-slate-400 leading-relaxed">
+                        <p>1. Settings ➔ <b>About Phone</b> ➔ <b>Software information</b> ➔ <b>Build Number</b> par 7 baar tap karein.</p>
+                        <p>2. Wapas Settings ➔ <b>Developer Options</b> me <b>USB Debugging</b> ko <b>ON</b> karein.</p>
+                        <p>3. USB Cable se PC me lagayein aur <b>"Always allow"</b> tick karke <b>Allow</b> dabayein.</p>
+                    </div>
+
+                    <!-- Xiaomi / Redmi / Poco Content -->
+                    <div id="bguide-xiaomi" class="space-y-1.5 text-slate-400 leading-relaxed hidden">
+                        <p>1. Settings ➔ <b>About Phone</b> ➔ <b>OS Version / MIUI version</b> par 7 baar tap karein.</p>
+                        <p>2. Settings ➔ <b>Additional Settings</b> ➔ <b>Developer Options</b> me jayein.</p>
+                        <p class="text-amber-400 font-bold">⚠️ Zaroori Step: "USB Debugging" aur "USB Debugging (Security settings)" dono ko ON karein!</p>
+                        <p>3. USB Cable lagayein aur <b>Allow</b> karein.</p>
+                    </div>
+
+                    <!-- Vivo / iQOO Content -->
+                    <div id="bguide-vivo" class="space-y-1.5 text-slate-400 leading-relaxed hidden">
+                        <p>1. Settings ➔ <b>About Phone</b> ➔ <b>Software version</b> par 7 baar tap karein.</p>
+                        <p>2. Settings ➔ <b>System / System Management</b> ➔ <b>Developer Options</b> me <b>USB Debugging</b> ko <b>ON</b> karein.</p>
+                        <p>3. USB Cable connect karke <b>Allow</b> karein.</p>
+                    </div>
+
+                    <!-- OnePlus / Realme / Oppo Content -->
+                    <div id="bguide-oneplus" class="space-y-1.5 text-slate-400 leading-relaxed hidden">
+                        <p>1. Settings ➔ <b>About Device</b> ➔ <b>Version</b> ➔ <b>Build Number</b> par 7 baar tap karein.</p>
+                        <p>2. Settings ➔ <b>Additional Settings</b> ➔ <b>Developer Options</b> me <b>USB Debugging</b> ko <b>ON</b> karein.</p>
+                        <p>3. USB Cable lagayein aur <b>Always allow</b> dabayein.</p>
+                    </div>
+
+                    <!-- Other / Pixel / Moto Content -->
+                    <div id="bguide-other" class="space-y-1.5 text-slate-400 leading-relaxed hidden">
+                        <p>1. Settings ➔ <b>About Phone</b> ➔ <b>Build Number</b> par 7 baar tap karein.</p>
+                        <p>2. Settings ➔ <b>System</b> ➔ <b>Developer Options</b> me <b>USB Debugging</b> ko <b>ON</b> karein.</p>
+                        <p>3. USB Cable connect karke <b>Allow</b> dabayein.</p>
+                    </div>
                 </div>
 
                 <!-- STEP 3: RUN RELAY -->
@@ -558,7 +621,7 @@
                         start_relay.bat ko double-click karein aur apna Code dalein
                     </div>
                     <p class="text-slate-400 leading-relaxed">
-                        Downloaded file ko run karein aur screen par apna Recruiter Code (<b class="text-teal-300 font-mono" id="guide-display-pairing-code-2">JR-100001</b>) dalein. Enter dabate hi website par <b class="text-emerald-400">[ 🟢 Cloud Relay Active ]</b> show ho jayega!
+                        Downloaded file ko run karein aur apna Recruiter Code (<b class="text-teal-300 font-mono" id="guide-display-pairing-code-2">JR-100001</b>) dalein. Enter dabate hi website par <b class="text-emerald-400">[ 🟢 Cloud Relay Active ]</b> show ho jayega!
                     </p>
                 </div>
             </div>
@@ -646,6 +709,21 @@
         let currentUser = null;
         let savedTemplatesList = [];
         let rawSupabaseLogs = [];
+
+        // --- BRAND SELECTOR CONTROLLER ---
+        function switchBrandTab(brand) {
+            ['samsung', 'xiaomi', 'vivo', 'oneplus', 'other'].forEach(b => {
+                const tab = document.getElementById(`btab-${b}`);
+                const guide = document.getElementById(`bguide-${b}`);
+                if (tab) tab.className = b === brand ? 'py-2 rounded-xl text-teal-300 bg-slate-800 shadow text-center' : 'py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center';
+                if (guide) guide.classList.toggle('hidden', b !== brand);
+            });
+            const tEl = document.getElementById('brand-step2-title');
+            if (tEl) {
+                const names = { samsung: 'Samsung Galaxy', xiaomi: 'Xiaomi / Redmi / Poco', vivo: 'Vivo / iQOO', oneplus: 'OnePlus / Realme / Oppo', other: 'Motorola / Pixel / Stock Android' };
+                tEl.textContent = `${names[brand] || 'Phone'} USB Debugging Settings`;
+            }
+        }
 
         // --- COOKIES & LOCALSTORAGE PERSISTENCE HELPERS ---
         function setCookie(name, val, days = 30) {
@@ -931,6 +1009,11 @@
                     
                     if (dispDev) dispDev.textContent = d.device_name;
                     if (dispCarrier) dispCarrier.textContent = d.carrier || 'Jio True5G';
+                    
+                    const s3Badge = document.getElementById('step3-health-badge');
+                    const s3Text = document.getElementById('step3-health-text');
+                    if (s3Badge) s3Badge.className = 'px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800 flex items-center gap-1';
+                    if (s3Text) s3Text.textContent = `${d.device_name || 'SIM Active'}`;
 
                     if (d.is_screen_locked) {
                         lockIcon.textContent = 'lock';
@@ -979,6 +1062,10 @@
                                 dispScreen.textContent = 'Cloud Relay Connected';
                                 dispScreen.className = 'font-bold text-cyan-400';
                             }
+                            const s3Badge = document.getElementById('step3-health-badge');
+                            const s3Text = document.getElementById('step3-health-text');
+                            if (s3Badge) s3Badge.className = 'px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800 flex items-center gap-1';
+                            if (s3Text) s3Text.textContent = `${rData.device_name || 'Relay Active'}`;
                             return;
                         }
                     } catch(re) {}
