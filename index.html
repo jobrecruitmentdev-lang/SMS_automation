@@ -27,12 +27,72 @@
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-3 md:p-5 antialiased selection:bg-teal-500/30 selection:text-teal-300">
-    <div class="max-w-7xl mx-auto space-y-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 md:p-5 antialiased selection:bg-teal-500/30 selection:text-teal-300 flex flex-col justify-center">
+
+    <!-- ========================================================================= -->
+    <!-- 0. MANDATORY FULLSCREEN AUTHENTICATION GATEWAY (AUTH WALL)                -->
+    <!-- ========================================================================= -->
+    <div id="auth-wall-container" class="max-w-md w-full mx-auto my-auto p-4 space-y-5">
+        <div class="text-center space-y-2">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-xl shadow-teal-500/20 font-black text-2xl mx-auto">
+                JR
+            </div>
+            <h1 class="text-xl font-black tracking-tight text-white">JobRecruitment SMS Studio</h1>
+            <p class="text-xs text-slate-400">Please sign in or register to access SMS Dispatch & AI Tools</p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <!-- Tab Switcher -->
+            <div class="grid grid-cols-2 gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-bold">
+                <button onclick="switchAuthGate('login')" id="gate-tab-login" class="py-2.5 rounded-xl text-slate-200 bg-slate-800 shadow text-center">🔑 Sign In</button>
+                <button onclick="switchAuthGate('signup')" id="gate-tab-signup" class="py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center">📝 Register Account</button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleGateAuthSubmit(event)" class="space-y-3.5 text-xs">
+                <div id="gate-field-name" class="space-y-1.5 hidden">
+                    <label class="text-slate-400 font-semibold">Full Name</label>
+                    <input type="text" id="gate-name" placeholder="e.g. Vishwa Patel" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-slate-400 font-semibold">Work Email</label>
+                    <input type="email" id="gate-email" required placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-slate-400 font-semibold">Password</label>
+                    <input type="password" id="gate-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+
+                <div id="gate-field-role" class="space-y-1.5 hidden">
+                    <label class="text-slate-400 font-semibold">Workspace Role</label>
+                    <select id="gate-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                        <option value="recruiter">Recruiter</option>
+                        <option value="admin">Administrator</option>
+                        <option value="manager">Hiring Manager</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="btn-gate-submit" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm mt-2 flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Sign In to Workspace</span>
+                    <span class="material-symbols-outlined text-base">arrow_forward</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="text-[11px] text-slate-500 text-center flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-xs text-teal-500">verified_user</span>
+            <span>Enterprise Security • TRAI Regulatory Quota Guard</span>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- UNLOCKED MAIN APPLICATION WORKSPACE (HIDDEN UNTIL AUTHENTICATED)          -->
+    <!-- ========================================================================= -->
+    <div id="app-workspace-container" class="max-w-7xl mx-auto space-y-4 w-full hidden">
         
-        <!-- ========================================================================= -->
-        <!-- 1. UNIFIED TOP HARDWARE HUD, AUTH STATION & CONTROL RIBBON                -->
-        <!-- ========================================================================= -->
+        <!-- 1. UNIFIED TOP HARDWARE HUD & CONTROL RIBBON -->
         <header class="p-3.5 md:p-4 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
             <!-- Left: Brand & Gateway Badge -->
             <div class="flex items-center gap-3">
@@ -69,25 +129,18 @@
                 </div>
             </div>
 
-            <!-- Right: Auth Station, Wi-Fi Trigger & Drawer Opener -->
+            <!-- Right: User Avatar Badge, Wi-Fi Trigger & Drawer Opener -->
             <div class="flex items-center gap-2">
-                <!-- Logged In User Avatar / Logged Out Button -->
-                <div id="auth-header-container" class="flex items-center gap-2">
-                    <button onclick="openAuthModal('login')" id="btn-header-login" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
-                        <span class="material-symbols-outlined text-sm">account_circle</span>
-                        <span>Sign In / Register</span>
-                    </button>
-                    
-                    <div id="user-profile-badge" class="hidden flex items-center gap-2 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-xl text-xs">
-                        <div class="w-6 h-6 rounded-lg bg-teal-500/20 text-teal-300 font-bold flex items-center justify-center text-[10px]" id="user-initials">VA</div>
-                        <div class="leading-tight">
-                            <div class="font-bold text-slate-200 text-[11px] truncate max-w-[90px]" id="user-display-name">Vishwa Admin</div>
-                            <div class="text-[9px] text-teal-400 font-mono uppercase" id="user-display-role">Recruiter</div>
-                        </div>
-                        <button onclick="logoutUser()" title="Logout" class="text-slate-500 hover:text-red-400 p-0.5">
-                            <span class="material-symbols-outlined text-xs">logout</span>
-                        </button>
+                <!-- Logged In User Avatar Badge -->
+                <div id="user-profile-badge" class="flex items-center gap-2 bg-slate-950 border border-slate-800 px-3 py-1 rounded-xl text-xs">
+                    <div class="w-6 h-6 rounded-lg bg-teal-500/20 text-teal-300 font-bold flex items-center justify-center text-[10px]" id="user-initials">VA</div>
+                    <div class="leading-tight">
+                        <div class="font-bold text-slate-200 text-[11px] truncate max-w-[100px]" id="user-display-name">Recruiter</div>
+                        <div class="text-[9px] text-teal-400 font-mono uppercase" id="user-display-role">Online</div>
                     </div>
+                    <button onclick="logoutUser()" title="Logout" class="text-slate-500 hover:text-red-400 p-0.5 ml-1">
+                        <span class="material-symbols-outlined text-sm">logout</span>
+                    </button>
                 </div>
 
                 <!-- 1-Click Screen Unlock (if locked) -->
@@ -108,9 +161,7 @@
             </div>
         </header>
 
-        <!-- ========================================================================= -->
-        <!-- 2. ZERO-COGNITIVE-LOAD 3-STEP GUIDED WORKFLOW                             -->
-        <!-- ========================================================================= -->
+        <!-- 2. ZERO-COGNITIVE-LOAD 3-STEP GUIDED WORKFLOW -->
         <main class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
             <!-- STEP 1: TARGET AUDIENCE (4 Columns) -->
@@ -301,196 +352,137 @@
                 </div>
             </section>
         </main>
+    </div>
 
-        <!-- ========================================================================= -->
-        <!-- 3. SLIDE-OVER DRAWER (CAMPAIGNS, TOOLS, LEDGER, QUOTA, SETTINGS)          -->
-        <!-- ========================================================================= -->
-        <div id="slide-drawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-            <!-- Drawer Header -->
-            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-2 text-teal-400 font-bold text-sm">
-                    <span class="material-symbols-outlined">tune</span>
-                    <h3>Studio Tools & Cloud History</h3>
+    <!-- ========================================================================= -->
+    <!-- SLIDE-OVER DRAWER (CAMPAIGNS, TOOLS, LEDGER, QUOTA, SETTINGS)              -->
+    <!-- ========================================================================= -->
+    <div id="slide-drawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-teal-400 font-bold text-sm">
+                <span class="material-symbols-outlined">tune</span>
+                <h3>Studio Tools & Cloud History</h3>
+            </div>
+            <button onclick="toggleDrawer()" class="text-slate-400 hover:text-white p-1">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-1 bg-slate-950 p-1 m-4 rounded-xl border border-slate-800 text-xs font-semibold">
+            <button onclick="switchDrawerTab('campaigns')" id="dtab-campaigns" class="py-1.5 rounded-lg text-slate-200 bg-slate-800 shadow text-center">Campaigns</button>
+            <button onclick="switchDrawerTab('settings')" id="dtab-settings" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">AI Config</button>
+            <button onclick="switchDrawerTab('ledger')" id="dtab-ledger" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">Ledger</button>
+            <button onclick="switchDrawerTab('health')" id="dtab-health" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">Hardware</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4 text-xs">
+            <!-- TAB 1: PREVIOUS CAMPAIGN HISTORY -->
+            <div id="dsec-campaigns" class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-300">Previous Dispatched Campaigns:</span>
+                    <button onclick="loadCampaignHistory()" class="text-teal-400 hover:underline">Refresh</button>
                 </div>
-                <button onclick="toggleDrawer()" class="text-slate-400 hover:text-white p-1">
-                    <span class="material-symbols-outlined">close</span>
+                <div id="campaigns-container" class="space-y-2.5 max-h-[420px] overflow-y-auto custom-scroll pr-1">
+                    <div class="p-4 text-center text-slate-500">Loading campaign history...</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: AI MODEL CONFIGURATION -->
+            <div id="dsec-settings" class="space-y-3 hidden">
+                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                    <div class="text-[11px] font-bold text-teal-300 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">lock</span> Production Worker API
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-mono truncate">Connected to Backend Server (.env locked)</div>
+                </div>
+
+                <div class="space-y-2.5 pt-1">
+                    <div>
+                        <label class="text-slate-400 font-semibold flex items-center justify-between">
+                            <span>Groq API Key</span>
+                            <span class="text-[10px] text-purple-400">Cookie & Env</span>
+                        </label>
+                        <input type="password" id="cfg-groq-key" placeholder="gsk_..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                    </div>
+
+                    <div>
+                        <label class="text-slate-400 font-semibold flex items-center justify-between">
+                            <span>Google Gemini API Key</span>
+                            <span class="text-[10px] text-blue-400">Cookie & Env</span>
+                        </label>
+                        <input type="password" id="cfg-gemini-key" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                    </div>
+
+                    <div>
+                        <label class="text-slate-400 font-semibold flex items-center justify-between">
+                            <span>NVIDIA NIM API Key</span>
+                            <span class="text-[10px] text-emerald-400">Cookie & Env</span>
+                        </label>
+                        <input type="password" id="cfg-nvidia-key" placeholder="nvapi-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                    </div>
+
+                    <div>
+                        <label class="text-slate-400 font-semibold flex items-center justify-between">
+                            <span>OpenAI API Key</span>
+                            <span class="text-[10px] text-cyan-400">Cookie & Env</span>
+                        </label>
+                        <input type="password" id="cfg-openai-key" placeholder="sk-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
+                    </div>
+                </div>
+
+                <button onclick="saveSettings()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-500 hover:to-teal-500 text-white font-bold rounded-xl transition shadow-lg">
+                    Save Keys to Cookies & Server
                 </button>
             </div>
 
-            <!-- Drawer Tabs -->
-            <div class="grid grid-cols-4 gap-1 bg-slate-950 p-1 m-4 rounded-xl border border-slate-800 text-xs font-semibold">
-                <button onclick="switchDrawerTab('campaigns')" id="dtab-campaigns" class="py-1.5 rounded-lg text-slate-200 bg-slate-800 shadow text-center">Campaigns</button>
-                <button onclick="switchDrawerTab('settings')" id="dtab-settings" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">AI Config</button>
-                <button onclick="switchDrawerTab('ledger')" id="dtab-ledger" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">Ledger</button>
-                <button onclick="switchDrawerTab('health')" id="dtab-health" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200 text-center">Hardware</button>
+            <!-- TAB 3: CLOUD AUDIT LEDGER -->
+            <div id="dsec-ledger" class="space-y-3 hidden">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-300">Supabase PostgreSQL Ledger:</span>
+                    <button onclick="loadSupabaseLogs()" class="text-teal-400 hover:underline">Refresh</button>
+                </div>
+                <div class="max-h-[380px] overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-950">
+                    <table class="w-full text-left text-[11px]">
+                        <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-slate-400">
+                            <tr><th class="p-2">Time</th><th class="p-2">Name</th><th class="p-2">Phone</th><th class="p-2">Status</th></tr>
+                        </thead>
+                        <tbody id="supabase-logs-tbody" class="divide-y divide-slate-800/50 text-slate-300">
+                            <tr><td colspan="4" class="p-4 text-center text-slate-500">Loading audit rows...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <!-- Drawer Content Container -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4 text-xs">
-                
-                <!-- TAB 1: PREVIOUS CAMPAIGN HISTORY & RE-USE TEMPLATES -->
-                <div id="dsec-campaigns" class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-300">Previous Dispatched Campaigns:</span>
-                        <button onclick="loadCampaignHistory()" class="text-teal-400 hover:underline">Refresh</button>
+            <!-- TAB 4: HARDWARE DIAGNOSTICS -->
+            <div id="dsec-health" class="space-y-3 hidden">
+                <div class="space-y-2">
+                    <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                        <span class="text-slate-400">Connection Socket</span>
+                        <span id="d-diag-id" class="font-mono text-teal-400">192.168.1.13</span>
                     </div>
-                    <div id="campaigns-container" class="space-y-2.5 max-h-[420px] overflow-y-auto custom-scroll pr-1">
-                        <div class="p-4 text-center text-slate-500">Loading campaign history...</div>
+                    <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                        <span class="text-slate-400">Battery & Power</span>
+                        <span id="d-diag-bat" class="text-emerald-400">54% (Healthy)</span>
                     </div>
-                </div>
-
-                <!-- TAB 2: PER-USER AI MODEL CONFIGURATION (Groq, Gemini, NVIDIA, OpenAI) -->
-                <div id="dsec-settings" class="space-y-3 hidden">
-                    <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                        <div class="text-[11px] font-bold text-teal-300 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-xs">lock</span> Production Worker API
-                        </div>
-                        <div class="text-[10px] text-slate-400 font-mono truncate">Connected to Backend Server (.env locked)</div>
+                    <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                        <span class="text-slate-400">Thermals</span>
+                        <span id="d-diag-temp" class="text-cyan-400">33.0°C (Normal)</span>
                     </div>
-
-                    <div class="space-y-2.5 pt-1">
-                        <div>
-                            <label class="text-slate-400 font-semibold flex items-center justify-between">
-                                <span>Groq API Key</span>
-                                <span class="text-[10px] text-purple-400">Cookie & Env</span>
-                            </label>
-                            <input type="password" id="cfg-groq-key" placeholder="gsk_..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
-                        </div>
-
-                        <div>
-                            <label class="text-slate-400 font-semibold flex items-center justify-between">
-                                <span>Google Gemini API Key</span>
-                                <span class="text-[10px] text-blue-400">Cookie & Env</span>
-                            </label>
-                            <input type="password" id="cfg-gemini-key" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
-                        </div>
-
-                        <div>
-                            <label class="text-slate-400 font-semibold flex items-center justify-between">
-                                <span>NVIDIA NIM API Key</span>
-                                <span class="text-[10px] text-emerald-400">Cookie & Env</span>
-                            </label>
-                            <input type="password" id="cfg-nvidia-key" placeholder="nvapi-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
-                        </div>
-
-                        <div>
-                            <label class="text-slate-400 font-semibold flex items-center justify-between">
-                                <span>OpenAI API Key</span>
-                                <span class="text-[10px] text-cyan-400">Cookie & Env</span>
-                            </label>
-                            <input type="password" id="cfg-openai-key" placeholder="sk-..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-slate-200 mt-1">
-                        </div>
-                    </div>
-
-                    <button onclick="saveSettings()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-500 hover:to-teal-500 text-white font-bold rounded-xl transition shadow-lg">
-                        Save Keys to Cookies & Server
-                    </button>
-                </div>
-
-                <!-- TAB 3: CLOUD AUDIT LEDGER -->
-                <div id="dsec-ledger" class="space-y-3 hidden">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-300">Supabase PostgreSQL Ledger:</span>
-                        <button onclick="loadSupabaseLogs()" class="text-teal-400 hover:underline">Refresh</button>
-                    </div>
-                    <div class="max-h-[380px] overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-950">
-                        <table class="w-full text-left text-[11px]">
-                            <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-slate-400">
-                                <tr><th class="p-2">Time</th><th class="p-2">Name</th><th class="p-2">Phone</th><th class="p-2">Status</th></tr>
-                            </thead>
-                            <tbody id="supabase-logs-tbody" class="divide-y divide-slate-800/50 text-slate-300">
-                                <tr><td colspan="4" class="p-4 text-center text-slate-500">Loading audit rows...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
+                        <span class="text-slate-400">Database Latency</span>
+                        <span id="d-diag-db" class="text-emerald-400">Online</span>
                     </div>
                 </div>
-
-                <!-- TAB 4: HARDWARE DIAGNOSTICS & TELEMETRY -->
-                <div id="dsec-health" class="space-y-3 hidden">
-                    <div class="space-y-2">
-                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">Connection Socket</span>
-                            <span id="d-diag-id" class="font-mono text-teal-400">192.168.1.13</span>
-                        </div>
-                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">Battery & Power</span>
-                            <span id="d-diag-bat" class="text-emerald-400">54% (Healthy)</span>
-                        </div>
-                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">Thermals</span>
-                            <span id="d-diag-temp" class="text-cyan-400">33.0°C (Normal)</span>
-                        </div>
-                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between">
-                            <span class="text-slate-400">Database Latency</span>
-                            <span id="d-diag-db" class="text-emerald-400">Online</span>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 pt-2">
-                        <button onclick="triggerAutoReconnect()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-teal-400 font-bold rounded-xl">Auto-Reconnect</button>
-                        <button onclick="triggerScreenUnlock()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl">Wake & Unlock</button>
-                    </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="triggerAutoReconnect()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-teal-400 font-bold rounded-xl">Auto-Reconnect</button>
+                    <button onclick="triggerScreenUnlock()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl">Wake & Unlock</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- MODALS SECTION                                                            -->
-    <!-- ========================================================================= -->
-
-    <!-- 1. TEAM AUTH MODAL (LOGIN & REGISTER) -->
-    <div id="modal-auth" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center gap-2 text-teal-400 font-bold text-sm">
-                    <span class="material-symbols-outlined">lock</span>
-                    <h3 id="auth-modal-title">Recruiter Workspace Sign In</h3>
-                </div>
-                <button onclick="closeModal('modal-auth')" class="text-slate-400 hover:text-white p-1 rounded-lg">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-
-            <!-- Tab Switcher -->
-            <div class="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-                <button onclick="switchAuthTab('login')" id="tab-auth-login" class="py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center">🔑 Sign In</button>
-                <button onclick="switchAuthTab('signup')" id="tab-auth-signup" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">📝 Register Team Member</button>
-            </div>
-
-            <!-- Form -->
-            <form onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
-                <div id="auth-field-name" class="space-y-1 hidden">
-                    <label class="text-slate-400 font-semibold">Full Name</label>
-                    <input type="text" id="auth-name" placeholder="e.g. Vishwa Patel" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-slate-400 font-semibold">Work Email</label>
-                    <input type="email" id="auth-email" required placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-slate-400 font-semibold">Password</label>
-                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
-                </div>
-
-                <div id="auth-field-role" class="space-y-1 hidden">
-                    <label class="text-slate-400 font-semibold">Workspace Role</label>
-                    <select id="auth-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 outline-none focus:border-teal-500">
-                        <option value="recruiter">Recruiter</option>
-                        <option value="admin">Administrator</option>
-                        <option value="manager">Hiring Manager</option>
-                    </select>
-                </div>
-
-                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-lg shadow-teal-500/20 text-sm mt-2">
-                    Sign In to Workspace
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 2. NATIVE WI-FI PAIRING & DIRECT CONNECT MODAL -->
+    <!-- MODALS -->
+    <!-- WI-FI DEBUGGING MODAL -->
     <div id="modal-wifi-pair" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -503,14 +495,12 @@
                 </button>
             </div>
 
-            <!-- 3-Way Tab Switcher -->
             <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
                 <button onclick="switchWifiPairTab('direct')" id="tab-wifi-direct" class="py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center">🔌 Direct IP</button>
                 <button onclick="switchWifiPairTab('manual')" id="tab-wifi-manual" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">⚡ 6-Digit PIN</button>
                 <button onclick="switchWifiPairTab('qr')" id="tab-wifi-qr" class="py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center">📱 Native QR</button>
             </div>
 
-            <!-- TAB 1: DIRECT CONNECT (IP:PORT) - FASTEST -->
             <div id="sec-wifi-direct" class="space-y-3 text-xs">
                 <div>
                     <label class="text-slate-400 font-semibold flex items-center justify-between">
@@ -522,10 +512,8 @@
                 <button onclick="submitWifiDirectConnect()" id="btn-submit-wifi-direct" class="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/20">
                     <span class="material-symbols-outlined text-sm">link</span> Connect to Phone
                 </button>
-                <p class="text-[10px] text-slate-500 text-center">Use this if phone is already paired once. Fast 1-click reconnect.</p>
             </div>
 
-            <!-- TAB 2: MANUAL 6-DIGIT PIN PAIR -->
             <div id="sec-wifi-manual" class="space-y-3 text-xs hidden">
                 <div>
                     <label class="text-slate-400 font-semibold">Pairing Screen IP:Port ("Pair with code")</label>
@@ -538,7 +526,6 @@
                 <button onclick="submitWifiPairing()" id="btn-submit-wifi-pair" class="w-full py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl transition">Pair & Connect Instantly</button>
             </div>
 
-            <!-- TAB 3: QR SCAN -->
             <div id="sec-wifi-qr" class="space-y-3 text-center text-xs hidden">
                 <div class="flex justify-center p-3 bg-white rounded-xl max-w-[180px] mx-auto">
                     <div id="wifi-qrcode-container"></div>
@@ -548,7 +535,7 @@
         </div>
     </div>
 
-    <!-- 3. SAVE TEMPLATE MODAL -->
+    <!-- SAVE TEMPLATE MODAL -->
     <div id="modal-save-template" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-3 shadow-2xl text-xs">
             <h3 class="font-bold text-teal-400 text-sm">Save SMS Template to Cloud</h3>
@@ -592,6 +579,102 @@
         function persistTemplateBody() { setCookie('jr_last_template', document.getElementById('sms-body').value); }
         function persistSelectedModel() { setCookie('jr_selected_model', document.getElementById('ai-model-select').value); }
 
+        // --- MANDATORY AUTH GATEWAY CONTROLLER ---
+        let currentGateMode = 'login';
+
+        function switchAuthGate(mode) {
+            currentGateMode = mode;
+            const isLogin = mode === 'login';
+            document.getElementById('gate-tab-login').className = isLogin ? 'py-2.5 rounded-xl text-slate-200 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
+            document.getElementById('gate-tab-signup').className = !isLogin ? 'py-2.5 rounded-xl text-slate-200 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
+            
+            document.getElementById('gate-field-name').classList.toggle('hidden', isLogin);
+            document.getElementById('gate-field-role').classList.toggle('hidden', isLogin);
+            document.getElementById('btn-gate-submit').innerHTML = isLogin ? '<span>Sign In to Workspace</span> <span class="material-symbols-outlined text-base">arrow_forward</span>' : '<span>Create Recruiter Account</span> <span class="material-symbols-outlined text-base">person_add</span>';
+        }
+
+        async function handleGateAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('gate-email').value.trim();
+            const password = document.getElementById('gate-password').value.trim();
+            const name = document.getElementById('gate-name').value.trim();
+            const role = document.getElementById('gate-role').value;
+
+            const endpoint = currentGateMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+            const payload = currentGateMode === 'login' ? { email, password } : { email, password, full_name: name, role };
+
+            const btn = document.getElementById('btn-gate-submit');
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Authenticating...';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.ok && data.user) {
+                    currentUser = data.user;
+                    setCookie('jr_user_session', JSON.stringify(currentUser));
+                    unlockWorkspace();
+                    showToast(`Welcome back, ${currentUser.name}!`);
+                } else {
+                    showToast(data.message || "Authentication failed.", true);
+                }
+            } catch(e) {
+                showToast("Network authentication error.", true);
+            } finally {
+                btn.innerHTML = currentGateMode === 'login' ? '<span>Sign In to Workspace</span> <span class="material-symbols-outlined text-base">arrow_forward</span>' : '<span>Create Recruiter Account</span> <span class="material-symbols-outlined text-base">person_add</span>';
+            }
+        }
+
+        function restoreSessionOrLock() {
+            const raw = getCookie('jr_user_session');
+            if (raw) {
+                try {
+                    currentUser = JSON.parse(raw);
+                    if (currentUser && currentUser.email) {
+                        unlockWorkspace();
+                        return;
+                    }
+                } catch(e) {}
+            }
+            lockWorkspace();
+        }
+
+        function unlockWorkspace() {
+            document.getElementById('auth-wall-container').classList.add('hidden');
+            document.getElementById('app-workspace-container').classList.remove('hidden');
+            document.body.classList.remove('justify-center');
+
+            document.getElementById('user-display-name').textContent = currentUser.name;
+            document.getElementById('user-display-role').textContent = currentUser.role || 'Recruiter';
+            const initials = (currentUser.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            document.getElementById('user-initials').textContent = initials;
+
+            // Load studio data once unlocked
+            loadAdminJobs();
+            loadFilterOptions();
+            loadAvailableAiModels();
+            loadCloudTemplates();
+            loadSettings();
+            pollActiveGatewayStatus();
+        }
+
+        function lockWorkspace() {
+            document.getElementById('auth-wall-container').classList.remove('hidden');
+            document.getElementById('app-workspace-container').classList.add('hidden');
+            document.body.classList.add('justify-center');
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            setCookie('jr_user_session', '', -1);
+            localStorage.removeItem('jr_user_session');
+            lockWorkspace();
+            showToast("Logged out of workspace.");
+        }
+
         // --- BROWSER HOT-RELOAD & LIVE AUTO-FETCHER ENGINE ---
         let lastServerStartTime = null;
         let lastMaxMtime = null;
@@ -612,6 +695,7 @@
         }
 
         async function runAutoFetchSync() {
+            if (!currentUser) return;
             // 1. Refresh Quota live
             try {
                 const qRes = await fetch('/api/quota');
@@ -619,15 +703,10 @@
                 document.getElementById('hud-quota').textContent = `${qData.sent_today || 0} / ${qData.limit || 180} Sent`;
             } catch(e) {}
 
-            // 2. Background sync Jobs list (silently preserves current selection)
+            // 2. Background sync Jobs list
             try {
-                const curVal = document.getElementById('job-select').value;
-                const jRes = await fetch('/api/jobs');
-                const jData = await jRes.json();
                 const sel = document.getElementById('job-select');
-                if (jData.jobs && jData.jobs.length > 0 && sel.options.length <= 1) {
-                    loadAdminJobs();
-                }
+                if (sel && sel.options.length <= 1) loadAdminJobs();
             } catch(e) {}
 
             // 3. Auto-sync open Drawer Tab if active
@@ -642,20 +721,15 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadAdminJobs();
-            loadFilterOptions();
-            loadAvailableAiModels();
-            loadSettings();
-            restoreUserSession();
-            pollActiveGatewayStatus();
+            restoreSessionOrLock();
 
             // 1. Hardware Vitals Poller (every 3.5s)
-            setInterval(pollActiveGatewayStatus, 3500);
+            setInterval(() => { if (currentUser) pollActiveGatewayStatus(); }, 3500);
 
-            // 2. Browser Hot-Reload Watcher (every 1.5s - instant auto-refresh on edit)
+            // 2. Browser Hot-Reload Watcher (every 1.5s)
             setInterval(checkHotReload, 1500);
 
-            // 3. 360° Live Auto-Fetcher (every 8s - jobs, quota, ledger auto-sync)
+            // 3. 360° Live Auto-Fetcher (every 8s)
             setInterval(runAutoFetchSync, 8000);
 
             // Restore from cookies
@@ -668,99 +742,6 @@
 
             updatePreview();
         });
-
-        // --- AUTH CONTROLLER ---
-        let currentAuthMode = 'login';
-
-        function openAuthModal(mode = 'login') {
-            switchAuthTab(mode);
-            openModal('modal-auth');
-        }
-
-        function switchAuthTab(mode) {
-            currentAuthMode = mode;
-            const isLogin = mode === 'login';
-            document.getElementById('tab-auth-login').className = isLogin ? 'py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center';
-            document.getElementById('tab-auth-signup').className = !isLogin ? 'py-2 rounded-lg text-slate-200 bg-slate-800 shadow text-center' : 'py-2 rounded-lg text-slate-400 hover:text-slate-200 text-center';
-            
-            document.getElementById('auth-modal-title').textContent = isLogin ? 'Recruiter Workspace Sign In' : 'Register New Team Member';
-            document.getElementById('auth-field-name').classList.toggle('hidden', isLogin);
-            document.getElementById('auth-field-role').classList.toggle('hidden', isLogin);
-            document.getElementById('btn-auth-submit').textContent = isLogin ? 'Sign In to Workspace' : 'Create Recruiter Account';
-        }
-
-        async function handleAuthSubmit(e) {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
-            const name = document.getElementById('auth-name').value.trim();
-            const role = document.getElementById('auth-role').value;
-
-            const endpoint = currentAuthMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
-            const payload = currentAuthMode === 'login' ? { email, password } : { email, password, full_name: name, role };
-
-            const btn = document.getElementById('btn-auth-submit');
-            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Authenticating...';
-
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.ok && data.user) {
-                    currentUser = data.user;
-                    setCookie('jr_user_session', JSON.stringify(currentUser));
-                    updateAuthUI();
-                    closeModal('modal-auth');
-                    showToast(`Welcome back, ${currentUser.name}!`);
-                    loadCloudTemplates();
-                } else {
-                    showToast(data.message || "Authentication failed.", true);
-                }
-            } catch(e) {
-                showToast("Network authentication error.", true);
-            } finally {
-                btn.textContent = currentAuthMode === 'login' ? 'Sign In to Workspace' : 'Create Recruiter Account';
-            }
-        }
-
-        function restoreUserSession() {
-            const raw = getCookie('jr_user_session');
-            if (raw) {
-                try {
-                    currentUser = JSON.parse(raw);
-                    updateAuthUI();
-                } catch(e) {}
-            }
-            loadCloudTemplates();
-        }
-
-        function updateAuthUI() {
-            const btnLogin = document.getElementById('btn-header-login');
-            const badge = document.getElementById('user-profile-badge');
-            if (currentUser) {
-                btnLogin.classList.add('hidden');
-                badge.classList.remove('hidden');
-                document.getElementById('user-display-name').textContent = currentUser.name;
-                document.getElementById('user-display-role').textContent = currentUser.role || 'Recruiter';
-                const initials = (currentUser.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                document.getElementById('user-initials').textContent = initials;
-            } else {
-                btnLogin.classList.remove('hidden');
-                badge.classList.add('hidden');
-            }
-        }
-
-        function logoutUser() {
-            currentUser = null;
-            setCookie('jr_user_session', '', -1);
-            localStorage.removeItem('jr_user_session');
-            updateAuthUI();
-            loadCloudTemplates();
-            showToast("Logged out of workspace.");
-        }
 
         // --- DRAWER CONTROLLER ---
         function toggleDrawer() {
@@ -1217,7 +1198,6 @@
         }
 
         async function loadSettings() {
-            // Priority: Cookies/LocalStorage, then server fallback
             const groq = getCookie('jr_groq_key');
             const gemini = getCookie('jr_gemini_key');
             const nvidia = getCookie('jr_nvidia_key');

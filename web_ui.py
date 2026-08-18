@@ -382,52 +382,114 @@ class SupabaseAuditService:
             write_log(f"Supabase fetch_recent_logs error: {e}")
             return []
 
-    # --- TEAM AUTH METHODS ---
-    def signup_user(self, email, password, full_name, role="recruiter"):
-        if not self.enabled:
-            return False, "Database connection not available."
+    # --- TEAM AUTH METHODS (With High-Availability SQLite/JSON Fallback) ---
+    def _get_local_users(self):
+        uf = os.path.join(BASE_DIR, "studio_users.json")
+        if os.path.exists(uf):
+            try:
+                with open(uf, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def _save_local_users(self, users):
+        uf = os.path.join(BASE_DIR, "studio_users.json")
         try:
-            import psycopg2, hashlib
-            pwd_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-            conn = psycopg2.connect(self.db_url, connect_timeout=8)
-            conn.autocommit = True
-            cur = conn.cursor()
-            cur.execute("""
-                INSERT INTO studio_users (email, password_hash, full_name, role)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id, email, full_name, role
-            """, (email.lower().strip(), pwd_hash, full_name.strip(), role))
-            user = cur.fetchone()
-            conn.close()
-            return True, {"id": str(user[0]), "email": user[1], "name": user[2], "role": user[3]}
-        except Exception as e:
-            err = str(e)
-            if "unique" in err.lower():
-                return False, "Email is already registered. Please sign in."
-            return False, f"Signup Error: {err}"
+            with open(uf, "w", encoding="utf-8") as f:
+                json.dump(users, f, indent=2)
+        except Exception:
+            pass
+
+    def signup_user(self, email, password, full_name, role="recruiter"):
+        email_clean = email.lower().strip()
+        name_clean = full_name.strip()
+        import hashlib, uuid
+        pwd_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+        # 1. Try Supabase Cloud DB
+        if self.enabled:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(self.db_url, connect_timeout=6)
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS studio_users (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        email VARCHAR(150) UNIQUE NOT NULL,
+                        password_hash VARCHAR(255) NOT NULL,
+                        full_name VARCHAR(100) NOT NULL,
+                        role VARCHAR(20) NOT NULL DEFAULT 'recruiter',
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                """)
+                cur.execute("""
+                    INSERT INTO studio_users (email, password_hash, full_name, role)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id, email, full_name, role
+                """, (email_clean, pwd_hash, name_clean, role))
+                user = cur.fetchone()
+                conn.close()
+                return True, {"id": str(user[0]), "email": user[1], "name": user[2], "role": user[3]}
+            except Exception as e:
+                err = str(e)
+                if "unique" in err.lower():
+                    return False, "Email is already registered. Please sign in."
+                write_log(f"[Auth] Supabase direct error: {err}. Switching to Local High-Availability Store...")
+
+        # 2. Resilient Local Fallback
+        users = self._get_local_users()
+        if email_clean in users:
+            return False, "Email is already registered. Please sign in."
+        
+        uid = str(uuid.uuid4())
+        user_record = {
+            "id": uid,
+            "email": email_clean,
+            "name": name_clean,
+            "role": role,
+            "password_hash": pwd_hash,
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        users[email_clean] = user_record
+        self._save_local_users(users)
+        return True, {"id": uid, "email": email_clean, "name": name_clean, "role": role}
 
     def login_user(self, email, password):
-        if not self.enabled:
-            return False, "Database connection not available."
-        try:
-            import psycopg2, hashlib
-            pwd_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-            conn = psycopg2.connect(self.db_url, connect_timeout=8)
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT id, email, full_name, role, password_hash
-                FROM studio_users
-                WHERE email = %s
-            """, (email.lower().strip(),))
-            user = cur.fetchone()
-            conn.close()
-            if not user:
-                return False, "No account found with this email."
-            if user[4] != pwd_hash:
+        email_clean = email.lower().strip()
+        import hashlib
+        pwd_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+        # 1. Try Supabase Cloud DB
+        if self.enabled:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(self.db_url, connect_timeout=6)
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id, email, full_name, role, password_hash
+                    FROM studio_users
+                    WHERE email = %s
+                """, (email_clean,))
+                user = cur.fetchone()
+                conn.close()
+                if user:
+                    if user[4] != pwd_hash:
+                        return False, "Invalid password. Please try again."
+                    return True, {"id": str(user[0]), "email": user[1], "name": user[2], "role": user[3]}
+            except Exception as e:
+                write_log(f"[Auth] Supabase query error: {e}. Checking Local Store...")
+
+        # 2. Local Fallback
+        users = self._get_local_users()
+        if email_clean in users:
+            u = users[email_clean]
+            if u.get("password_hash") != pwd_hash:
                 return False, "Invalid password. Please try again."
-            return True, {"id": str(user[0]), "email": user[1], "name": user[2], "role": user[3]}
-        except Exception as e:
-            return False, f"Login Error: {str(e)}"
+            return True, {"id": u["id"], "email": u["email"], "name": u["name"], "role": u.get("role", "recruiter")}
+
+        return False, "No account found with this email. Please register first."
 
     # --- CLOUD TEMPLATE METHODS ---
     def fetch_templates(self, user_id=None):
