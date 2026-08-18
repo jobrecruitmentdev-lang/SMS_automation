@@ -274,12 +274,12 @@
                                 <span class="material-symbols-outlined text-xs">bolt</span> Generate
                             </button>
                         </div>
-                        <input type="text" id="ai-prompt" oninput="persistPrompt()" placeholder="e.g. Urgent interview for {role} in {location}..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
+                        <input type="text" id="ai-prompt" name="ai_custom_prompt" autocomplete="off" autocorrect="off" spellcheck="false" oninput="persistPrompt()" placeholder="e.g. Urgent interview for {role} in {location}..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
                     </div>
 
                     <!-- Live Editable SMS Textarea -->
                     <div>
-                        <textarea id="sms-body" rows="3" oninput="updatePreview(); persistTemplateBody();" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed" placeholder="Enter SMS text or use tags {name}, {role}, {location}..."></textarea>
+                        <textarea id="sms-body" rows="3" name="sms_content_body" autocomplete="off" autocorrect="off" spellcheck="false" oninput="updatePreview(); persistTemplateBody();" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed" placeholder="Enter SMS text or use tags {name}, {role}, {location}..."></textarea>
                     </div>
 
                     <!-- Live Bubble Preview -->
