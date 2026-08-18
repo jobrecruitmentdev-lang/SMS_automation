@@ -88,10 +88,39 @@ def get_json(endpoint):
     with urllib.request.urlopen(req, timeout=8) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
+def get_saved_pairing_code():
+    config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "relay_config.json")
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, "r") as f:
+                data = json.load(f)
+                if data.get("pairing_code"):
+                    return data["pairing_code"]
+        except Exception:
+            pass
+    
+    print("\n" + "=" * 60)
+    print(" 🔑 RECRUITER PAIRING CODE SETUP")
+    print(" Open https://sms-automation-q1zf.onrender.com to get your 6-digit Code.")
+    print("=" * 60)
+    code = input(" Enter your Recruiter Pairing Code (e.g. JR-849201): ").strip().upper()
+    if not code:
+        code = "JR-DEFAULT"
+    
+    try:
+        with open(config_file, "w") as f:
+            json.dump({"pairing_code": code}, f, indent=2)
+    except Exception:
+        pass
+    return code
+
 def main():
+    pairing_code = get_saved_pairing_code()
+
     print("=" * 72)
     print(" 🚀 JobRecruitment Cloud-to-Phone Local Relay Bridge")
     print(f" 🌐 Connected to Cloud: {CLOUD_SERVER_URL}")
+    print(f" 🔑 Recruiter Code:     {pairing_code}")
     print(f" 📱 Local ADB Engine:   {ADB_BIN}")
     print("=" * 72)
 
@@ -99,9 +128,10 @@ def main():
 
     while True:
         try:
-            # 1. Heartbeat to Cloud Server
+            # 1. Heartbeat to Cloud Server for this specific Recruiter
             is_connected, dev_name, carrier, battery = get_phone_diagnostics()
             post_json("/api/relay/heartbeat", {
+                "pairing_code": pairing_code,
                 "device_name": dev_name if is_connected else "Waiting for Phone...",
                 "carrier": carrier,
                 "battery": battery
@@ -112,8 +142,8 @@ def main():
                 time.sleep(3)
                 continue
 
-            # 2. Poll for pending jobs
-            res = get_json("/api/relay/poll_jobs")
+            # 2. Poll for pending jobs specifically for this Recruiter
+            res = get_json(f"/api/relay/poll_jobs?pairing_code={pairing_code}")
             if res.get("has_job") and res.get("job"):
                 job = res["job"]
                 cands = job.get("candidates", [])
@@ -123,7 +153,7 @@ def main():
                 company = job.get("company", "Job Recruitment")
                 base_delay = float(job.get("delay", 5.0))
 
-                print(f"\n[⚡ NEW CAMPAIGN RECEIVED FROM CLOUD] '{job.get('campaign_title')}' - {len(cands)} SMS")
+                print(f"\n[⚡ NEW CAMPAIGN RECEIVED FOR {pairing_code}] '{job.get('campaign_title')}' - {len(cands)} SMS")
 
                 for i, c in enumerate(cands, 1):
                     c_name = c.get("name") or "Candidate"
@@ -146,6 +176,7 @@ def main():
 
                     # Report status back to cloud
                     post_json("/api/relay/report_status", {
+                        "pairing_code": pairing_code,
                         "current_index": i,
                         "is_sent": ok,
                         "log_line": status_log,

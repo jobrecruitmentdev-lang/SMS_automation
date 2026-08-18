@@ -40,10 +40,21 @@ LOG_FILE = os.path.join(BASE_DIR, "sms_dispatch.log")
 QUOTA_FILE = os.path.join(BASE_DIR, "quota_state.json")
 SERVER_START_TIME = str(time.time())
 
-# Cloud-to-Local Relay Queue State
-pending_relay_jobs = []
-active_relay = {"is_online": False, "last_heartbeat": 0, "device_name": "None", "carrier": "None", "battery": "--%"}
+# Multi-Tenant Cloud-to-Local Relay Queue State
+# Key: pairing_code (e.g. "JR-849201" or user_id)
+user_relay_devices = {} # { pairing_code: { "is_online": True, "last_heartbeat": time, "device_name": ..., "carrier": ..., "battery": ... } }
+user_relay_jobs = {}    # { pairing_code: [ pending_job_1, pending_job_2 ] }
+user_dispatch_states = {} # { pairing_code: current_dispatch_state }
 relay_lock = threading.Lock()
+
+def get_user_pairing_code(user_id_or_email):
+    """Generates a stable 6-digit PIN based on user ID / email."""
+    if not user_id_or_email:
+        return "JR-100001"
+    import hashlib
+    h = hashlib.md5(str(user_id_or_email).encode("utf-8")).hexdigest()
+    pin = int(h[:6], 16) % 900000 + 100000
+    return f"JR-{pin}"
 
 # Prepend local platform-tools to PATH
 if os.path.exists(PLATFORM_TOOLS_DIR):
@@ -436,7 +447,14 @@ class SupabaseAuditService:
                 """, (email_clean, pwd_hash, name_clean, role))
                 user = cur.fetchone()
                 conn.close()
-                return True, {"id": str(user[0]), "email": user[1], "name": user[2], "role": user[3]}
+                user_id_str = str(user[0])
+                return True, {
+                    "id": user_id_str,
+                    "email": user[1],
+                    "name": user[2],
+                    "role": user[3],
+                    "pairing_code": get_user_pairing_code(user_id_str)
+                }
             except Exception as e:
                 err = str(e)
                 if "unique" in err.lower():
@@ -459,7 +477,13 @@ class SupabaseAuditService:
         }
         users[email_clean] = user_record
         self._save_local_users(users)
-        return True, {"id": uid, "email": email_clean, "name": name_clean, "role": role}
+        return True, {
+            "id": uid,
+            "email": email_clean,
+            "name": name_clean,
+            "role": role,
+            "pairing_code": get_user_pairing_code(uid)
+        }
 
     def login_user(self, email, password):
         email_clean = email.lower().strip()
@@ -482,7 +506,14 @@ class SupabaseAuditService:
                 if user:
                     if user[4] != pwd_hash:
                         return False, "Invalid password. Please try again."
-                    return True, {"id": str(user[0]), "email": user[1], "name": user[2], "role": user[3]}
+                    uid_str = str(user[0])
+                    return True, {
+                        "id": uid_str,
+                        "email": user[1],
+                        "name": user[2],
+                        "role": user[3],
+                        "pairing_code": get_user_pairing_code(uid_str)
+                    }
             except Exception as e:
                 write_log(f"[Auth] Supabase query error: {e}. Checking Local Store...")
 
@@ -492,7 +523,13 @@ class SupabaseAuditService:
             u = users[email_clean]
             if u.get("password_hash") != pwd_hash:
                 return False, "Invalid password. Please try again."
-            return True, {"id": u["id"], "email": u["email"], "name": u["name"], "role": u.get("role", "recruiter")}
+            return True, {
+                "id": u["id"],
+                "email": u["email"],
+                "name": u["name"],
+                "role": u.get("role", "recruiter"),
+                "pairing_code": get_user_pairing_code(u["id"])
+            }
 
         return False, "No account found with this email. Please register first."
 
@@ -2161,22 +2198,32 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/relay/poll_jobs":
-            # Cloud Relay agent polling for pending dispatch jobs
+            # Cloud Relay agent polling for pending dispatch jobs for this specific recruiter
+            p_code = query.get("pairing_code", [""])[0] or query.get("code", [""])[0] or "JR-DEFAULT"
             with relay_lock:
-                active_relay["last_heartbeat"] = time.time()
-                active_relay["is_online"] = True
-                job = pending_relay_jobs.pop(0) if pending_relay_jobs else None
-                self._send_json({"job": job, "has_job": bool(job)})
+                if p_code not in user_relay_devices:
+                    user_relay_devices[p_code] = {"is_online": True, "last_heartbeat": time.time(), "device_name": "Relay Agent", "carrier": "Physical SIM", "battery": "100%"}
+                else:
+                    user_relay_devices[p_code]["last_heartbeat"] = time.time()
+                    user_relay_devices[p_code]["is_online"] = True
+                
+                queue = user_relay_jobs.get(p_code, [])
+                job = queue.pop(0) if queue else None
+                self._send_json({"job": job, "has_job": bool(job), "pairing_code": p_code})
             return
 
         elif path == "/api/relay/status":
+            uid = query.get("user_id", [""])[0] or query.get("email", [""])[0]
+            p_code = get_user_pairing_code(uid) if uid else "JR-DEFAULT"
             with relay_lock:
-                is_alive = (time.time() - active_relay.get("last_heartbeat", 0)) < 15
+                dev = user_relay_devices.get(p_code, {})
+                is_alive = (time.time() - dev.get("last_heartbeat", 0)) < 15 and dev.get("is_online", False)
                 self._send_json({
-                    "is_online": is_alive and active_relay.get("is_online", False),
-                    "device_name": active_relay.get("device_name", "Local Relay Daemon"),
-                    "carrier": active_relay.get("carrier", "Physical SIM"),
-                    "battery": active_relay.get("battery", "100%")
+                    "is_online": is_alive,
+                    "pairing_code": p_code,
+                    "device_name": dev.get("device_name", "No Phone Connected"),
+                    "carrier": dev.get("carrier", "Physical SIM"),
+                    "battery": dev.get("battery", "--%")
                 })
             return
 
@@ -2234,17 +2281,21 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/relay/heartbeat":
+            p_code = data.get("pairing_code", "JR-DEFAULT")
             with relay_lock:
-                active_relay["last_heartbeat"] = time.time()
-                active_relay["is_online"] = True
-                active_relay["device_name"] = data.get("device_name", "Local Relay Phone")
-                active_relay["carrier"] = data.get("carrier", "Physical SIM")
-                active_relay["battery"] = data.get("battery", "100%")
-            self._send_json({"ok": True})
+                user_relay_devices[p_code] = {
+                    "last_heartbeat": time.time(),
+                    "is_online": True,
+                    "device_name": data.get("device_name", "Local Relay Phone"),
+                    "carrier": data.get("carrier", "Physical SIM"),
+                    "battery": data.get("battery", "100%")
+                }
+            self._send_json({"ok": True, "pairing_code": p_code})
             return
 
         elif path == "/api/relay/report_status":
             # Update dispatch status from local relay execution
+            p_code = data.get("pairing_code", "JR-DEFAULT")
             log_line = data.get("log_line", "")
             is_sent = data.get("is_sent", True)
             with dispatch_lock:
@@ -2437,14 +2488,21 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 location=location
             )
 
-            # Check if Local Relay is active (Cloud Mode)
+            # Identify Recruiter / Pairing Code
+            user_id = data.get("user_id") or data.get("email")
+            p_code = get_user_pairing_code(user_id) if user_id else "JR-DEFAULT"
+
+            # Check if this specific Recruiter's Local Relay is active
             with relay_lock:
-                relay_online = (time.time() - active_relay.get("last_heartbeat", 0)) < 15 and active_relay.get("is_online", False)
+                dev = user_relay_devices.get(p_code, {})
+                relay_online = (time.time() - dev.get("last_heartbeat", 0)) < 15 and dev.get("is_online", False)
 
             if relay_online and not gateway_service.is_connected():
-                # Enqueue for local daemon
+                # Enqueue for this specific recruiter's local daemon
                 with relay_lock:
-                    pending_relay_jobs.append({
+                    if p_code not in user_relay_jobs:
+                        user_relay_jobs[p_code] = []
+                    user_relay_jobs[p_code].append({
                         "campaign_id": campaign_id,
                         "campaign_title": campaign_title,
                         "candidates": candidates,
@@ -2452,7 +2510,8 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                         "role": role,
                         "location": location,
                         "company": company,
-                        "delay": DISPATCH_DELAY
+                        "delay": DISPATCH_DELAY,
+                        "pairing_code": p_code
                     })
                 with dispatch_lock:
                     current_dispatch["is_running"] = True
@@ -2460,8 +2519,8 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                     current_dispatch["current_index"] = 0
                     current_dispatch["sent_count"] = 0
                     current_dispatch["failed_count"] = 0
-                    current_dispatch["logs"] = [f"Job queued for Local Relay Daemon ({active_relay.get('device_name')})..."]
-                self._send_json({"status": "started", "mode": "cloud_relay", "campaign_id": campaign_id})
+                    current_dispatch["logs"] = [f"Job queued for Recruiter's Local Phone ({dev.get('device_name', 'Relay Phone')})..."]
+                self._send_json({"status": "started", "mode": "cloud_relay", "pairing_code": p_code, "campaign_id": campaign_id})
                 return
 
             def run_dispatch():
