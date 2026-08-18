@@ -2113,6 +2113,12 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
+    def do_HEAD(self):
+        # Render / uptime monitoring HEAD requests
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
