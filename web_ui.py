@@ -631,6 +631,10 @@ class SMSGatewayService:
             return cleaned
         return None
 
+    def is_connected(self):
+        diag = self.get_full_diagnostics()
+        return bool(diag.get("all_ok") or diag.get("adb_connected"))
+
     def check_phone_connection(self):
         diag = self.get_full_diagnostics()
         if diag.get("all_ok"):
@@ -2515,8 +2519,10 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             )
 
             # Identify Recruiter / Pairing Code
-            user_id = data.get("user_id") or data.get("email")
-            p_code = get_user_pairing_code(user_id) if user_id else "JR-DEFAULT"
+            p_code = data.get("pairing_code")
+            if not p_code:
+                user_id = data.get("user_id") or data.get("email")
+                p_code = get_user_pairing_code(user_id) if user_id else "JR-DEFAULT"
 
             # Check if this specific Recruiter's Local Relay is active
             with relay_lock:
