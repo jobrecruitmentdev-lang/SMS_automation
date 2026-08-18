@@ -2354,11 +2354,26 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/start_dispatch":
+            with dispatch_lock:
+                if current_dispatch["is_running"]:
+                    self._send_json({"ok": False, "message": "A dispatch campaign is already running in background."}, code=409)
+                    return
+
             candidates = data.get("candidates", [])
             template = data.get("template", "")
             role = data.get("role", "")
             location = data.get("location", "")
             company = data.get("company", "Job Recruitment")
+
+            if not candidates or not template:
+                self._send_json({"ok": False, "message": "Candidates and template are required."}, code=400)
+                return
+
+            # Pre-flight TRAI Quota Guard
+            quota_ok, rem, q_msg = quota_service.check_quota(len(candidates))
+            if not quota_ok:
+                self._send_json({"ok": False, "message": q_msg}, code=429)
+                return
 
             campaign_title = f"{role or 'Recruitment'} ({location or 'India'}) - {len(candidates)} SMS"
             campaign_id = supabase_service.create_campaign(
