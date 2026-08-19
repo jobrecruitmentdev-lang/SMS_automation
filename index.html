@@ -1293,7 +1293,18 @@
         async function loadAvailableAiModels() {
             const sel = document.getElementById('ai-model-select');
             try {
-                const res = await fetch('/api/ai_models');
+                const groq = getCookie('jr_groq_key') || (document.getElementById('cfg-groq-key') ? document.getElementById('cfg-groq-key').value.trim() : '');
+                const gemini = getCookie('jr_gemini_key') || (document.getElementById('cfg-gemini-key') ? document.getElementById('cfg-gemini-key').value.trim() : '');
+                const nvidia = getCookie('jr_nvidia_key') || (document.getElementById('cfg-nvidia-key') ? document.getElementById('cfg-nvidia-key').value.trim() : '');
+                const openai = getCookie('jr_openai_key') || (document.getElementById('cfg-openai-key') ? document.getElementById('cfg-openai-key').value.trim() : '');
+
+                const params = new URLSearchParams();
+                if (groq) params.set('groq_key', groq);
+                if (gemini) params.set('gemini_key', gemini);
+                if (nvidia) params.set('nvidia_key', nvidia);
+                if (openai) params.set('openai_key', openai);
+
+                const res = await fetch(`/api/ai_models?${params.toString()}`);
                 const data = await res.json();
                 sel.innerHTML = '';
                 (data.models || []).forEach(m => {
@@ -1381,13 +1392,28 @@
             if (!prompt) { showToast("Please enter an AI prompt.", true); return; }
             persistPrompt();
             const model_id = document.getElementById('ai-model-select').value;
+            const groq = getCookie('jr_groq_key') || (document.getElementById('cfg-groq-key') ? document.getElementById('cfg-groq-key').value.trim() : '');
+            const gemini = getCookie('jr_gemini_key') || (document.getElementById('cfg-gemini-key') ? document.getElementById('cfg-gemini-key').value.trim() : '');
+            const nvidia = getCookie('jr_nvidia_key') || (document.getElementById('cfg-nvidia-key') ? document.getElementById('cfg-nvidia-key').value.trim() : '');
+            const openai = getCookie('jr_openai_key') || (document.getElementById('cfg-openai-key') ? document.getElementById('cfg-openai-key').value.trim() : '');
+
             const btn = document.getElementById('btn-generate-ai');
             btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> AI Writing...';
             try {
                 const res = await fetch('/api/ai_draft', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, role: activeJobContext.role, location: activeJobContext.location, company: activeJobContext.company, model_id })
+                    body: JSON.stringify({
+                        prompt,
+                        role: activeJobContext.role,
+                        location: activeJobContext.location,
+                        company: activeJobContext.company,
+                        model_id,
+                        groq_key: groq,
+                        gemini_key: gemini,
+                        nvidia_key: nvidia,
+                        openai_key: openai
+                    })
                 });
                 const data = await res.json();
                 if (data.template) {

@@ -932,10 +932,15 @@ class AIService:
         self.nvidia_key = nvidia_key
         self.openai_key = openai_key or os.getenv("OPENAI_API_KEY")
 
-    def get_available_models(self):
+    def get_available_models(self, custom_groq=None, custom_gemini=None, custom_nvidia=None, custom_openai=None):
         models = []
+        eff_groq = custom_groq or self.groq_key
+        eff_gemini = custom_gemini or self.gemini_key
+        eff_nvidia = custom_nvidia or self.nvidia_key
+        eff_openai = custom_openai or self.openai_key
+
         # Groq Models
-        if self.groq_key:
+        if eff_groq:
             models.extend([
                 {"id": "groq/llama-3.3-70b-versatile", "name": "Llama 3.3 70B (Groq Fast)", "provider": "groq", "model": "llama-3.3-70b-versatile"},
                 {"id": "groq/llama-3.1-8b-instant", "name": "Llama 3.1 8B (Groq Instant)", "provider": "groq", "model": "llama-3.1-8b-instant"},
@@ -943,20 +948,20 @@ class AIService:
                 {"id": "groq/mixtral-8x7b-32768", "name": "Mixtral 8x7B (Groq)", "provider": "groq", "model": "mixtral-8x7b-32768"}
             ])
         # Google Gemini Models
-        if self.gemini_key:
+        if eff_gemini:
             models.extend([
-                {"id": "gemini/gemini-2.5-flash", "name": "Gemini 2.5 Flash (Google)", "provider": "gemini", "model": "gemini-2.5-flash"},
-                {"id": "gemini/gemini-1.5-flash", "name": "Gemini 1.5 Flash (Google)", "provider": "gemini", "model": "gemini-1.5-flash"},
+                {"id": "gemini/gemini-2.5-flash", "name": "Gemini 2.5 Flash (Google Next-Gen)", "provider": "gemini", "model": "gemini-2.5-flash"},
+                {"id": "gemini/gemini-1.5-flash", "name": "Gemini 1.5 Flash (Google Fast)", "provider": "gemini", "model": "gemini-1.5-flash"},
                 {"id": "gemini/gemini-1.5-pro", "name": "Gemini 1.5 Pro (Google Deep)", "provider": "gemini", "model": "gemini-1.5-pro"}
             ])
         # NVIDIA NIM Models
-        if self.nvidia_key:
+        if eff_nvidia:
             models.extend([
                 {"id": "nvidia/meta/llama-3.3-70b-instruct", "name": "Llama 3.3 70B (NVIDIA NIM)", "provider": "nvidia", "model": "meta/llama-3.3-70b-instruct"},
-                {"id": "nvidia/deepseek-ai/deepseek-r1", "name": "DeepSeek R1 (NVIDIA)", "provider": "nvidia", "model": "deepseek-ai/deepseek-r1"}
+                {"id": "nvidia/deepseek-ai/deepseek-r1", "name": "DeepSeek R1 (NVIDIA NIM)", "provider": "nvidia", "model": "deepseek-ai/deepseek-r1"}
             ])
         # OpenAI Models
-        if self.openai_key:
+        if eff_openai:
             models.extend([
                 {"id": "openai/gpt-4o-mini", "name": "GPT-4o mini (OpenAI)", "provider": "openai", "model": "gpt-4o-mini"},
                 {"id": "openai/gpt-4o", "name": "GPT-4o (OpenAI Flagship)", "provider": "openai", "model": "gpt-4o"}
@@ -965,34 +970,47 @@ class AIService:
             models.append({"id": "default", "name": "Built-in Rule Engine (Free)", "provider": "default", "model": "default"})
         return models
 
-    def generate_sms_template(self, prompt, job_role=None, location=None, company="Job Recruitment", model_id=None):
+    def generate_sms_template(self, prompt, job_role=None, location=None, company="Job Recruitment", model_id=None, custom_groq=None, custom_gemini=None, custom_nvidia=None, custom_openai=None):
         extracted_urls = re.findall(r'https?://[^\s]+', prompt)
         url_text = extracted_urls[0] if extracted_urls else "https://jobrecruitment.in/jobs"
 
+        eff_groq = custom_groq or self.groq_key
+        eff_gemini = custom_gemini or self.gemini_key
+        eff_nvidia = custom_nvidia or self.nvidia_key
+        eff_openai = custom_openai or self.openai_key
+
         if model_id and "/" in model_id:
             provider, model_name = model_id.split("/", 1)
-            if provider == "groq" and self.groq_key:
-                res = self._call_groq(prompt, job_role, location, company, url_text, specific_model=model_name)
+            if provider == "groq" and eff_groq:
+                temp_service = AIService(groq_key=eff_groq)
+                res = temp_service._call_groq(prompt, job_role, location, company, url_text, specific_model=model_name)
                 if res: return res
-            elif provider == "gemini" and self.gemini_key:
-                res = self._call_gemini(prompt, job_role, location, company, url_text, specific_model=model_name)
+            elif provider == "gemini" and eff_gemini:
+                temp_service = AIService(gemini_key=eff_gemini)
+                res = temp_service._call_gemini(prompt, job_role, location, company, url_text, specific_model=model_name)
                 if res: return res
-            elif provider == "nvidia" and self.nvidia_key:
-                res = self._call_nvidia(prompt, job_role, location, company, url_text, specific_model=model_name)
+            elif provider == "nvidia" and eff_nvidia:
+                temp_service = AIService(nvidia_key=eff_nvidia)
+                res = temp_service._call_nvidia(prompt, job_role, location, company, url_text, specific_model=model_name)
                 if res: return res
-            elif provider == "openai" and self.openai_key:
-                res = self._call_openai(prompt, job_role, location, company, url_text, specific_model=model_name)
+            elif provider == "openai" and eff_openai:
+                temp_service = AIService(openai_key=eff_openai)
+                res = temp_service._call_openai(prompt, job_role, location, company, url_text, specific_model=model_name)
                 if res: return res
 
         # Default fallback cascade
-        if self.groq_key:
-            res = self._call_groq(prompt, job_role, location, company, url_text)
+        if eff_groq:
+            temp_service = AIService(groq_key=eff_groq)
+            res = temp_service._call_groq(prompt, job_role, location, company, url_text)
             if res: return res
-        if self.gemini_key:
-            res = self._call_gemini(prompt, job_role, location, company, url_text)
+        if eff_gemini:
+            temp_service = AIService(gemini_key=eff_gemini)
+            res = temp_service._call_gemini(prompt, job_role, location, company, url_text)
             if res: return res
-        if self.nvidia_key:
-            res = self._call_nvidia(prompt, job_role, location, company, url_text)
+        if eff_nvidia:
+            temp_service = AIService(nvidia_key=eff_nvidia)
+            res = temp_service._call_nvidia(prompt, job_role, location, company, url_text)
+            if res: return res
             if res: return res
 
         if "whatsapp" in prompt.lower() and extracted_urls:
@@ -2281,7 +2299,16 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/ai_models":
-            models = ai_service.get_available_models()
+            groq_k = query.get("groq_key", [""])[0]
+            gemini_k = query.get("gemini_key", [""])[0]
+            nvidia_k = query.get("nvidia_key", [""])[0]
+            openai_k = query.get("openai_key", [""])[0]
+            models = ai_service.get_available_models(
+                custom_groq=groq_k or None,
+                custom_gemini=gemini_k or None,
+                custom_nvidia=nvidia_k or None,
+                custom_openai=openai_k or None
+            )
             self._send_json({"models": models})
             return
 
@@ -2486,13 +2513,13 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/save_settings":
             # WORKER_API_KEY is locked to production .env and cannot be overwritten by client UI
-            current_worker_url = os.getenv("WORKER_API_URL", "https://jobrecruitment.in/api/sms_worker.php")
+            current_worker_url = os.getenv("WORKER_API_URL", "https://jobrecruitment.in/backend/api/worker-api.php")
             current_worker_key = os.getenv("WORKER_API_KEY", "")
             lines = [
                 f"WORKER_API_URL={current_worker_url}\n",
                 f"WORKER_API_KEY={current_worker_key}\n",
                 f"GROQ_API_KEY={data.get('GROQ_API_KEY', '')}\n",
-                f"GEMINI_API_KEY={data.get('GEMINI_API_KEY', GEMINI_KEY)}\n",
+                f"GEMINI_API_KEY={data.get('GEMINI_API_KEY', '')}\n",
                 f"NVIDIA_API_KEY={data.get('NVIDIA_API_KEY', '')}\n",
                 f"OPENAI_API_KEY={data.get('OPENAI_API_KEY', '')}\n",
                 f"SMS_MODE={data.get('SMS_MODE', 'adb')}\n",
@@ -2515,7 +2542,18 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             location = data.get("location", "")
             company = data.get("company", "Job Recruitment")
             model_id = data.get("model_id", "")
-            template = ai_service.generate_sms_template(prompt, role, location, company, model_id=model_id)
+            groq_k = data.get("groq_key", "")
+            gemini_k = data.get("gemini_key", "")
+            nvidia_k = data.get("nvidia_key", "")
+            openai_k = data.get("openai_key", "")
+            template = ai_service.generate_sms_template(
+                prompt, role, location, company,
+                model_id=model_id,
+                custom_groq=groq_k or None,
+                custom_gemini=gemini_k or None,
+                custom_nvidia=nvidia_k or None,
+                custom_openai=openai_k or None
+            )
             self._send_json({"template": template})
             return
 
