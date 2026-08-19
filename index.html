@@ -236,9 +236,13 @@
                     <button onclick="switchSource('single')" id="tab-single" class="py-2 font-bold rounded-xl text-slate-400 hover:text-slate-200 text-center transition">Single Test</button>
                 </div>
 
-                <!-- Source 1: Active Job Selector -->
-                <div id="section-jobs" class="space-y-2">
-                    <select id="job-select" onchange="loadJobApplicants()" class="w-full max-w-xl bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-200 focus:border-teal-500 outline-none">
+                <!-- Source 1: Active Job Selector with Searchable Filter -->
+                <div id="section-jobs" class="space-y-2 max-w-xl">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500 material-symbols-outlined text-sm">search</span>
+                        <input type="text" id="job-search-input" oninput="filterJobList(this.value)" placeholder="Search jobs by Role, Company, Location (e.g. PHP, Rajkot)..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-9 pr-4 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none shadow-inner">
+                    </div>
+                    <select id="job-select" onchange="loadJobApplicants()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-200 focus:border-teal-500 outline-none">
                         <option value="">Loading live jobs...</option>
                     </select>
                 </div>
@@ -308,7 +312,7 @@
                         <h2 class="text-sm font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
                             <span class="material-symbols-outlined text-purple-400 text-lg">psychology</span> AI Copy Studio & Template Engine
                         </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">3-part modular SMS with dynamic tags, 3-way length switcher, and real-time simulator.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">3-part modular SMS with dynamic tags, rich formatting, and real-time simulator.</p>
                     </div>
                     <span id="char-count" class="text-xs font-mono px-3 py-1 bg-slate-950 border border-slate-800 rounded-xl text-purple-300 font-bold">0c (1 Cr)</span>
                 </div>
@@ -338,13 +342,13 @@
                             </div>
                             <div class="space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <label class="text-[11px] text-slate-400 font-semibold">Cloud Templates:</label>
+                                    <label class="text-[11px] text-slate-400 font-semibold">Templates Library:</label>
                                     <button onclick="deleteCurrentCloudTemplate()" id="btn-delete-template" title="Delete Template" class="hidden text-slate-500 hover:text-red-400 text-[11px] flex items-center gap-0.5">
                                         <span class="material-symbols-outlined text-xs">delete</span> Delete
                                     </button>
                                 </div>
                                 <select id="template-select" onchange="applySavedTemplate()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
-                                    <option value="">-- Saved Cloud Templates --</option>
+                                    <option value="">-- Select Template Preset --</option>
                                 </select>
                             </div>
                         </div>
@@ -360,11 +364,20 @@
                             <textarea id="ai-prompt" name="ai_custom_prompt" rows="2" autocomplete="off" autocorrect="off" spellcheck="false" oninput="persistPrompt()" placeholder="e.g. Invite for Accountant interview tomorrow at Ahmedabad office. Call HR: +91 9898011223..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-200 outline-none focus:border-purple-500 leading-relaxed"></textarea>
                         </div>
 
-                        <!-- Editable SMS Textarea -->
+                        <!-- Rich Text Formatting Toolbar & Editable SMS Textarea -->
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between text-xs text-slate-400">
-                                <span class="font-bold text-slate-300">SMS Text (3-Part Structured Body):</span>
-                                <span id="url-validator-badge" class="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-950 border border-slate-800 text-slate-400">⚪ No Link</span>
+                                <span class="font-bold text-slate-300">SMS Text Body:</span>
+                                <div class="flex items-center gap-2">
+                                    <!-- Formatting Buttons -->
+                                    <div class="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 gap-0.5">
+                                        <button type="button" onclick="formatSmsText('bold')" title="Bold (*text* or 𝐁𝐨𝐥𝐝)" class="px-2 py-0.5 rounded text-[11px] font-bold text-slate-300 hover:text-white hover:bg-slate-800">𝐁</button>
+                                        <button type="button" onclick="formatSmsText('italic')" title="Italic (_text_ or 𝘐𝘵𝘢𝘭𝘪𝘤)" class="px-2 py-0.5 rounded text-[11px] italic font-serif text-slate-300 hover:text-white hover:bg-slate-800">𝘐</button>
+                                        <button type="button" onclick="formatSmsText('upper')" title="UPPERCASE" class="px-2 py-0.5 rounded text-[10px] font-bold text-slate-300 hover:text-white hover:bg-slate-800">AA</button>
+                                        <button type="button" onclick="formatSmsText('clear')" title="Clear Formatting" class="px-1.5 py-0.5 rounded text-[11px] text-slate-400 hover:text-red-400 hover:bg-slate-800 material-symbols-outlined">backspace</button>
+                                    </div>
+                                    <span id="url-validator-badge" class="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-950 border border-slate-800 text-slate-400">⚪ No Link</span>
+                                </div>
                             </div>
                             <textarea id="sms-body" rows="4" name="sms_content_body" autocomplete="off" autocorrect="off" spellcheck="false" oninput="updatePreview(); persistTemplateBody();" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed" placeholder="Dear {name}, JobRecruitment invitation for {role} in {location}. Apply: https://jobrecruitment.in/jobs | Call HR: +91 9898011223"></textarea>
                         </div>
@@ -378,7 +391,7 @@
                                 <button onclick="insertTag('{location}')" class="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-teal-400 font-mono rounded-xl">{location}</button>
                             </div>
                             <button onclick="openSaveTemplateModal()" class="px-3 py-1.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 font-bold rounded-xl flex items-center gap-1 transition">
-                                <span class="material-symbols-outlined text-xs">cloud_upload</span> Save to Cloud
+                                <span class="material-symbols-outlined text-xs">cloud_upload</span> Save Template
                             </button>
                         </div>
                     </div>
@@ -877,12 +890,89 @@
 
     <!-- SAVE TEMPLATE MODAL -->
     <div id="modal-save-template" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-3 shadow-2xl text-xs">
-            <h3 class="font-bold text-teal-400 text-sm">Save SMS Template to Cloud</h3>
-            <input type="text" id="tpl-title" placeholder="Template Title (e.g. WhatsApp Invite)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-slate-200">
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeModal('modal-save-template')" class="px-3 py-1.5 bg-slate-800 rounded-xl">Cancel</button>
-                <button onclick="confirmSaveTemplate()" class="px-4 py-1.5 bg-teal-500 text-slate-950 font-bold rounded-xl">Save</button>
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl text-xs">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-teal-400 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-teal-400 text-base">cloud_upload</span> Save Template
+                </h3>
+                <button onclick="closeModal('modal-save-template')" class="text-slate-400 hover:text-white material-symbols-outlined text-sm">close</button>
+            </div>
+            <div class="space-y-1.5">
+                <label class="text-slate-400 font-semibold">Template Title</label>
+                <input type="text" id="tpl-title" placeholder="e.g. WhatsApp Fast CV Drop" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+            </div>
+            <div class="space-y-1.5">
+                <label class="text-slate-400 font-semibold">Category</label>
+                <select id="tpl-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                    <option value="recruitment">Recruitment / Interview</option>
+                    <option value="followup">Candidate Follow-up</option>
+                    <option value="urgent">Urgent Walk-in</option>
+                    <option value="general">General Notification</option>
+                </select>
+            </div>
+            <div class="space-y-1.5">
+                <label class="text-slate-400 font-semibold">Visibility</label>
+                <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                    <label class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-900">
+                        <input type="radio" name="tpl-visibility" value="public" checked class="text-teal-500">
+                        <span class="text-slate-200 font-semibold">🌐 Global (Public)</span>
+                    </label>
+                    <label class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-900">
+                        <input type="radio" name="tpl-visibility" value="private" class="text-teal-500">
+                        <span class="text-slate-200 font-semibold">🔒 Personal (Mine)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button onclick="closeModal('modal-save-template')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold">Cancel</button>
+                <button onclick="confirmSaveTemplate()" class="px-5 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg transition">Save Template</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRE-FLIGHT DISPATCH CONFIRMATION MODAL -->
+    <div id="modal-preflight-dispatch" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-xs">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-emerald-400 text-base">verified</span> Pre-Flight Dispatch Verification
+                </h3>
+                <button onclick="closeModal('modal-preflight-dispatch')" class="text-slate-400 hover:text-white material-symbols-outlined text-sm">close</button>
+            </div>
+
+            <!-- Pre-Flight Summary Metrics -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] text-slate-500 uppercase font-mono block">Recipients</span>
+                    <span id="preflight-cands" class="text-base font-bold text-teal-400 font-mono">0</span>
+                </div>
+                <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] text-slate-500 uppercase font-mono block">Credits</span>
+                    <span id="preflight-credits" class="text-base font-bold text-purple-400 font-mono">0</span>
+                </div>
+                <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] text-slate-500 uppercase font-mono block">Hardware</span>
+                    <span id="preflight-device" class="text-xs font-bold text-emerald-400 truncate block mt-0.5">Physical SIM</span>
+                </div>
+            </div>
+
+            <!-- Message Preview Box -->
+            <div class="space-y-1.5">
+                <span class="text-slate-400 font-semibold block">Message Body (Live Preview):</span>
+                <div id="preflight-msg-box" class="p-3 bg-slate-950 border border-slate-800 rounded-2xl font-mono text-emerald-400 leading-relaxed text-[11px] max-h-32 overflow-y-auto"></div>
+            </div>
+
+            <!-- Screen Lock Notice -->
+            <div id="preflight-lock-notice" class="hidden p-3 bg-amber-950/80 border border-amber-800 rounded-2xl text-amber-300 flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-amber-400">warning</span>
+                <span>Phone screen is locked. Please tap unlock or wake your screen before proceeding.</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                <button onclick="closeModal('modal-preflight-dispatch')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold">Cancel</button>
+                <button onclick="confirmAndExecuteDispatch()" id="btn-preflight-confirm" class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm">send</span> Confirm & Send to SIM
+                </button>
             </div>
         </div>
     </div>
@@ -1427,22 +1517,80 @@
             if (type === 'single') updateSingleCandidate();
         }
 
+        let loadedAdminJobsList = [];
+
         async function loadAdminJobs() {
             const sel = document.getElementById('job-select');
             try {
                 const res = await fetch('/api/jobs');
                 const data = await res.json();
-                sel.innerHTML = '<option value="">-- Select Active Job --</option>';
-                (data.jobs || []).forEach(j => {
-                    const opt = document.createElement('option');
-                    opt.value = j.id;
-                    opt.textContent = `${j.jobRole} @ ${j.companyName || 'Job Recruitment'} (${j.total_applicants} cands)`;
-                    opt.dataset.role = j.jobRole;
-                    opt.dataset.location = j.location;
-                    opt.dataset.company = j.companyName || 'Job Recruitment';
-                    sel.appendChild(opt);
-                });
+                loadedAdminJobsList = data.jobs || [];
+                renderFilteredJobs(loadedAdminJobsList);
             } catch (e) {}
+        }
+
+        function renderFilteredJobs(jobs) {
+            const sel = document.getElementById('job-select');
+            sel.innerHTML = '<option value="">-- Select Active Job --</option>';
+            jobs.forEach(j => {
+                const opt = document.createElement('option');
+                opt.value = j.id;
+                opt.textContent = `${j.jobRole} @ ${j.companyName || 'Job Recruitment'} (${j.location || 'Ahmedabad'}) - ${j.total_applicants} cands`;
+                opt.dataset.role = j.jobRole;
+                opt.dataset.location = j.location;
+                opt.dataset.company = j.companyName || 'Job Recruitment';
+                sel.appendChild(opt);
+            });
+        }
+
+        function filterJobList(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) {
+                renderFilteredJobs(loadedAdminJobsList);
+                return;
+            }
+            const filtered = loadedAdminJobsList.filter(j => {
+                const role = (j.jobRole || '').toLowerCase();
+                const comp = (j.companyName || '').toLowerCase();
+                const loc = (j.location || '').toLowerCase();
+                return role.includes(q) || comp.includes(q) || loc.includes(q);
+            });
+            renderFilteredJobs(filtered);
+        }
+
+        // --- RICH TEXT FORMATTING TOOLBAR ---
+        function formatSmsText(action) {
+            const el = document.getElementById('sms-body');
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const selectedText = el.value.substring(start, end);
+            
+            if (action === 'clear') {
+                el.value = el.value.replace(/\*([^*]+)\*/g, '$1').replace(/_([^_]+)_/g, '$1');
+                updatePreview();
+                persistTemplateBody();
+                showToast("Cleared formatting tags");
+                return;
+            }
+
+            if (!selectedText) {
+                showToast("Select text in the SMS box first to format.", true);
+                return;
+            }
+
+            let transformed = selectedText;
+            if (action === 'bold') {
+                transformed = `*${selectedText}*`;
+            } else if (action === 'italic') {
+                transformed = `_${selectedText}_`;
+            } else if (action === 'upper') {
+                transformed = selectedText.toUpperCase();
+            }
+
+            el.setRangeText(transformed, start, end, 'select');
+            updatePreview();
+            persistTemplateBody();
+            showToast(`Formatted as ${action.toUpperCase()}`);
         }
 
         async function loadFilterOptions() {
@@ -1768,20 +1916,92 @@
             }
         }
 
+        const BUILTIN_INDUSTRY_TEMPLATES = [
+            {
+                id: 'builtin_1',
+                title: '⚡ WhatsApp Fast CV Drop (1 Cr)',
+                category: 'recruitment',
+                body: '{role} in {location}! Send resume on WhatsApp: 830278775 | JobRecruitment.in',
+                char_count: 78,
+                is_builtin: true
+            },
+            {
+                id: 'builtin_2',
+                title: '🏢 Walk-in Interview Invite (2 Cr)',
+                category: 'urgent',
+                body: 'Dear {name}, JobRecruitment invitation for {role} interview in {location}. Walk-in timings: 10AM-4PM. Apply: https://jobrecruitment.in/jobs | Call HR: 830278775',
+                char_count: 168,
+                is_builtin: true
+            },
+            {
+                id: 'builtin_3',
+                title: '🎯 Direct Candidate Opportunity (2 Cr)',
+                category: 'recruitment',
+                body: 'Hi {name}, hiring for {role} in {location}. Send your updated CV on WhatsApp: 830278775 or apply at https://jobrecruitment.in/jobs.',
+                char_count: 142,
+                is_builtin: true
+            },
+            {
+                id: 'builtin_4',
+                title: '📜 Comprehensive Job Spec (3 Cr)',
+                category: 'general',
+                body: 'Dear {name}, JobRecruitment is inviting applications for {role} in {location}. Interview slots are available. Kindly share your CV on WhatsApp: 830278775 or register at https://jobrecruitment.in/jobs to confirm your interview.',
+                char_count: 236,
+                is_builtin: true
+            }
+        ];
+
         async function loadCloudTemplates() {
             const sel = document.getElementById('template-select');
             try {
                 const uid = currentUser ? currentUser.id : '';
                 const res = await fetch(`/api/templates?user_id=${encodeURIComponent(uid)}`);
                 const data = await res.json();
-                savedTemplatesList = data.templates || [];
-                sel.innerHTML = '<option value="">-- Saved Cloud Templates --</option>';
-                savedTemplatesList.forEach((t, i) => {
+                const cloudTemplates = data.templates || [];
+                savedTemplatesList = [...BUILTIN_INDUSTRY_TEMPLATES, ...cloudTemplates];
+                
+                sel.innerHTML = '<option value="">-- Select Template Preset --</option>';
+
+                // Group 1: Built-in Presets
+                const gBuiltin = document.createElement('optgroup');
+                gBuiltin.label = '⚡ Built-in Industry Presets';
+                BUILTIN_INDUSTRY_TEMPLATES.forEach((t, i) => {
                     const opt = document.createElement('option');
                     opt.value = i;
-                    opt.textContent = `${t.title} (${t.char_count}c)${t.is_mine ? ' [Custom]' : ''}`;
-                    sel.appendChild(opt);
+                    opt.textContent = `${t.title} (${t.char_count}c)`;
+                    gBuiltin.appendChild(opt);
                 });
+                sel.appendChild(gBuiltin);
+
+                // Group 2: Public Cloud Templates
+                const publicTpls = cloudTemplates.filter(t => t.visibility === 'public' && !t.is_mine);
+                if (publicTpls.length > 0) {
+                    const gPublic = document.createElement('optgroup');
+                    gPublic.label = '🌐 Global Community Templates';
+                    publicTpls.forEach(t => {
+                        const idx = savedTemplatesList.indexOf(t);
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.textContent = `${t.title} (${t.char_count}c)`;
+                        gPublic.appendChild(opt);
+                    });
+                    sel.appendChild(gPublic);
+                }
+
+                // Group 3: My Saved Templates
+                const myTpls = cloudTemplates.filter(t => t.is_mine);
+                if (myTpls.length > 0) {
+                    const gMine = document.createElement('optgroup');
+                    gMine.label = '🔒 My Personal Templates';
+                    myTpls.forEach(t => {
+                        const idx = savedTemplatesList.indexOf(t);
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.textContent = `⭐ ${t.title} (${t.char_count}c)`;
+                        gMine.appendChild(opt);
+                    });
+                    sel.appendChild(gMine);
+                }
             } catch(e) {}
         }
 
@@ -1799,9 +2019,49 @@
                 persistTemplateBody();
                 showToast(`Applied "${t.title}"!`);
                 if (delBtn) {
-                    if (t.is_mine) delBtn.classList.remove('hidden');
+                    if (t.is_mine && !t.is_builtin) delBtn.classList.remove('hidden');
                     else delBtn.classList.add('hidden');
                 }
+            }
+        }
+
+        function openSaveTemplateModal() {
+            const body = document.getElementById('sms-body').value.trim();
+            if (!body) { showToast("Enter SMS body before saving template.", true); return; }
+            document.getElementById('tpl-title').value = '';
+            openModal('modal-save-template');
+        }
+
+        async function confirmSaveTemplate() {
+            const title = document.getElementById('tpl-title').value.trim();
+            const category = document.getElementById('tpl-category').value;
+            const body = document.getElementById('sms-body').value.trim();
+            const visibilityRadios = document.getElementsByName('tpl-visibility');
+            let visibility = 'public';
+            for (const r of visibilityRadios) {
+                if (r.checked) visibility = r.value;
+            }
+
+            if (!title) { showToast("Please enter template title.", true); return; }
+            if (!body) { showToast("Template body is empty.", true); return; }
+
+            const uid = currentUser ? currentUser.id : null;
+            try {
+                const res = await fetch('/api/templates/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, category, body, visibility, user_id: uid })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast("Template saved to Cloud!");
+                    closeModal('modal-save-template');
+                    loadCloudTemplates();
+                } else {
+                    showToast(data.message || "Failed to save.", true);
+                }
+            } catch(e) {
+                showToast("Save template error.", true);
             }
         }
 
@@ -1809,8 +2069,8 @@
             const idx = document.getElementById('template-select').value;
             if (idx === '') return;
             const t = savedTemplatesList[parseInt(idx)];
-            if (!t || !t.id) return;
-            if (!confirm(`Delete custom template "${t.title}"?`)) return;
+            if (!t || !t.id || t.is_builtin) return;
+            if (!confirm(`Delete template "${t.title}"?`)) return;
 
             try {
                 const uid = currentUser ? currentUser.id : '';
@@ -1822,12 +2082,7 @@
                 const data = await res.json();
                 if (data.ok) {
                     showToast("Template deleted.");
-                    loadCloudTemplates();
                     document.getElementById('btn-delete-template').classList.add('hidden');
-                } else {
-                    showToast(data.message || "Failed to delete.", true);
-                }
-            } catch(e) {
                 showToast("Delete request failed.", true);
             }
         }
@@ -1931,7 +2186,10 @@
             finally { btn.innerHTML = '<span class="material-symbols-outlined text-xs">bolt</span> Generate Message'; }
         }
 
-        // --- DISPATCH RUNNER ---
+        // --- DISPATCH RUNNER WITH PRE-FLIGHT GUARD ---
+        let pendingDispatchBatch = [];
+        let pendingDispatchTitle = "";
+
         async function startSingleTestRun() {
             const selected = Array.from(selectedCandidateKeys).map(k => {
                 const [phone, name] = k.split('_');
@@ -1941,7 +2199,7 @@
                 showToast("Please select at least 1 candidate for test run.", true);
                 return;
             }
-            executeDispatchBatch(selected.slice(0, 1), "Test Run (1 SMS)");
+            openPreFlightModal(selected.slice(0, 1), "Test Run (1 SMS)");
         }
 
         async function startLiveDispatch() {
@@ -1953,14 +2211,57 @@
                 showToast("No candidates selected.", true);
                 return;
             }
-            executeDispatchBatch(selected, `Dispatch to ${selected.length} Candidates`);
+            openPreFlightModal(selected, `Dispatch to ${selected.length} Candidates`);
+        }
+
+        async function openPreFlightModal(selected, title) {
+            const template = document.getElementById('sms-body').value.trim();
+            if (!template) { showToast("Please enter an SMS template.", true); return; }
+
+            pendingDispatchBatch = selected;
+            pendingDispatchTitle = title;
+
+            const creditsPerSms = Math.max(1, Math.ceil(template.length / 160));
+            const totalCredits = selected.length * creditsPerSms;
+
+            document.getElementById('preflight-cands').textContent = selected.length;
+            document.getElementById('preflight-credits').textContent = `${totalCredits} Cr`;
+            
+            const sampleName = (selected[0] && selected[0].name) || 'Omear';
+            const sampleMsg = template
+                .replace(/{name}/g, sampleName)
+                .replace(/{role}/g, activeJobContext.role || 'Candidate')
+                .replace(/{location}/g, activeJobContext.location || 'Ahmedabad');
+            document.getElementById('preflight-msg-box').textContent = sampleMsg;
+
+            // Check hardware screen lock telemetry
+            try {
+                const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : '';
+                const uid = currentUser ? (currentUser.id || currentUser.email) : '';
+                const rRes = await fetch(`/api/relay/status?pairing_code=${encodeURIComponent(pCode)}&user_id=${encodeURIComponent(uid)}`);
+                const rData = await rRes.json();
+                document.getElementById('preflight-device').textContent = rData.device_name || 'Physical SIM';
+                const lockNotice = document.getElementById('preflight-lock-notice');
+                if (rData.is_screen_locked) {
+                    lockNotice.classList.remove('hidden');
+                } else {
+                    lockNotice.classList.add('hidden');
+                }
+            } catch(e) {}
+
+            openModal('modal-preflight-dispatch');
+        }
+
+        async function confirmAndExecuteDispatch() {
+            closeModal('modal-preflight-dispatch');
+            if (pendingDispatchBatch.length > 0) {
+                executeDispatchBatch(pendingDispatchBatch, pendingDispatchTitle);
+            }
         }
 
         async function executeDispatchBatch(selected, title) {
             const template = document.getElementById('sms-body').value.trim();
             if (!template) { showToast("Please enter an SMS template.", true); return; }
-
-            if (!confirm(`Confirm ${title} via connected physical SIM?`)) return;
 
             document.getElementById('btn-start-dispatch').disabled = true;
             document.getElementById('btn-test-run').disabled = true;

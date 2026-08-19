@@ -2617,7 +2617,7 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
         elif path == "/api/templates/save":
             title = data.get("title", "")
             category = data.get("category", "recruitment")
-            body_txt = data.get("template_body", "")
+            body_txt = data.get("body") or data.get("template_body") or ""
             visibility = data.get("visibility", "public")
             user_id = data.get("user_id") or None
             if not title or not body_txt:
