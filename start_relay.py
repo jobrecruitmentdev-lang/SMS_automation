@@ -16,6 +16,15 @@ import random
 import urllib.request
 import subprocess
 
+# Ensure UTF-8 output encoding on all Windows consoles and terminals
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+
 CLOUD_SERVER_URL = os.getenv("CLOUD_SERVER_URL", "https://sms-automation-q1zf.onrender.com")
 
 def find_local_adb():
