@@ -164,7 +164,7 @@ def write_log(text):
 # 3. SERVICE LAYER: QUOTA & TRAI COMPLIANCE (180 SMS/Day + Midnight Reset)
 # ==============================================================================
 class QuotaService:
-    def __init__(self, limit=180, storage_file=QUOTA_FILE):
+    def __init__(self, limit=50, storage_file=QUOTA_FILE):
         self.limit = int(limit)
         self.storage_file = storage_file
         self.state = self._load_state()
@@ -244,7 +244,7 @@ class QuotaService:
         history.append(reset_entry)
         self.state["reset_history"] = history[-30:]
         self._save_state(self.state)
-        return True, "Quota reset to 0/180."
+        return True, "Quota reset to 0/50."
 
 # ==============================================================================
 # 3.5. SERVICE LAYER: SUPABASE POSTGRESQL CLOUD AUDIT LEDGER
@@ -1081,13 +1081,12 @@ class AIService:
         eff_nvidia = custom_nvidia or self.nvidia_key
         eff_openai = custom_openai or self.openai_key
 
-        # Groq Models
+        # Groq Models (Active Cloud IDs)
         if eff_groq:
             models.extend([
-                {"id": "groq/llama-3.3-70b-versatile", "name": "Llama 3.3 70B (Groq Fast)", "provider": "groq", "model": "llama-3.3-70b-versatile"},
-                {"id": "groq/llama-3.1-8b-instant", "name": "Llama 3.1 8B (Groq Instant)", "provider": "groq", "model": "llama-3.1-8b-instant"},
-                {"id": "groq/qwen-2.5-32b", "name": "Qwen 2.5 32B (Groq HR)", "provider": "groq", "model": "qwen/qwen3.6-27b"},
-                {"id": "groq/mixtral-8x7b-32768", "name": "Mixtral 8x7B (Groq)", "provider": "groq", "model": "mixtral-8x7b-32768"}
+                {"id": "groq/qwen/qwen3.6-27b", "name": "Qwen 2.5 32B (Groq Fast)", "provider": "groq", "model": "qwen/qwen3.6-27b"},
+                {"id": "groq/openai/gpt-oss-120b", "name": "GPT-OSS 120B (Groq Deep)", "provider": "groq", "model": "openai/gpt-oss-120b"},
+                {"id": "groq/openai/gpt-oss-20b", "name": "GPT-OSS 20B (Groq Instant)", "provider": "groq", "model": "openai/gpt-oss-20b"}
             ])
         # Google Gemini Models
         if eff_gemini:
@@ -1099,8 +1098,7 @@ class AIService:
         # NVIDIA NIM Models
         if eff_nvidia:
             models.extend([
-                {"id": "nvidia/meta/llama-3.3-70b-instruct", "name": "Llama 3.3 70B (NVIDIA NIM)", "provider": "nvidia", "model": "meta/llama-3.3-70b-instruct"},
-                {"id": "nvidia/deepseek-ai/deepseek-r1", "name": "DeepSeek R1 (NVIDIA NIM)", "provider": "nvidia", "model": "deepseek-ai/deepseek-r1"}
+                {"id": "nvidia/meta/llama-3.3-70b-instruct", "name": "Llama 3.3 70B (NVIDIA NIM)", "provider": "nvidia", "model": "meta/llama-3.3-70b-instruct"}
             ])
         # OpenAI Models
         if eff_openai:
@@ -1115,140 +1113,194 @@ class AIService:
     def generate_sms_template(self, prompt, job_role=None, location=None, company="Job Recruitment", model_id=None, custom_groq=None, custom_gemini=None, custom_nvidia=None, custom_openai=None):
         extracted_urls = re.findall(r'https?://[^\s]+', prompt)
         url_text = extracted_urls[0] if extracted_urls else "https://jobrecruitment.in/jobs"
+        
+        # Robust Phone Extraction (matches 8 to 12 digits, handling typos like 830278775 or 9898011223)
+        phone_match = re.search(r'\b(?:\+91|0)?[6-9]\d{7,11}\b', prompt)
+        recruiter_phone = phone_match.group(0) if phone_match else None
+
+        role_txt = job_role or 'Candidate'
+        loc_txt = location or 'Ahmedabad'
 
         eff_groq = custom_groq or self.groq_key
         eff_gemini = custom_gemini or self.gemini_key
-        eff_nvidia = custom_nvidia or self.nvidia_key
-        eff_openai = custom_openai or self.openai_key
 
-        if model_id and "/" in model_id:
-            provider, model_name = model_id.split("/", 1)
-            if provider == "groq" and eff_groq:
-                temp_service = AIService(groq_key=eff_groq)
-                res = temp_service._call_groq(prompt, job_role, location, company, url_text, specific_model=model_name)
-                if res: return res
-            elif provider == "gemini" and eff_gemini:
-                temp_service = AIService(gemini_key=eff_gemini)
-                res = temp_service._call_gemini(prompt, job_role, location, company, url_text, specific_model=model_name)
-                if res: return res
-            elif provider == "nvidia" and eff_nvidia:
-                temp_service = AIService(nvidia_key=eff_nvidia)
-                res = temp_service._call_nvidia(prompt, job_role, location, company, url_text, specific_model=model_name)
-                if res: return res
-            elif provider == "openai" and eff_openai:
-                temp_service = AIService(openai_key=eff_openai)
-                res = temp_service._call_openai(prompt, job_role, location, company, url_text, specific_model=model_name)
-                if res: return res
+        def _make_variations(base_body=None):
+            if base_body and len(base_body) > 10:
+                short_v = base_body
+                if recruiter_phone and recruiter_phone not in short_v:
+                    short_v += f" | WhatsApp: {recruiter_phone}"
+                if url_text not in short_v and len(short_v) < 110:
+                    short_v += f" | {url_text}"
+                
+                med_v = f"Hi {{name}}, {role_txt} opening in {loc_txt}. "
+                if recruiter_phone:
+                    med_v += f"Send your updated CV on WhatsApp: {recruiter_phone} or apply at {url_text}."
+                else:
+                    med_v += f"Apply now at {url_text} | JobRecruitment.in"
+                
+                det_v = f"Dear {{name}}, JobRecruitment is inviting applications for {role_txt} in {loc_txt}. "
+                if recruiter_phone:
+                    det_v += f"Interview slots are available. Kindly share your CV on WhatsApp: {recruiter_phone} or register at {url_text} to confirm your interview."
+                else:
+                    det_v += f"Interview slots are available. Kindly apply at {url_text} to schedule your interview."
 
-        # Default fallback cascade
+                return {"short": short_v, "medium": med_v, "detailed": det_v}
+
+            # Pure Rule Fallback
+            if recruiter_phone:
+                short_v = f"{role_txt} Opportunity in {loc_txt}! Send CV on WhatsApp: {recruiter_phone} | JobRecruitment.in"
+                med_v = f"Hi {{name}}, hiring for {role_txt} in {loc_txt}. Send your updated CV on WhatsApp: {recruiter_phone} or apply: {url_text}."
+                det_v = f"Dear {{name}}, JobRecruitment is hiring {role_txt} in {loc_txt}. Interview slots available. Please share your CV on WhatsApp: {recruiter_phone} or apply at {url_text}."
+            else:
+                short_v = f"{role_txt} Opening in {loc_txt}! Apply: {url_text} | JobRecruitment.in"
+                med_v = f"Hi {{name}}, hiring for {role_txt} in {loc_txt}. Apply online at {url_text} | JobRecruitment.in"
+                det_v = f"Dear {{name}}, JobRecruitment is hiring {role_txt} in {loc_txt}. Apply at {url_text} to schedule your interview."
+            
+            return {"short": short_v, "medium": med_v, "detailed": det_v}
+
+        ai_text = None
         if eff_groq:
-            temp_service = AIService(groq_key=eff_groq)
-            res = temp_service._call_groq(prompt, job_role, location, company, url_text)
-            if res: return res
-        if eff_gemini:
-            temp_service = AIService(gemini_key=eff_gemini)
-            res = temp_service._call_gemini(prompt, job_role, location, company, url_text)
-            if res: return res
-        if eff_nvidia:
-            temp_service = AIService(nvidia_key=eff_nvidia)
-            res = temp_service._call_nvidia(prompt, job_role, location, company, url_text)
-            if res: return res
-            if res: return res
-
-        if "whatsapp" in prompt.lower() and extracted_urls:
-            return f"Dear {{name}}, join Job Recruitment's official WhatsApp jobs group for instant job alerts in {location or 'Ahmedabad'}: {extracted_urls[0]}"
-        if extracted_urls:
-            return f"Dear {{name}}, opening for {job_role or 'Candidate'} in {location or 'Ahmedabad'}. Check details: {extracted_urls[0]}"
-        return f"Dear {{name}}, Job Recruitment has an urgent opening for {job_role or 'Candidate'} in {location or 'Ahmedabad'}. Apply here: https://jobrecruitment.in/jobs"
-
-    def _get_anti_spam_system_prompt(self, url_text):
-        return (
-            "You are a professional HR Communication Engine for JobRecruitment.in. "
-            "Your sole objective is to write polite, clean, human-like SMS interview and job notifications for candidates. "
-            "CRITICAL ANTI-SPAM COMPLIANCE RULES: "
-            "1. NO spam trigger keywords: Do NOT use 'URGENT', 'HURRY', 'EARN MONEY', 'CLICK NOW', or words in ALL CAPS. "
-            "2. Tone must be professional, courteous, and authentic (e.g. 'Job opportunity', 'Interview invitation', 'Application update'). "
-            f"3. Must include the exact official URL: {url_text}. "
-            "4. Must include dynamic tag {name} for candidate personalization. "
-            "5. Keep total length strictly between 90 and 140 characters so dynamic tags and signature fit into 1 single SMS credit. "
-            "6. Output ONLY the raw SMS message body. Do NOT include quotation marks, markdown, explanations, notes, or intros."
-        )
-
-    def _call_groq(self, prompt, job_role, location, company, url_text, specific_model=None):
-        try:
-            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
-            system_msg = self._get_anti_spam_system_prompt(url_text)
-            models_to_try = [specific_model] if specific_model else ["llama-3.3-70b-versatile", "qwen/qwen3.6-27b", "llama-3.1-8b-instant"]
-            for m in models_to_try:
+            try:
+                headers = {"Authorization": f"Bearer {eff_groq}", "Content-Type": "application/json"}
+                m_name = (model_id.split("/", 1)[1] if model_id and "/" in model_id else "openai/gpt-oss-120b")
                 payload = {
-                    "model": m,
+                    "model": m_name,
                     "messages": [
-                        {"role": "system", "content": system_msg},
-                        {"role": "user", "content": f"Candidate notification requirement: {prompt}. Target Job: {job_role} in {location}."}
+                        {"role": "system", "content": "You are a professional HR SMS copilot for JobRecruitment.in. Write an ultra-concise, action-first recruitment SMS. Include role, location, and recruiter contact. Output ONLY the single final SMS text body."},
+                        {"role": "user", "content": f"Requirement: {prompt}. Role: {role_txt}, Location: {loc_txt}."}
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 100
+                    "max_tokens": 150
                 }
-                r = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=6)
+                r = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=6.0)
                 if r.status_code == 200:
                     content = r.json()["choices"][0]["message"]["content"].strip()
+                    if "</think>" in content:
+                        content = content.split("</think>")[-1].strip()
                     clean = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip().strip('"\' \n')
-                    if clean and 10 < len(clean) < 180:
-                        return clean
-        except Exception:
-            pass
-        return None
+                    if clean and len(clean) > 10:
+                        ai_text = clean
+            except Exception:
+                pass
 
-    def _call_gemini(self, prompt, job_role, location, company, url_text, specific_model="gemini-2.5-flash"):
+        return _make_variations(ai_text)
+
+    def _call_gemini_variations(self, prompt, job_role, location, company, url_text, specific_model="gemini-2.5-flash"):
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{specific_model}:generateContent?key={self.gemini_key}"
             sys_text = self._get_anti_spam_system_prompt(url_text)
             payload = {
                 "contents": [{
+                    "parts": [{"text": f"{sys_text}\n\nTask: Generate 3 JSON variations for {prompt}, Role: {job_role}, Location: {location}."}]
+                }]
+            }
+            r = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=4.0)
+            if r.status_code == 200:
+                data = r.json()
+                text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                json_match = re.search(r'\{[\s\S]*\}', text)
+                if json_match:
+                    parsed = json.loads(json_match.group(0))
+                    if "short" in parsed and "medium" in parsed and "detailed" in parsed:
+                        return parsed
+        except Exception:
+            pass
+        return None
+
+    def _get_anti_spam_system_prompt(self, url_text):
+        return (
+            "You are a Senior Talent Acquisition HR Specialist for JobRecruitment.in. "
+            "Write high-converting, professional, ACTION-FIRST Indian recruitment SMS messages. "
+            "TONE & STYLE: Action-First Direct Bullet format (e.g., '{role} Opportunity in {location}! Send your updated resume on WhatsApp: {phone} | JobRecruitment.in'). "
+            "RULES: "
+            "1. Output ONLY a valid JSON object containing 3 distinct variations: 'short', 'medium', and 'detailed'. "
+            "2. 'short': Strictly <= 140 chars. Ultra-crisp action CTA (WhatsApp/Call/Apply). "
+            "3. 'medium': 160-240 chars. Includes Job Role, Location, brief key details, and contact CTA. "
+            "4. 'detailed': 280-380 chars. Complete professional invitation with interview briefing, contact, and official link. "
+            f"5. Always preserve any recruiter phone number, WhatsApp number, or contact details provided in the requirement. "
+            f"6. Integrate link ({url_text}) cleanly. "
+            "7. NO spam words ('URGENT', 'EARN MONEY', 'CLICK NOW', ALL CAPS). "
+            "8. CRITICAL: Return ONLY valid raw JSON: {\"short\": \"...\", \"medium\": \"...\", \"detailed\": \"...\"} without markdown code blocks, backticks, or intros."
+        )
+
+    def _call_groq(self, prompt, job_role, location, company, url_text, specific_model=None, length_mode="short"):
+        try:
+            headers = {"Authorization": f"Bearer {self.groq_key}", "Content-Type": "application/json"}
+            model_to_use = specific_model or "openai/gpt-oss-120b"
+            system_msg = self._get_anti_spam_system_prompt(url_text, length_mode=length_mode)
+            payload = {
+                "model": model_to_use,
+                "messages": [
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": f"Candidate notification requirement: {prompt}. Target Job: {job_role or 'Candidate'} in {location or 'Ahmedabad'}."}
+                ],
+                "temperature": 0.2,
+                "max_tokens": 2500
+            }
+            r = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=8.0)
+            if r.status_code == 200:
+                content = r.json()["choices"][0]["message"]["content"].strip()
+                if "</think>" in content:
+                    clean = content.split("</think>")[-1].strip().strip('"\' \n')
+                else:
+                    clean = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip().strip('"\' \n')
+                if clean and not clean.startswith("<think>"):
+                    return clean
+        except Exception:
+            pass
+        return None
+
+    def _call_gemini(self, prompt, job_role, location, company, url_text, specific_model="gemini-2.5-flash", length_mode="short"):
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{specific_model}:generateContent?key={self.gemini_key}"
+            sys_text = self._get_anti_spam_system_prompt(url_text, length_mode=length_mode)
+            payload = {
+                "contents": [{
                     "parts": [{"text": f"{sys_text}\n\nTask: Draft SMS for {prompt}, Role: {job_role}, Location: {location}."}]
                 }]
             }
-            r = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=6)
+            r = requests.post(url, headers={"Content-Type": "application/json"}, json=payload, timeout=2.5)
             if r.status_code == 200:
                 data = r.json()
                 text = data["candidates"][0]["content"]["parts"][0]["text"].strip().strip('"\' \n')
-                if text and len(text) < 180:
+                max_len = 350 if length_mode == "detailed" else (240 if length_mode == "medium" else 160)
+                if text and len(text) <= max_len:
                     return text
         except Exception:
             pass
         return None
 
-    def _call_nvidia(self, prompt, job_role, location, company, url_text, specific_model="meta/llama-3.3-70b-instruct"):
+    def _call_nvidia(self, prompt, job_role, location, company, url_text, specific_model="meta/llama-3.3-70b-instruct", length_mode="short"):
         try:
             headers = {"Authorization": f"Bearer {self.nvidia_key}", "Content-Type": "application/json"}
-            system_msg = self._get_anti_spam_system_prompt(url_text)
+            system_msg = self._get_anti_spam_system_prompt(url_text, length_mode=length_mode)
             payload = {
                 "model": specific_model,
                 "messages": [
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": f"Task: {prompt} for {job_role} in {location}."}
                 ],
-                "max_tokens": 100,
+                "max_tokens": 150,
                 "temperature": 0.2
             }
-            r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", headers=headers, json=payload, timeout=6)
+            r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", headers=headers, json=payload, timeout=2.5)
             if r.status_code == 200:
                 return r.json()["choices"][0]["message"]["content"].strip().strip('"\' \n')
         except Exception:
             pass
         return None
 
-    def _call_openai(self, prompt, job_role, location, company, url_text, specific_model="gpt-4o-mini"):
+    def _call_openai(self, prompt, job_role, location, company, url_text, specific_model="gpt-4o-mini", length_mode="short"):
         try:
             headers = {"Authorization": f"Bearer {self.openai_key}", "Content-Type": "application/json"}
-            system_msg = self._get_anti_spam_system_prompt(url_text)
+            system_msg = self._get_anti_spam_system_prompt(url_text, length_mode=length_mode)
             payload = {
                 "model": specific_model,
                 "messages": [
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": f"Task: {prompt} for {job_role} in {location}."}
                 ],
-                "max_tokens": 100,
+                "max_tokens": 150,
                 "temperature": 0.2
             }
             r = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=6)
@@ -1280,7 +1332,7 @@ def reload_app_config():
     OPENAI_KEY = os.getenv("OPENAI_API_KEY", "")
     SMS_MODE = os.getenv("SMS_MODE", "adb")
     GATEWAY_URL = os.getenv("ANDROID_GATEWAY_URL", "http://192.168.1.100:8080/send")
-    DAILY_LIMIT = int(os.getenv("DAILY_SMS_LIMIT", "180"))
+    DAILY_LIMIT = int(os.getenv("DAILY_SMS_LIMIT", "50"))
     DISPATCH_DELAY = int(os.getenv("DISPATCH_DELAY_SECONDS", "5"))
 
     candidate_service = CandidateService(WORKER_URL, WORKER_KEY)
@@ -2275,7 +2327,7 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             })
             return
 
-        elif path in ["/api/health_check", "/healthz"]:
+        elif path in ["/api/health_check", "/healthz", "/api/healthz"]:
             diag = gateway_service.get_full_diagnostics()
             self._send_json(diag)
             return
@@ -2575,6 +2627,16 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": ok, "id" if ok else "message": res})
             return
 
+        elif path == "/api/templates/delete":
+            template_id = data.get("template_id", "").strip()
+            user_id = data.get("user_id") or None
+            if not template_id:
+                self._send_json({"ok": False, "message": "Template ID is required."}, code=400)
+                return
+            ok, res = supabase_service.delete_template(template_id, user_id=user_id)
+            self._send_json({"ok": ok, "message": "Template deleted." if ok else str(res)})
+            return
+
         elif path == "/api/unlock_screen":
             p_code = data.get("pairing_code") or "JR-DEFAULT"
             # 1. Enqueue remote action for local relay daemon
@@ -2704,11 +2766,12 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             location = data.get("location", "")
             company = data.get("company", "Job Recruitment")
             model_id = data.get("model_id", "")
+            length_mode = data.get("length_mode", "short")
             groq_k = data.get("groq_key", "")
             gemini_k = data.get("gemini_key", "")
             nvidia_k = data.get("nvidia_key", "")
             openai_k = data.get("openai_key", "")
-            template = ai_service.generate_sms_template(
+            variations = ai_service.generate_sms_template(
                 prompt, role, location, company,
                 model_id=model_id,
                 custom_groq=groq_k or None,
@@ -2716,7 +2779,23 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 custom_nvidia=nvidia_k or None,
                 custom_openai=openai_k or None
             )
-            self._send_json({"template": template})
+            selected_template = variations.get(length_mode) or variations.get("short") or ""
+            self._send_json({
+                "template": selected_template,
+                "variations": variations
+            })
+            return
+
+        elif path == "/api/stop_dispatch":
+            with dispatch_lock:
+                current_dispatch["is_running"] = False
+                current_dispatch["logs"].append("🛑 Emergency Stop Triggered by Recruiter.")
+            p_code = data.get("pairing_code") or "JR-DEFAULT"
+            with relay_lock:
+                if p_code in user_relay_jobs:
+                    user_relay_jobs[p_code] = []
+            write_log("DISPATCH STOPPED: Emergency abort requested by user.")
+            self._send_json({"ok": True, "message": "Dispatch queue halted successfully."})
             return
 
         elif path == "/api/start_dispatch":

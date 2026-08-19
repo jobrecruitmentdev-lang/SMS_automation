@@ -174,7 +174,6 @@
                 <button onclick="openWifiPairModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
                     <span class="material-symbols-outlined text-sm">wifi_tethering</span> Wi-Fi Pair
                 </button>
-
                 <!-- Drawer Toggle -->
                 <button onclick="toggleDrawer()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
                     <span class="material-symbols-outlined text-sm">tune</span>
@@ -183,215 +182,327 @@
             </div>
         </header>
 
-        <!-- 2. ZERO-COGNITIVE-LOAD 3-STEP GUIDED WORKFLOW -->
-        <main class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- 2. STREAMLINED APPLE-CLEAN 3-STEP TAB NAVIGATION -->
+        <div class="flex items-center justify-between bg-slate-900/90 border border-slate-800/80 p-1.5 rounded-2xl mb-4 backdrop-blur-xl shadow-xl">
+            <div class="grid grid-cols-3 gap-1 w-full max-w-2xl text-xs font-bold">
+                <button onclick="switchWorkflowTab('step1')" id="w-tab-step1" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-teal-500/10 text-teal-300 border border-teal-500/30 transition shadow-sm">
+                    <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px] font-black">1</span>
+                    <span>Target Audience</span>
+                    <span id="tab-cand-badge" class="ml-1 px-1.5 py-0.2 bg-teal-950 text-teal-400 text-[10px] rounded-full border border-teal-800/60">0</span>
+                </button>
+                <button onclick="switchWorkflowTab('step2')" id="w-tab-step2" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition">
+                    <span class="w-5 h-5 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-black">2</span>
+                    <span>AI Copy Studio</span>
+                </button>
+                <button onclick="switchWorkflowTab('step3')" id="w-tab-step3" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition">
+                    <span class="w-5 h-5 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-black">3</span>
+                    <span>Dispatch Station</span>
+                </button>
+            </div>
+            <div class="hidden md:flex items-center gap-3 pr-3 text-xs">
+                <span id="sim-carrier-badge" class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 font-mono flex items-center gap-1.5">
+                    <span class="text-teal-400">📶</span> Jio 4G (Signal: Excellent)
+                </span>
+            </div>
+        </div>
+
+        <!-- 3. WORKSPACE CONTAINER (3 FULL-WIDTH VIEWS) -->
+        <main class="space-y-4">
             
-            <!-- STEP 1: TARGET AUDIENCE (4 Columns) -->
-            <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                        <div class="flex items-center gap-1.5">
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                                <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[11px] font-black">1</span>
-                                Target Audience
-                            </h2>
-                            <span id="step1-health-badge" class="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-teal-950/80 text-teal-300 border border-teal-800 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
-                                <span id="step1-health-text">Portal Live</span>
-                            </span>
-                        </div>
-                        <span class="text-xs font-mono font-bold text-teal-300"><span id="cand-count">0</span> Selected</span>
-                    </div>
-
-                    <!-- Source Selector Sub-Tabs -->
-                    <div class="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
-                        <button onclick="switchSource('jobs')" id="tab-jobs" class="py-1.5 font-bold rounded-lg text-slate-200 bg-slate-800 shadow text-center">Jobs</button>
-                        <button onclick="switchSource('search')" id="tab-search" class="py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center">Search</button>
-                        <button onclick="switchSource('import')" id="tab-import" class="py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center">CSV</button>
-                        <button onclick="switchSource('single')" id="tab-single" class="py-1.5 font-bold rounded-lg text-slate-400 hover:text-slate-200 text-center">Single</button>
-                    </div>
-
-                    <!-- Source 1: Active Job Selector -->
-                    <div id="section-jobs" class="space-y-2">
-                        <select id="job-select" onchange="loadJobApplicants()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-teal-500 outline-none">
-                            <option value="">Loading live jobs...</option>
-                        </select>
-                    </div>
-
-                    <!-- Source 2: Global Candidate Search -->
-                    <div id="section-search" class="space-y-2 hidden">
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="filter-role" onchange="searchGlobalCandidates()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 outline-none">
-                                <option value="">-- All Roles --</option>
-                            </select>
-                            <input type="text" id="filter-city" list="city-list" placeholder="City (e.g. Ahmedabad)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 outline-none">
-                            <datalist id="city-list"></datalist>
-                        </div>
-                        <button onclick="searchGlobalCandidates()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-xl text-xs font-semibold">Search DB</button>
-                    </div>
-
-                    <!-- Source 3: CSV Import / Paste -->
-                    <div id="section-import" class="space-y-2 hidden">
-                        <textarea id="import-paste-box" rows="2" oninput="parseCustomInput()" placeholder="9099876985, Omear, Candidate" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs font-mono text-slate-200 outline-none"></textarea>
-                    </div>
-
-                    <!-- Source 4: Single Mobile Number Test -->
-                    <div id="section-single" class="space-y-2 hidden">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="single-phone" oninput="updateSingleCandidate()" placeholder="9099876985" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 font-mono outline-none">
-                            <input type="text" id="single-name" oninput="updateSingleCandidate()" placeholder="Omear" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200 outline-none">
-                        </div>
-                    </div>
-
-                    <!-- Candidates Preview List -->
-                    <div class="max-h-[220px] overflow-y-auto custom-scroll border border-slate-800 rounded-xl bg-slate-950">
-                        <table class="w-full text-left text-xs">
-                            <tbody id="cand-tbody" class="divide-y divide-slate-800/50 text-slate-300">
-                                <tr><td class="p-4 text-center text-slate-500 text-xs">Select job or paste number above.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800">
-                    <button onclick="toggleSelectAll(true)" class="hover:text-teal-400">Select All</button>
-                    <button onclick="toggleSelectAll(false)" class="hover:text-red-400">Deselect</button>
-                </div>
-            </section>
-
-            <!-- STEP 2: WHAT TO SEND (4 Columns) -->
-            <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                        <div class="flex items-center gap-1.5">
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                                <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center text-[11px] font-black">2</span>
-                                Message & AI Copy
-                            </h2>
-                            <span id="step2-health-badge" class="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-purple-950/80 text-purple-300 border border-purple-800 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
-                                <span id="step2-health-text">AI Ready</span>
-                            </span>
-                        </div>
-                        <span id="char-count" class="text-xs font-mono text-slate-400">0c (1 Cr)</span>
-                    </div>
-
-                    <!-- Model Selector Dropdown & Cloud Template -->
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between gap-1">
-                            <label class="text-[11px] text-purple-300 font-semibold flex items-center gap-1">
-                                <span class="material-symbols-outlined text-xs">psychology</span> Select AI Model:
-                            </label>
-                            <button onclick="loadAvailableAiModels()" class="text-[10px] text-slate-400 hover:text-purple-300 flex items-center gap-0.5">
-                                <span class="material-symbols-outlined text-[11px]">refresh</span> Reload
-                            </button>
-                        </div>
-                        <select id="ai-model-select" onchange="persistSelectedModel()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-purple-300 font-semibold outline-none focus:border-purple-500">
-                            <option value="">Loading AI models...</option>
-                        </select>
-
-                        <select id="template-select" onchange="applySavedTemplate()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
-                            <option value="">-- Or Select Saved Cloud Template --</option>
-                        </select>
-                    </div>
-
-                    <!-- AI Prompt Input -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between text-[11px] text-slate-400">
-                            <span>AI Prompt (Hindi / English):</span>
-                            <button onclick="generateAiDraft()" id="btn-generate-ai" class="text-purple-400 font-bold hover:underline flex items-center gap-0.5">
-                                <span class="material-symbols-outlined text-xs">bolt</span> Generate
-                            </button>
-                        </div>
-                        <input type="text" id="ai-prompt" name="ai_custom_prompt" autocomplete="off" autocorrect="off" spellcheck="false" oninput="persistPrompt()" placeholder="e.g. Urgent interview for {role} in {location}..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
-                    </div>
-
-                    <!-- Live Editable SMS Textarea -->
+            <!-- STEP 1: TARGET AUDIENCE (FULL VIEW) -->
+            <section id="view-step1" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-slate-800/80 gap-3">
                     <div>
-                        <textarea id="sms-body" rows="3" name="sms_content_body" autocomplete="off" autocorrect="off" spellcheck="false" oninput="updatePreview(); persistTemplateBody();" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed" placeholder="Enter SMS text or use tags {name}, {role}, {location}..."></textarea>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-teal-400 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-teal-400 text-lg">group</span> Target Audience Selection
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Select candidates from live job applicants, global database search, or custom CSV paste.</p>
                     </div>
-
-                    <!-- Live Bubble Preview -->
-                    <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl text-xs space-y-1">
-                        <div class="text-[10px] uppercase font-bold text-slate-500">Live Bubble Preview:</div>
-                        <p id="sample-preview" class="text-slate-300 italic text-[11px]">"Sample preview will appear here..."</p>
+                    <div class="flex items-center gap-2">
+                        <span id="step1-dedup-badge" class="hidden px-2.5 py-1 rounded-xl text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80 flex items-center gap-1">
+                            <span>⚠️</span> <span id="step1-dedup-count">0 Duplicates Skipped</span>
+                        </span>
+                        <div class="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono text-teal-300 font-bold">
+                            <span id="cand-count">0</span> Candidates Selected
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800">
-                    <div class="flex gap-2">
-                        <button onclick="insertTag('{name}')" class="text-teal-400 font-mono">{name}</button>
-                        <button onclick="insertTag('{role}')" class="text-teal-400 font-mono">{role}</button>
-                        <button onclick="insertTag('{location}')" class="text-teal-400 font-mono">{location}</button>
+                <!-- Source Selector Sub-Tabs -->
+                <div class="grid grid-cols-4 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-semibold max-w-md">
+                    <button onclick="switchSource('jobs')" id="tab-jobs" class="py-2 font-bold rounded-xl text-slate-200 bg-slate-800 shadow text-center transition">Live Jobs</button>
+                    <button onclick="switchSource('search')" id="tab-search" class="py-2 font-bold rounded-xl text-slate-400 hover:text-slate-200 text-center transition">DB Search</button>
+                    <button onclick="switchSource('import')" id="tab-import" class="py-2 font-bold rounded-xl text-slate-400 hover:text-slate-200 text-center transition">CSV / Paste</button>
+                    <button onclick="switchSource('single')" id="tab-single" class="py-2 font-bold rounded-xl text-slate-400 hover:text-slate-200 text-center transition">Single Test</button>
+                </div>
+
+                <!-- Source 1: Active Job Selector -->
+                <div id="section-jobs" class="space-y-2">
+                    <select id="job-select" onchange="loadJobApplicants()" class="w-full max-w-xl bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-xs text-slate-200 focus:border-teal-500 outline-none">
+                        <option value="">Loading live jobs...</option>
+                    </select>
+                </div>
+
+                <!-- Source 2: Global Candidate Search -->
+                <div id="section-search" class="space-y-2 hidden max-w-2xl">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <select id="filter-role" onchange="searchGlobalCandidates()" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-2.5 text-xs text-slate-200 outline-none">
+                            <option value="">-- All Roles --</option>
+                        </select>
+                        <input type="text" id="filter-city" list="city-list" placeholder="City (e.g. Ahmedabad)" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-2.5 text-xs text-slate-200 outline-none">
+                        <datalist id="city-list"></datalist>
                     </div>
-                    <button onclick="openSaveTemplateModal()" class="text-cyan-400 font-bold hover:underline">Save to Cloud</button>
+                    <button onclick="searchGlobalCandidates()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-xl text-xs font-semibold">Search DB</button>
+                </div>
+
+                <!-- Source 3: CSV Import / Paste -->
+                <div id="section-import" class="space-y-2 hidden max-w-2xl">
+                    <textarea id="import-paste-box" rows="3" oninput="parseCustomInput()" placeholder="9099876985, Omear, Candidate&#10;9898011223, Rahul, Sales" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs font-mono text-slate-200 outline-none"></textarea>
+                </div>
+
+                <!-- Source 4: Single Mobile Number Test -->
+                <div id="section-single" class="space-y-2 hidden max-w-lg">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="single-phone" oninput="updateSingleCandidate()" placeholder="9099876985" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-2.5 text-xs text-slate-200 font-mono outline-none">
+                        <input type="text" id="single-name" oninput="updateSingleCandidate()" placeholder="Omear" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-2.5 text-xs text-slate-200 outline-none">
+                    </div>
+                </div>
+
+                <!-- Candidate Table with 10-Row Pagination -->
+                <div class="border border-slate-800 rounded-2xl bg-slate-950/80 overflow-hidden shadow-inner">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-mono border-b border-slate-800">
+                            <tr>
+                                <th class="p-3 w-10 text-center"><input type="checkbox" id="master-checkbox" onchange="toggleSelectCurrentPage(this.checked)"></th>
+                                <th class="p-3">Candidate Name</th>
+                                <th class="p-3">Phone Number</th>
+                                <th class="p-3">Role / Designation</th>
+                                <th class="p-3 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cand-tbody" class="divide-y divide-slate-800/40 text-slate-300">
+                            <tr><td colspan="5" class="p-6 text-center text-slate-500 text-xs">Select a live job or paste numbers above.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 10-Row Pagination Toolbar -->
+                <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3 pt-2">
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleSelectAllGlobal(true)" class="hover:text-teal-400 font-semibold">Select All in DB</button>
+                        <span>•</span>
+                        <button onclick="toggleSelectAllGlobal(false)" class="hover:text-red-400 font-semibold">Deselect All</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="page-info-text" class="text-slate-400 font-mono text-[11px]">Page 1 of 1</span>
+                        <button onclick="prevCandPage()" id="btn-prev-page" class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">‹ Prev</button>
+                        <button onclick="nextCandPage()" id="btn-next-page" class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">Next ›</button>
+                    </div>
                 </div>
             </section>
 
-            <!-- STEP 3: SMART DISPATCH STATION (4 Columns) -->
-            <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg flex flex-col justify-between">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                        <div class="flex items-center gap-1.5">
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[11px] font-black">3</span>
-                                Dispatch Station
-                            </h2>
-                            <span id="step3-health-badge" class="px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                <span id="step3-health-text">SIM Ready</span>
-                            </span>
-                        </div>
-                        <span class="text-xs font-bold text-emerald-400 font-mono">SIM Physical Gateway</span>
+            <!-- STEP 2: AI COPY STUDIO (FULL VIEW WITH SMARTPHONE MOCKUP) -->
+            <section id="view-step2" class="hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-400 text-lg">psychology</span> AI Copy Studio & Template Engine
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">3-part modular SMS with dynamic tags, 3-way length switcher, and real-time simulator.</p>
                     </div>
-
-                    <!-- Hardware Pre-Flight Summary Card -->
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-400">Target Device:</span>
-                            <span class="font-bold text-slate-200 font-mono" id="disp-device-name">Samsung SM-G781B</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-400">SIM Carrier:</span>
-                            <span class="font-bold text-teal-400" id="disp-carrier">Jio True5G</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-400">Screen Automation:</span>
-                            <span class="font-bold text-emerald-400" id="disp-screen-state">Unlocked & Ready</span>
-                        </div>
-                    </div>
-
-                    <!-- Big Smart Dispatch Trigger -->
-                    <div class="space-y-2 pt-1">
-                        <button onclick="startDispatch(0)" id="btn-send-all" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
-                            <span class="material-symbols-outlined text-lg">rocket_launch</span>
-                            <span>SEND ALL SELECTED (<span id="btn-send-count">0</span>)</span>
-                        </button>
-                        
-                        <button onclick="startDispatch(1)" id="btn-test-run" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-sm">science</span>
-                            <span>Test Single Message (1 SMS)</span>
-                        </button>
-                    </div>
-
-                    <!-- Progress Bar & Live Execution Log -->
-                    <div id="progress-container" class="space-y-2 hidden pt-2">
-                        <div class="flex items-center justify-between text-xs font-bold">
-                            <span id="progress-label" class="text-slate-300">Dispatching...</span>
-                            <span id="progress-stats" class="text-teal-400 font-mono">0 / 0</span>
-                        </div>
-                        <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
-                            <div id="progress-bar" class="bg-gradient-to-r from-teal-500 to-emerald-400 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                        <div id="live-log" class="text-[11px] font-mono text-slate-400 truncate">Ready.</div>
-                    </div>
+                    <span id="char-count" class="text-xs font-mono px-3 py-1 bg-slate-950 border border-slate-800 rounded-xl text-purple-300 font-bold">0c (1 Cr)</span>
                 </div>
 
-                <div class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800">
-                    Auto-calibrated dual coordinates: 1080x2400 (X: 982, Y: 2256 / 1344)
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Left Column: AI Prompt & Editor (7 cols) -->
+                    <div class="lg:col-span-7 space-y-4">
+                        
+                        <!-- 3-Way Length Mode Switcher -->
+                        <div class="flex items-center justify-between bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
+                            <span class="text-xs text-slate-400 font-bold pl-2">SMS Length Mode:</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="setLengthMode('short')" id="btn-len-short" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 transition">⚡ Short (1 Cr)</button>
+                                <button onclick="setLengthMode('medium')" id="btn-len-medium" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition">📄 Medium (2 Cr)</button>
+                                <button onclick="setLengthMode('detailed')" id="btn-len-detailed" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition">📜 Detailed (3 Cr)</button>
+                            </div>
+                        </div>
+
+                        <!-- AI Model & Saved Cloud Templates -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[11px] text-slate-400 font-semibold">Select AI Model:</label>
+                                <select id="ai-model-select" onchange="persistSelectedModel()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-purple-300 font-semibold outline-none focus:border-purple-500">
+                                    <option value="">Loading AI models...</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[11px] text-slate-400 font-semibold">Cloud Templates:</label>
+                                    <button onclick="deleteCurrentCloudTemplate()" id="btn-delete-template" title="Delete Template" class="hidden text-slate-500 hover:text-red-400 text-[11px] flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-xs">delete</span> Delete
+                                    </button>
+                                </div>
+                                <select id="template-select" onchange="applySavedTemplate()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-purple-500">
+                                    <option value="">-- Saved Cloud Templates --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Free-Form AI Prompt Box -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-xs text-slate-300">
+                                <span class="font-bold flex items-center gap-1"><span class="text-purple-400">✨</span> Describe Your Requirement:</span>
+                                <button onclick="generateAiDraft()" id="btn-generate-ai" class="px-3 py-1 bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-500 hover:to-indigo-400 text-white rounded-xl font-bold flex items-center gap-1 shadow-lg shadow-purple-500/20 transition">
+                                    <span class="material-symbols-outlined text-xs">bolt</span> Generate Message
+                                </button>
+                            </div>
+                            <textarea id="ai-prompt" name="ai_custom_prompt" rows="2" autocomplete="off" autocorrect="off" spellcheck="false" oninput="persistPrompt()" placeholder="e.g. Invite for Accountant interview tomorrow at Ahmedabad office. Call HR: +91 9898011223..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-200 outline-none focus:border-purple-500 leading-relaxed"></textarea>
+                        </div>
+
+                        <!-- Editable SMS Textarea -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between text-xs text-slate-400">
+                                <span class="font-bold text-slate-300">SMS Text (3-Part Structured Body):</span>
+                                <span id="url-validator-badge" class="px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-950 border border-slate-800 text-slate-400">⚪ No Link</span>
+                            </div>
+                            <textarea id="sms-body" rows="4" name="sms_content_body" autocomplete="off" autocorrect="off" spellcheck="false" oninput="updatePreview(); persistTemplateBody();" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs font-mono text-emerald-400 focus:border-teal-500 outline-none leading-relaxed" placeholder="Dear {name}, JobRecruitment invitation for {role} in {location}. Apply: https://jobrecruitment.in/jobs | Call HR: +91 9898011223"></textarea>
+                        </div>
+
+                        <!-- Tag Insert Bar & Save to Cloud -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-400 text-[11px]">Insert Tag:</span>
+                                <button onclick="insertTag('{name}')" class="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-teal-400 font-mono rounded-xl">{name}</button>
+                                <button onclick="insertTag('{role}')" class="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-teal-400 font-mono rounded-xl">{role}</button>
+                                <button onclick="insertTag('{location}')" class="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-teal-400 font-mono rounded-xl">{location}</button>
+                            </div>
+                            <button onclick="openSaveTemplateModal()" class="px-3 py-1.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 font-bold rounded-xl flex items-center gap-1 transition">
+                                <span class="material-symbols-outlined text-xs">cloud_upload</span> Save to Cloud
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Realistic Smartphone SVG Simulator (5 cols) -->
+                    <div class="lg:col-span-5 flex flex-col items-center justify-center">
+                        <div class="w-[280px] bg-slate-950 border-4 border-slate-800 rounded-[40px] p-3 shadow-2xl relative space-y-2">
+                            <!-- Speaker & Camera Notch -->
+                            <div class="w-24 h-4 bg-slate-900 rounded-full mx-auto flex items-center justify-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-slate-950"></div>
+                                <div class="w-8 h-1 rounded-full bg-slate-800"></div>
+                            </div>
+                            <!-- Phone Status Bar -->
+                            <div class="flex items-center justify-between px-2 text-[10px] text-slate-400 font-mono pt-1">
+                                <span>9:41 AM</span>
+                                <div class="flex items-center gap-1 text-[11px]">
+                                    <span>5G</span>
+                                    <span>📶</span>
+                                    <span>🔋</span>
+                                </div>
+                            </div>
+                            <!-- App Header -->
+                            <div class="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-2.5 text-center space-y-0.5">
+                                <div class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-300 font-bold mx-auto flex items-center justify-center text-xs">JR</div>
+                                <div class="font-bold text-slate-200 text-xs">JobRecruitment Verified</div>
+                                <div class="text-[9px] text-teal-400 font-mono">SMS Service Gateway</div>
+                            </div>
+                            <!-- Chat Bubble Screen Area -->
+                            <div class="h-[240px] bg-slate-900/40 rounded-2xl p-2.5 overflow-y-auto flex flex-col justify-end space-y-2 custom-scroll">
+                                <div class="bg-teal-600 text-white p-3 rounded-2xl rounded-tr-none text-[11px] leading-relaxed shadow-lg max-w-[95%] self-end">
+                                    <p id="phone-bubble-text">"Sample candidate preview will appear here..."</p>
+                                    <div class="text-[9px] text-teal-200 text-right mt-1 font-mono">Now • SIM 1</div>
+                                </div>
+                            </div>
+                            <!-- Home Indicator Bar -->
+                            <div class="w-20 h-1 bg-slate-700 rounded-full mx-auto my-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 3: DISPATCH STATION (FULL VIEW) -->
+            <section id="view-step3" class="hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-emerald-400 text-lg">send</span> Physical SIM Dispatch Station
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Live hardware execution with 4-8s telecom jitter delay and instant emergency abort.</p>
+                    </div>
+                    <span id="step3-health-badge" class="px-3 py-1 rounded-xl text-xs font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="step3-health-text">SIM Ready</span>
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Left: Control & Telemetry (6 cols) -->
+                    <div class="lg:col-span-6 space-y-4">
+                        <!-- Hardware Pre-Flight Card -->
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Target Device:</span>
+                                <span class="font-bold text-slate-200 font-mono" id="disp-device-name">Samsung SM-G781B</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">SIM Carrier & Signal:</span>
+                                <span class="font-bold text-teal-400" id="disp-carrier">Jio True5G (Signal: 4/4)</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Anti-Spam Pacing:</span>
+                                <span class="font-bold text-emerald-400">4.0s - 8.0s Dynamic Jitter Delay</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons: Pre-Flight Test Run, Send All, Emergency Stop -->
+                        <div class="space-y-2">
+                            <button onclick="startSingleTestRun()" id="btn-test-run" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-800/80 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition">
+                                <span class="material-symbols-outlined text-sm">science</span> ⚡ Test Run (Send 1 Candidate Only)
+                            </button>
+                            <button onclick="startLiveDispatch()" id="btn-start-dispatch" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 rounded-2xl text-sm font-black flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 transition">
+                                <span class="material-symbols-outlined text-lg">send</span>
+                                <span id="btn-send-main-text">⚡ Dispatch to 0 Candidates (0 Credits)</span>
+                            </button>
+                            <button onclick="stopLiveDispatch()" id="btn-stop-dispatch" class="hidden w-full py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition animate-pulse">
+                                <span class="material-symbols-outlined text-sm">stop_circle</span> 🛑 Emergency Stop / Abort Dispatch
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Live Color-Coded Log Terminal (6 cols) -->
+                    <div class="lg:col-span-6 space-y-2">
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span class="font-mono">Live Dispatch Stream:</span>
+                            <button onclick="downloadDispatchReportCSV()" id="btn-download-csv" class="hidden text-teal-400 font-bold hover:underline flex items-center gap-0.5">
+                                <span class="material-symbols-outlined text-xs">download</span> Download CSV Report
+                            </button>
+                        </div>
+                        <div id="live-log-box" class="h-[260px] bg-slate-950 border border-slate-800 rounded-2xl p-3 font-mono text-[11px] overflow-y-auto space-y-1 custom-scroll">
+                            <div class="text-slate-500 italic">Ready to dispatch...</div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
+
+        <!-- 4. GLOBAL STICKY BOTTOM WORKFLOW BAR -->
+        <div id="global-sticky-bar" class="fixed bottom-3 left-4 right-4 max-w-7xl mx-auto bg-slate-950/90 border border-slate-800/90 rounded-2xl px-5 py-3 backdrop-blur-xl shadow-2xl flex items-center justify-between z-40">
+            <div class="flex items-center gap-4 text-xs font-mono">
+                <div class="flex items-center gap-1.5 text-slate-300">
+                    <span class="text-teal-400 font-bold">👥</span> <span id="sticky-cand-count" class="font-bold text-teal-300">0</span> Selected
+                </div>
+                <span class="text-slate-700">|</span>
+                <div class="flex items-center gap-1.5 text-slate-300">
+                    <span class="text-purple-400 font-bold">💳</span> <span id="sticky-credit-count" class="font-bold text-purple-300">0</span> Total Credits
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="advanceWorkflowStep()" id="btn-sticky-next" class="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-teal-500/20 transition">
+                    <span>Next: AI Copy</span> <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ========================================================================= -->
@@ -1435,10 +1546,192 @@
             updateSelectedCount();
         }
 
+        // State Variables for Pagination & Workflow
+        let candCurrentPage = 1;
+        const candPageSize = 10;
+        let selectedCandidateKeys = new Set();
+        let currentWorkflowTab = 'step1';
+        let currentLengthMode = 'short';
+        let lastCompletedReport = [];
+        let lastGeneratedVariations = null;
+
+        function switchWorkflowTab(tabId) {
+            currentWorkflowTab = tabId;
+            ['step1', 'step2', 'step3'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const tab = document.getElementById(`w-tab-${t}`);
+                if (view) view.classList.toggle('hidden', t !== tabId);
+                if (tab) {
+                    if (t === tabId) {
+                        tab.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-teal-500/10 text-teal-300 border border-teal-500/30 transition shadow-sm';
+                    } else {
+                        tab.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-slate-400 hover:text-slate-200 transition';
+                    }
+                }
+            });
+            updateStickyWorkflowBar();
+        }
+
+        function advanceWorkflowStep() {
+            if (currentWorkflowTab === 'step1') switchWorkflowTab('step2');
+            else if (currentWorkflowTab === 'step2') switchWorkflowTab('step3');
+            else switchWorkflowTab('step1');
+        }
+
+        function updateStickyWorkflowBar() {
+            const count = selectedCandidateKeys.size;
+            const body = document.getElementById('sms-body') ? document.getElementById('sms-body').value : '';
+            const creditsPerSms = Math.max(1, Math.ceil((body.length || 1) / 160));
+            const totalCredits = count * creditsPerSms;
+
+            if (document.getElementById('sticky-cand-count')) document.getElementById('sticky-cand-count').textContent = count;
+            if (document.getElementById('sticky-credit-count')) document.getElementById('sticky-credit-count').textContent = totalCredits;
+            if (document.getElementById('tab-cand-badge')) document.getElementById('tab-cand-badge').textContent = count;
+            if (document.getElementById('btn-send-main-text')) {
+                document.getElementById('btn-send-main-text').textContent = `⚡ Dispatch to ${count} Candidates (${totalCredits} Credits)`;
+            }
+
+            const btnNext = document.getElementById('btn-sticky-next');
+            if (btnNext) {
+                if (currentWorkflowTab === 'step1') {
+                    btnNext.innerHTML = '<span>Next: AI Copy</span> <span class="material-symbols-outlined text-sm">arrow_forward</span>';
+                } else if (currentWorkflowTab === 'step2') {
+                    btnNext.innerHTML = '<span>Next: Dispatch</span> <span class="material-symbols-outlined text-sm">rocket_launch</span>';
+                } else {
+                    btnNext.innerHTML = '<span>Review Audience</span> <span class="material-symbols-outlined text-sm">arrow_back</span>';
+                }
+            }
+        }
+
+        function setLengthMode(mode) {
+            currentLengthMode = mode;
+            ['short', 'medium', 'detailed'].forEach(m => {
+                const btn = document.getElementById(`btn-len-${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 transition';
+                    } else {
+                        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition';
+                    }
+                }
+            });
+            if (lastGeneratedVariations && lastGeneratedVariations[mode]) {
+                document.getElementById('sms-body').value = lastGeneratedVariations[mode];
+                updatePreview();
+                persistTemplateBody();
+            }
+            showToast(`Switched to: ${mode.toUpperCase()} Variation`);
+        }
+
+        function renderCandidates(cands) {
+            const tbody = document.getElementById('cand-tbody');
+            tbody.innerHTML = '';
+            if (!cands || cands.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500 text-xs">No candidates found.</td></tr>';
+                if (document.getElementById('page-info-text')) document.getElementById('page-info-text').textContent = 'Page 0 of 0';
+                updateSelectedCount();
+                return;
+            }
+
+            // Deduplication Check
+            const seenPhones = new Set();
+            let duplicateCount = 0;
+            cands.forEach(c => {
+                const p = (c.phone || '').replace(/[^0-9]/g, '').slice(-10);
+                if (seenPhones.has(p)) duplicateCount++;
+                else seenPhones.add(p);
+            });
+
+            const dedupBadge = document.getElementById('step1-dedup-badge');
+            if (dedupBadge) {
+                if (duplicateCount > 0) {
+                    dedupBadge.classList.remove('hidden');
+                    document.getElementById('step1-dedup-count').textContent = `${duplicateCount} Duplicates Skipped`;
+                } else {
+                    dedupBadge.classList.add('hidden');
+                }
+            }
+
+            const totalPages = Math.ceil(cands.length / candPageSize) || 1;
+            if (candCurrentPage > totalPages) candCurrentPage = totalPages;
+            if (candCurrentPage < 1) candCurrentPage = 1;
+
+            const startIdx = (candCurrentPage - 1) * candPageSize;
+            const pageCands = cands.slice(startIdx, startIdx + candPageSize);
+
+            pageCands.forEach((c, idx) => {
+                const globalIdx = startIdx + idx;
+                const candKey = `${c.phone}_${c.name}`;
+                const isChecked = selectedCandidateKeys.has(candKey);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/60 transition';
+                tr.innerHTML = `
+                    <td class="p-3 text-center w-10">
+                        <input type="checkbox" class="cand-checkbox" data-key="${escapeHtml(candKey)}" ${isChecked ? 'checked' : ''} onchange="onCandidateCheckboxToggle('${escapeHtml(candKey)}', this.checked)">
+                    </td>
+                    <td class="p-3 font-semibold text-slate-200">${escapeHtml(c.name || 'Candidate')}</td>
+                    <td class="p-3 font-mono text-teal-400">+91-${escapeHtml(c.phone || '')}</td>
+                    <td class="p-3 text-slate-400">${escapeHtml(c.role || activeJobContext.role || 'Candidate')}</td>
+                    <td class="p-3 text-right font-mono text-[10px] text-teal-400">Verified</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (document.getElementById('page-info-text')) {
+                document.getElementById('page-info-text').textContent = `Page ${candCurrentPage} of ${totalPages} (${cands.length} total)`;
+            }
+            if (document.getElementById('btn-prev-page')) document.getElementById('btn-prev-page').disabled = (candCurrentPage <= 1);
+            if (document.getElementById('btn-next-page')) document.getElementById('btn-next-page').disabled = (candCurrentPage >= totalPages);
+
+            updateSelectedCount();
+        }
+
+        function prevCandPage() {
+            if (candCurrentPage > 1) {
+                candCurrentPage--;
+                renderCandidates(currentCandidates);
+            }
+        }
+
+        function nextCandPage() {
+            const totalPages = Math.ceil(currentCandidates.length / candPageSize);
+            if (candCurrentPage < totalPages) {
+                candCurrentPage++;
+                renderCandidates(currentCandidates);
+            }
+        }
+
+        function onCandidateCheckboxToggle(key, isChecked) {
+            if (isChecked) selectedCandidateKeys.add(key);
+            else selectedCandidateKeys.delete(key);
+            updateSelectedCount();
+        }
+
+        function toggleSelectCurrentPage(checked) {
+            const startIdx = (candCurrentPage - 1) * candPageSize;
+            const pageCands = currentCandidates.slice(startIdx, startIdx + candPageSize);
+            pageCands.forEach(c => {
+                const key = `${c.phone}_${c.name}`;
+                if (checked) selectedCandidateKeys.add(key);
+                else selectedCandidateKeys.delete(key);
+            });
+            renderCandidates(currentCandidates);
+        }
+
+        function toggleSelectAllGlobal(checked) {
+            if (checked) {
+                currentCandidates.forEach(c => selectedCandidateKeys.add(`${c.phone}_${c.name}`));
+            } else {
+                selectedCandidateKeys.clear();
+            }
+            renderCandidates(currentCandidates);
+        }
+
         function updateSelectedCount() {
-            const checked = document.querySelectorAll('.cand-checkbox:checked').length;
-            document.getElementById('cand-count').textContent = checked;
-            document.getElementById('btn-send-count').textContent = checked;
+            const count = selectedCandidateKeys.size;
+            if (document.getElementById('cand-count')) document.getElementById('cand-count').textContent = count;
+            updateStickyWorkflowBar();
         }
 
         // --- MESSAGE & AI CONTROLLER ---
@@ -1481,11 +1774,11 @@
                 const res = await fetch(`/api/templates?user_id=${encodeURIComponent(uid)}`);
                 const data = await res.json();
                 savedTemplatesList = data.templates || [];
-                sel.innerHTML = '<option value="">-- Select Saved Cloud Template --</option>';
+                sel.innerHTML = '<option value="">-- Saved Cloud Templates --</option>';
                 savedTemplatesList.forEach((t, i) => {
                     const opt = document.createElement('option');
                     opt.value = i;
-                    opt.textContent = `${t.title} (${t.char_count}c)${t.is_mine ? ' [Private]' : ''}`;
+                    opt.textContent = `${t.title} (${t.char_count}c)${t.is_mine ? ' [Custom]' : ''}`;
                     sel.appendChild(opt);
                 });
             } catch(e) {}
@@ -1493,32 +1786,68 @@
 
         function applySavedTemplate() {
             const idx = document.getElementById('template-select').value;
-            if (idx === '') return;
+            const delBtn = document.getElementById('btn-delete-template');
+            if (idx === '') {
+                if (delBtn) delBtn.classList.add('hidden');
+                return;
+            }
             const t = savedTemplatesList[parseInt(idx)];
             if (t) {
                 document.getElementById('sms-body').value = t.body;
                 updatePreview();
                 persistTemplateBody();
                 showToast(`Applied "${t.title}"!`);
+                if (delBtn) {
+                    if (t.is_mine) delBtn.classList.remove('hidden');
+                    else delBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        async function deleteCurrentCloudTemplate() {
+            const idx = document.getElementById('template-select').value;
+            if (idx === '') return;
+            const t = savedTemplatesList[parseInt(idx)];
+            if (!t || !t.id) return;
+            if (!confirm(`Delete custom template "${t.title}"?`)) return;
+
+            try {
+                const uid = currentUser ? currentUser.id : '';
+                const res = await fetch('/api/templates/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template_id: t.id, user_id: uid })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast("Template deleted.");
+                    loadCloudTemplates();
+                    document.getElementById('btn-delete-template').classList.add('hidden');
+                } else {
+                    showToast(data.message || "Failed to delete.", true);
+                }
+            } catch(e) {
+                showToast("Delete request failed.", true);
             }
         }
 
         function persistPrompt() {
             try {
                 const p = document.getElementById('ai-prompt').value;
-                sessionStorage.setItem('jr_saved_prompt', p);
+                localStorage.setItem('jr_saved_prompt', p);
             } catch(e) {}
         }
 
         function persistTemplateBody() {
             try {
                 const b = document.getElementById('sms-body').value;
-                sessionStorage.setItem('jr_saved_body', b);
+                localStorage.setItem('jr_saved_body', b);
             } catch(e) {}
         }
 
         function insertTag(tag) {
-            document.getElementById('sms-body').value += tag;
+            const el = document.getElementById('sms-body');
+            el.value += tag;
             updatePreview();
             persistTemplateBody();
         }
@@ -1529,19 +1858,38 @@
             const credits = Math.max(1, Math.ceil(len / 160));
             document.getElementById('char-count').textContent = `${len}c (${credits} Cr)`;
 
+            // URL Validator Badge
+            const urlBadge = document.getElementById('url-validator-badge');
+            if (urlBadge) {
+                const match = body.match(/https?:\/\/[^\s]+/);
+                if (match) {
+                    urlBadge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-mono bg-emerald-950/80 border border-emerald-800 text-emerald-300';
+                    urlBadge.textContent = '🟢 Valid Link';
+                } else if (body.includes('jobrecruitment.in') || body.includes('.in') || body.includes('.com')) {
+                    urlBadge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-mono bg-amber-950/80 border border-amber-800 text-amber-300';
+                    urlBadge.textContent = '🟡 Missing https://';
+                } else {
+                    urlBadge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-mono bg-slate-950 border border-slate-800 text-slate-400';
+                    urlBadge.textContent = '⚪ No Link';
+                }
+            }
+
             const sampleName = (currentCandidates[0] && currentCandidates[0].name) || 'Omear';
-            const rendered = body
+            let rendered = body
                 .replace(/{name}/g, sampleName)
                 .replace(/{role}/g, activeJobContext.role || 'Candidate')
                 .replace(/{location}/g, activeJobContext.location || 'Ahmedabad')
                 .replace(/{company}/g, activeJobContext.company || 'Job Recruitment');
             
-            document.getElementById('sample-preview').textContent = rendered ? `"${rendered}"` : '"Sample preview will appear here..."';
+            if (document.getElementById('phone-bubble-text')) {
+                document.getElementById('phone-bubble-text').textContent = rendered ? `"${rendered}"` : '"Sample candidate preview will appear here..."';
+            }
+            updateStickyWorkflowBar();
         }
 
         async function generateAiDraft() {
             const prompt = document.getElementById('ai-prompt').value.trim();
-            if (!prompt) { showToast("Please enter an AI prompt.", true); return; }
+            if (!prompt) { showToast("Please describe your message requirement.", true); return; }
             persistPrompt();
             const model_id = document.getElementById('ai-model-select').value;
             const groq = getCookie('jr_groq_key') || (document.getElementById('cfg-groq-key') ? document.getElementById('cfg-groq-key').value.trim() : '');
@@ -1561,6 +1909,7 @@
                         location: activeJobContext.location,
                         company: activeJobContext.company,
                         model_id,
+                        length_mode: currentLengthMode,
                         groq_key: groq,
                         gemini_key: gemini,
                         nvidia_key: nvidia,
@@ -1568,36 +1917,60 @@
                     })
                 });
                 const data = await res.json();
+                if (data.variations) {
+                    lastGeneratedVariations = data.variations;
+                }
                 if (data.template) {
                     document.getElementById('sms-body').value = data.template;
                     updatePreview();
                     persistTemplateBody();
-                    showToast("AI Template Ready!");
+                    showToast("3 AI Variations Ready!");
                 }
             } catch(e) { showToast("AI generation failed.", true); }
-            finally { btn.innerHTML = '<span class="material-symbols-outlined text-xs">bolt</span> Generate'; }
+            finally { btn.innerHTML = '<span class="material-symbols-outlined text-xs">bolt</span> Generate Message'; }
         }
 
         // --- DISPATCH RUNNER ---
-        async function startDispatch(limit = 0) {
+        async function startSingleTestRun() {
+            const selected = Array.from(selectedCandidateKeys).map(k => {
+                const [phone, name] = k.split('_');
+                return { phone, name, role: activeJobContext.role || 'Candidate' };
+            });
+            if (selected.length === 0) {
+                showToast("Please select at least 1 candidate for test run.", true);
+                return;
+            }
+            executeDispatchBatch(selected.slice(0, 1), "Test Run (1 SMS)");
+        }
+
+        async function startLiveDispatch() {
+            const selected = Array.from(selectedCandidateKeys).map(k => {
+                const [phone, name] = k.split('_');
+                return { phone, name, role: activeJobContext.role || 'Candidate' };
+            });
+            if (selected.length === 0) {
+                showToast("No candidates selected.", true);
+                return;
+            }
+            executeDispatchBatch(selected, `Dispatch to ${selected.length} Candidates`);
+        }
+
+        async function executeDispatchBatch(selected, title) {
             const template = document.getElementById('sms-body').value.trim();
             if (!template) { showToast("Please enter an SMS template.", true); return; }
 
-            const checked = Array.from(document.querySelectorAll('.cand-checkbox:checked'));
-            if (checked.length === 0) { showToast("No candidates selected.", true); return; }
+            if (!confirm(`Confirm ${title} via connected physical SIM?`)) return;
 
-            let selected = checked.map(cb => currentCandidates[parseInt(cb.dataset.idx)]).filter(Boolean);
-            if (limit > 0) selected = selected.slice(0, limit);
-
-            if (!confirm(`Dispatch ${selected.length} SMS via phone SIM?`)) return;
-
-            document.getElementById('btn-send-all').disabled = true;
+            document.getElementById('btn-start-dispatch').disabled = true;
             document.getElementById('btn-test-run').disabled = true;
-            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('btn-stop-dispatch').classList.remove('hidden');
+
+            const logBox = document.getElementById('live-log-box');
+            logBox.innerHTML = '<div class="text-teal-400">⚡ Initializing hardware dispatch queue...</div>';
 
             try {
                 const pCode = currentUser ? (currentUser.pairing_code || `JR-${currentUser.id}`) : "JR-DEFAULT";
-                await fetch('/api/start_dispatch', {
+                const res = await fetch('/api/start_dispatch', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1611,12 +1984,53 @@
                         pairing_code: pCode
                     })
                 });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast(data.message || "Dispatch error.", true);
+                    document.getElementById('btn-start-dispatch').disabled = false;
+                    document.getElementById('btn-test-run').disabled = false;
+                    document.getElementById('btn-stop-dispatch').classList.add('hidden');
+                    return;
+                }
                 pollDispatchProgress();
             } catch(e) {
-                showToast("Dispatch start error.", true);
-                document.getElementById('btn-send-all').disabled = false;
+                showToast("Failed to connect to dispatch service.", true);
+                document.getElementById('btn-start-dispatch').disabled = false;
                 document.getElementById('btn-test-run').disabled = false;
+                document.getElementById('btn-stop-dispatch').classList.add('hidden');
             }
+        }
+
+        async function stopLiveDispatch() {
+            try {
+                const pCode = currentUser ? (currentUser.pairing_code || `JR-${currentUser.id}`) : "JR-DEFAULT";
+                const res = await fetch('/api/stop_dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pairing_code: pCode })
+                });
+                const data = await res.json();
+                showToast(data.message || "Emergency stop signal sent.");
+            } catch(e) {
+                showToast("Failed to send stop signal.", true);
+            }
+        }
+
+        function playCompletionChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.15); // A5
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch(e) {}
         }
 
         async function pollDispatchProgress() {
@@ -1625,19 +2039,44 @@
                     const res = await fetch('/api/dispatch_status');
                     const data = await res.json();
                     
-                    const pct = data.total > 0 ? Math.round((data.current_index / data.total) * 100) : 0;
-                    document.getElementById('progress-bar').style.width = pct + '%';
-                    document.getElementById('progress-stats').textContent = `${data.current_index} / ${data.total}`;
-                    document.getElementById('live-log').textContent = data.last_log || 'Dispatching...';
+                    const logBox = document.getElementById('live-log-box');
+                    if (data.logs && data.logs.length > 0) {
+                        logBox.innerHTML = data.logs.map(l => {
+                            let color = 'text-slate-300';
+                            if (l.includes('SUCCESS') || l.includes('Sent')) color = 'text-emerald-400';
+                            if (l.includes('ERROR') || l.includes('Failed') || l.includes('Stop')) color = 'text-red-400';
+                            return `<div class="${color}">• ${escapeHtml(l)}</div>`;
+                        }).join('');
+                        logBox.scrollTop = logBox.scrollHeight;
+                    }
 
                     if (!data.is_running) {
                         clearInterval(interval);
-                        document.getElementById('btn-send-all').disabled = false;
+                        document.getElementById('btn-start-dispatch').disabled = false;
                         document.getElementById('btn-test-run').disabled = false;
+                        document.getElementById('btn-stop-dispatch').classList.add('hidden');
+                        document.getElementById('btn-download-csv').classList.remove('hidden');
+                        playCompletionChime();
                         showToast(`Campaign Complete! ${data.sent_count} sent.`);
                     }
                 } catch(e) {}
             }, 1200);
+        }
+
+        function downloadDispatchReportCSV() {
+            const logBox = document.getElementById('live-log-box');
+            const lines = logBox ? logBox.innerText.split('\n').filter(Boolean) : [];
+            let csvContent = "data:text/csv;charset=utf-8,Index,Log Content,Timestamp\n";
+            lines.forEach((l, idx) => {
+                csvContent += `${idx + 1},"${l.replace(/"/g, '""')}","${new Date().toISOString()}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Dispatch_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // --- SUPABASE LEDGER & SETTINGS ---
