@@ -64,7 +64,10 @@
                 </div>
 
                 <div class="space-y-1.5">
-                    <label class="text-slate-400 font-semibold">Password</label>
+                    <div class="flex items-center justify-between">
+                        <label class="text-slate-400 font-semibold">Password</label>
+                        <button type="button" id="link-forgot-pwd" onclick="openForgotPwdModal()" class="text-[11px] text-teal-400 hover:underline font-medium">Forgot Password?</button>
+                    </div>
                     <div class="relative">
                         <input type="password" id="gate-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pr-10 text-slate-200 outline-none focus:border-teal-500">
                         <button type="button" onclick="togglePasswordVisibility('gate-password', 'gate-pwd-eye')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-300 p-1 flex items-center justify-center">
@@ -640,6 +643,63 @@
         </div>
     </div>
 
+    <!-- FORGOT / RESET PASSWORD MODAL -->
+    <div id="modal-forgot-password" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2 text-teal-400 font-bold text-sm">
+                    <span class="material-symbols-outlined">lock_reset</span>
+                    <h3>Reset Account Password</h3>
+                </div>
+                <button onclick="closeModal('modal-forgot-password')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- STEP 1: REQUEST CODE -->
+            <div id="reset-step-1" class="space-y-3 text-xs">
+                <p class="text-slate-400">Enter your registered work email. We will generate a secure 15-minute verification token for your workspace.</p>
+                <div class="space-y-1.5">
+                    <label class="text-slate-400 font-semibold">Work Email</label>
+                    <input type="email" id="reset-email" placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                </div>
+                <button onclick="requestPasswordResetCode()" id="btn-request-reset" class="w-full py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">
+                    Send Verification Code
+                </button>
+            </div>
+
+            <!-- STEP 2: VERIFY CODE & SET NEW PASSWORD -->
+            <div id="reset-step-2" class="space-y-3 text-xs hidden">
+                <div class="p-3 bg-teal-950/60 border border-teal-800/80 rounded-xl text-[11px] text-teal-300 space-y-1">
+                    <div class="font-bold flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                        <span>Verification Code Generated!</span>
+                    </div>
+                    <p class="text-slate-300" id="reset-token-display">Your 1-time token is: <b class="font-mono text-teal-200 text-sm tracking-wider" id="reset-token-code">------</b></p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-slate-400 font-semibold">8-Character Reset Code</label>
+                    <input type="text" id="reset-input-token" placeholder="e.g. A9B2C3D4" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-teal-300 uppercase tracking-widest outline-none focus:border-teal-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-slate-400 font-semibold">New Password</label>
+                    <div class="relative">
+                        <input type="password" id="reset-new-pwd" placeholder="Minimum 4 characters" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 pr-10 text-slate-200 outline-none focus:border-teal-500">
+                        <button type="button" onclick="togglePasswordVisibility('reset-new-pwd', 'reset-pwd-eye')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-300 p-1 flex items-center justify-center">
+                            <span id="reset-pwd-eye" class="material-symbols-outlined text-base">visibility</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="submitPasswordReset()" id="btn-submit-reset" class="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl text-xs transition">
+                    Save New Password & Sign In
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- WI-FI DEBUGGING MODAL -->
     <div id="modal-wifi-pair" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
@@ -763,8 +823,80 @@
         function persistTemplateBody() { setCookie('jr_last_template', document.getElementById('sms-body').value); }
         function persistSelectedModel() { setCookie('jr_selected_model', document.getElementById('ai-model-select').value); }
 
-        // --- MANDATORY AUTH GATEWAY CONTROLLER ---
-        let currentGateMode = 'login';
+        function openForgotPwdModal() {
+            const currentEmail = document.getElementById('gate-email').value.trim();
+            if (currentEmail) document.getElementById('reset-email').value = currentEmail;
+            document.getElementById('reset-step-1').classList.remove('hidden');
+            document.getElementById('reset-step-2').classList.add('hidden');
+            openModal('modal-forgot-password');
+        }
+
+        async function requestPasswordResetCode() {
+            const email = document.getElementById('reset-email').value.trim();
+            if (!email) { showToast("Please enter your work email.", true); return; }
+            const btn = document.getElementById('btn-request-reset');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Generating Code...';
+            try {
+                const res = await fetch('/api/auth/forgot_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    document.getElementById('reset-step-1').classList.add('hidden');
+                    document.getElementById('reset-step-2').classList.remove('hidden');
+                    if (data.token) {
+                        document.getElementById('reset-token-code').textContent = data.token;
+                        document.getElementById('reset-input-token').value = data.token;
+                    }
+                    showToast(data.message || "Reset token ready!");
+                } else {
+                    showToast(data.message || "Could not generate reset code.", true);
+                }
+            } catch(e) {
+                showToast("Request error.", true);
+            } finally {
+                btn.innerHTML = 'Send Verification Code';
+            }
+        }
+
+        async function submitPasswordReset() {
+            const email = document.getElementById('reset-email').value.trim();
+            const token = document.getElementById('reset-input-token').value.trim();
+            const new_password = document.getElementById('reset-new-pwd').value.trim();
+            if (!email || !token || !new_password) {
+                showToast("Enter verification code and new password.", true);
+                return;
+            }
+            if (new_password.length < 4) {
+                showToast("Password must be at least 4 characters.", true);
+                return;
+            }
+            const btn = document.getElementById('btn-submit-reset');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Updating Password...';
+            try {
+                const res = await fetch('/api/auth/reset_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, token, new_password })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || "Password reset! Please sign in.");
+                    closeModal('modal-forgot-password');
+                    document.getElementById('gate-email').value = email;
+                    document.getElementById('gate-password').value = new_password;
+                    switchAuthGate('login');
+                } else {
+                    showToast(data.message || "Password reset failed.", true);
+                }
+            } catch(e) {
+                showToast("Reset error.", true);
+            } finally {
+                btn.innerHTML = 'Save New Password & Sign In';
+            }
+        }
 
         function togglePasswordVisibility(inputId, eyeIconId) {
             const input = document.getElementById(inputId);

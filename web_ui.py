@@ -533,6 +533,129 @@ class SupabaseAuditService:
 
         return False, "No account found with this email. Please register first."
 
+    def create_password_reset(self, email):
+        email_clean = email.lower().strip()
+        import hashlib
+        import secrets
+        raw_token = secrets.token_hex(4).upper() # 8-character clean alphanumeric code e.g. A9B2C3D4
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+        expires_at = datetime.now() + timedelta(minutes=15)
+
+        # 1. Supabase PostgreSQL Store
+        if self.enabled:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(self.db_url, connect_timeout=6)
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS password_resets (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        email VARCHAR(150) NOT NULL,
+                        token_hash VARCHAR(255) NOT NULL,
+                        expires_at TIMESTAMPTZ NOT NULL,
+                        used_at TIMESTAMPTZ,
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                """)
+                cur.execute("""
+                    INSERT INTO password_resets (email, token_hash, expires_at)
+                    VALUES (%s, %s, %s)
+                """, (email_clean, token_hash, expires_at))
+                conn.close()
+                return True, {"message": "Reset code generated.", "token": raw_token}
+            except Exception as e:
+                write_log(f"[Auth] Supabase reset creation error: {e}. Using local store...")
+
+        # 2. Local File Store Fallback
+        resets = self._get_local_resets()
+        resets[email_clean] = {
+            "token_hash": token_hash,
+            "expires_at": expires_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "used": False
+        }
+        self._save_local_resets(resets)
+        return True, {"message": "Reset code generated.", "token": raw_token}
+
+    def reset_password(self, email, token, new_password):
+        email_clean = email.lower().strip()
+        token_clean = token.strip().upper()
+        if len(new_password) < 4:
+            return False, "Password must be at least 4 characters."
+        import hashlib
+        token_hash = hashlib.sha256(token_clean.encode("utf-8")).hexdigest()
+        new_pwd_hash = hashlib.sha256(new_password.encode("utf-8")).hexdigest()
+
+        # 1. Check Supabase PostgreSQL
+        if self.enabled:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(self.db_url, connect_timeout=6)
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id, expires_at, used_at
+                    FROM password_resets
+                    WHERE email = %s AND token_hash = %s
+                    ORDER BY created_at DESC LIMIT 1
+                """, (email_clean, token_hash))
+                row = cur.fetchone()
+                if row:
+                    r_id, r_exp, r_used = row
+                    if r_used is not None:
+                        conn.close()
+                        return False, "This reset code has already been used."
+                    if datetime.now(r_exp.tzinfo if r_exp.tzinfo else None) > r_exp:
+                        conn.close()
+                        return False, "Reset code has expired (15-min limit)."
+                    # Mark used & Update User
+                    cur.execute("UPDATE password_resets SET used_at = NOW() WHERE id = %s", (r_id,))
+                    cur.execute("UPDATE studio_users SET password_hash = %s WHERE email = %s", (new_pwd_hash, email_clean))
+                    conn.close()
+                    return True, "Password reset successfully! Please sign in with your new password."
+                conn.close()
+            except Exception as e:
+                write_log(f"[Auth] Supabase reset verification error: {e}")
+
+        # 2. Local Fallback
+        resets = self._get_local_resets()
+        if email_clean in resets:
+            rec = resets[email_clean]
+            if rec.get("token_hash") == token_hash:
+                if rec.get("used"):
+                    return False, "This reset code has already been used."
+                exp = datetime.strptime(rec.get("expires_at"), "%Y-%m-%d %H:%M:%S")
+                if datetime.now() > exp:
+                    return False, "Reset code has expired."
+                rec["used"] = True
+                self._save_local_resets(resets)
+                # Update local user
+                users = self._get_local_users()
+                if email_clean in users:
+                    users[email_clean]["password_hash"] = new_pwd_hash
+                    self._save_local_users(users)
+                return True, "Password reset successfully! Please sign in with your new password."
+
+        return False, "Invalid reset code or email address."
+
+    def _get_local_resets(self):
+        reset_file = os.path.join(os.path.dirname(LOG_FILE), "local_resets.json")
+        if os.path.exists(reset_file):
+            try:
+                with open(reset_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def _save_local_resets(self, data):
+        reset_file = os.path.join(os.path.dirname(LOG_FILE), "local_resets.json")
+        try:
+            with open(reset_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
+
     # --- CLOUD TEMPLATE METHODS ---
     def fetch_templates(self, user_id=None):
         if not self.enabled:
@@ -2398,6 +2521,26 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 return
             ok, res = supabase_service.login_user(email, password)
             self._send_json({"ok": ok, "user" if ok else "message": res})
+            return
+
+        elif path == "/api/auth/forgot_password":
+            email = data.get("email", "").strip()
+            if not email:
+                self._send_json({"ok": False, "message": "Work email is required."}, code=400)
+                return
+            ok, res = supabase_service.create_password_reset(email)
+            self._send_json({"ok": ok, "message": "If an account exists, a 15-minute reset code has been generated.", "token": res.get("token")})
+            return
+
+        elif path == "/api/auth/reset_password":
+            email = data.get("email", "").strip()
+            token = data.get("token", "").strip()
+            new_password = data.get("new_password", "").strip()
+            if not email or not token or not new_password:
+                self._send_json({"ok": False, "message": "Email, verification token, and new password are required."}, code=400)
+                return
+            ok, msg = supabase_service.reset_password(email, token, new_password)
+            self._send_json({"ok": ok, "message": msg})
             return
 
         elif path == "/api/templates/save":
