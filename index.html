@@ -919,6 +919,8 @@
             
             document.getElementById('gate-field-name').classList.toggle('hidden', isLogin);
             document.getElementById('gate-field-role').classList.toggle('hidden', isLogin);
+            const forgotLink = document.getElementById('link-forgot-pwd');
+            if (forgotLink) forgotLink.classList.toggle('hidden', !isLogin);
             document.getElementById('btn-gate-submit').innerHTML = isLogin ? '<span>Sign In to Workspace</span> <span class="material-symbols-outlined text-base">arrow_forward</span>' : '<span>Create Recruiter Account</span> <span class="material-symbols-outlined text-base">person_add</span>';
         }
 
