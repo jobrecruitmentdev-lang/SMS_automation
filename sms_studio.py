@@ -2251,9 +2251,13 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({
                     "is_online": is_alive,
                     "pairing_code": p_code,
+                    "device_id": dev.get("device_id", "None"),
                     "device_name": dev.get("device_name", "No Phone Connected"),
                     "carrier": dev.get("carrier", "Physical SIM"),
-                    "battery": dev.get("battery", "--%")
+                    "battery": dev.get("battery", "--%"),
+                    "temperature": dev.get("temperature", "--°C"),
+                    "is_screen_locked": dev.get("is_screen_locked", False),
+                    "screen_state_text": dev.get("screen_state_text", "Ready")
                 })
             return
 
@@ -2315,10 +2319,14 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             with relay_lock:
                 user_relay_devices[p_code] = {
                     "last_heartbeat": time.time(),
-                    "is_online": True,
+                    "is_online": data.get("is_online", True),
+                    "device_id": data.get("device_id", "None"),
                     "device_name": data.get("device_name", "Local Relay Phone"),
                     "carrier": data.get("carrier", "Physical SIM"),
-                    "battery": data.get("battery", "100%")
+                    "battery": data.get("battery", "100%"),
+                    "temperature": data.get("temperature", "--°C"),
+                    "is_screen_locked": data.get("is_screen_locked", False),
+                    "screen_state_text": data.get("screen_state_text", "Ready")
                 }
             self._send_json({"ok": True, "pairing_code": p_code})
             return
@@ -2366,34 +2374,45 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/unlock_screen":
+            p_code = data.get("pairing_code") or "JR-DEFAULT"
+            # 1. Enqueue remote action for local relay daemon
+            with relay_lock:
+                if p_code not in user_relay_jobs:
+                    user_relay_jobs[p_code] = []
+                user_relay_jobs[p_code].append({"action": "UNLOCK_SCREEN"})
+            
+            # 2. Localhost fallback execution if ADB is locally attached
             try:
                 import subprocess
                 adb_cmd = ensure_adb_binary()
-                # Wake screen
-                subprocess.run([adb_cmd, "shell", "input", "keyevent", "224"], timeout=3)
-                # Dismiss keyguard
-                subprocess.run([adb_cmd, "shell", "wm", "dismiss-keyguard"], timeout=3)
-                self._send_json({"ok": True, "message": "Wake and unlock signals sent to phone!"})
-            except Exception as e:
-                self._send_json({"ok": False, "message": f"Unlock Error: {e}"})
+                subprocess.run([adb_cmd, "shell", "input", "keyevent", "224"], timeout=2)
+                subprocess.run([adb_cmd, "shell", "wm", "dismiss-keyguard"], timeout=2)
+            except Exception:
+                pass
+            self._send_json({"ok": True, "message": "Unlock command dispatched to phone!"})
             return
 
         elif path == "/api/adb_reconnect":
+            p_code = data.get("pairing_code") or "JR-DEFAULT"
+            # 1. Enqueue remote action for local relay daemon
+            with relay_lock:
+                if p_code not in user_relay_jobs:
+                    user_relay_jobs[p_code] = []
+                user_relay_jobs[p_code].append({"action": "RECONNECT_SOCKETS"})
+            
+            # 2. Localhost fallback
             try:
                 import subprocess
                 adb_cmd = ensure_adb_binary()
-                res_dev = subprocess.run([adb_cmd, "devices"], capture_output=True, text=True, timeout=3)
+                res_dev = subprocess.run([adb_cmd, "devices"], capture_output=True, text=True, timeout=2)
                 lines = [l for l in res_dev.stdout.strip().split('\n')[1:] if l.strip()]
-                all_devs = [l.split()[0] for l in lines]
-                reconnected = []
-                for d in all_devs:
-                    if ":" in d: # Wi-Fi IP:Port
+                for d in [l.split()[0] for l in lines]:
+                    if ":" in d:
                         subprocess.run([adb_cmd, "disconnect", d], capture_output=True, timeout=2)
-                        subprocess.run([adb_cmd, "connect", d], capture_output=True, timeout=3)
-                        reconnected.append(d)
-                self._send_json({"ok": True, "message": f"Sockets refreshed: {', '.join(reconnected) if reconnected else 'Ready'}"})
-            except Exception as e:
-                self._send_json({"ok": False, "message": f"Reconnect Error: {e}"})
+                        subprocess.run([adb_cmd, "connect", d], capture_output=True, timeout=2)
+            except Exception:
+                pass
+            self._send_json({"ok": True, "message": "Socket refresh signal sent to phone!"})
             return
 
         elif path == "/api/adb_wifi_pair":

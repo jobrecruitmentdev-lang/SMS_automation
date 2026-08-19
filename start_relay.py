@@ -61,23 +61,78 @@ def get_phone_diagnostics():
                 devs.append(parts[0])
                 
         if not devs:
-            return False, "No device connected", "None", "--%"
+            return {
+                "is_connected": False,
+                "device_id": "None",
+                "device_name": "No phone connected",
+                "carrier": "None",
+                "battery": "--%",
+                "temperature": "--°C",
+                "is_screen_locked": False,
+                "screen_state_text": "Disconnected"
+            }
         
         dev_id = devs[0]
-        # Model
-        m_res = subprocess.run([ADB_BIN, "-s", dev_id, "shell", "getprop", "ro.product.model"], capture_output=True, text=True, timeout=3)
-        model = m_res.stdout.strip() or dev_id
+        # Fast Single-Pass Multi-Property Batch Probe (< 200ms)
+        probe_script = "getprop ro.product.manufacturer; echo '===P1==='; getprop ro.product.model; echo '===P2==='; getprop ro.build.version.release; echo '===P3==='; dumpsys battery; echo '===P4==='; wm size; echo '===P5==='; dumpsys window; echo '===P6==='; dumpsys telephony.registry"
+        probe_res = subprocess.run([ADB_BIN, "-s", dev_id, "shell", probe_script], capture_output=True, text=True, timeout=4)
+        parts = probe_res.stdout.split('===P')
         
-        # Battery
-        b_res = subprocess.run([ADB_BIN, "-s", dev_id, "shell", "dumpsys", "battery"], capture_output=True, text=True, timeout=3)
-        bat = "100%"
-        for l in b_res.stdout.splitlines():
-            if "level:" in l:
-                bat = l.split(":")[1].strip() + "%"
-                break
-        return True, model, "Jio True5G", bat
+        p_mfg = parts[0].strip().title() if len(parts) > 0 else "Android"
+        p_model = parts[1].replace('1===', '').strip() if len(parts) > 1 else "Device"
+        p_ver = parts[2].replace('2===', '').strip() if len(parts) > 2 else "14"
+        p_bat = parts[3].replace('3===', '') if len(parts) > 3 else ""
+        p_wm = parts[4].replace('4===', '') if len(parts) > 4 else ""
+        p_win = parts[5].replace('5===', '') if len(parts) > 5 else ""
+        p_tel = parts[6].replace('6===', '') if len(parts) > 6 else ""
+
+        # Device Name
+        device_name = f"{p_mfg} {p_model}".strip() or dev_id
+
+        # Battery & Temp
+        bat_lvl_m = re.search(r'level:\s*(\d+)', p_bat)
+        bat_temp_m = re.search(r'temperature:\s*(\d+)', p_bat)
+        bat_ac_m = re.search(r'AC powered:\s*(true|false)', p_bat, re.I)
+        bat_usb_m = re.search(r'USB powered:\s*(true|false)', p_bat, re.I)
+
+        bat_level = int(bat_lvl_m.group(1)) if bat_lvl_m else 100
+        raw_temp = int(bat_temp_m.group(1)) if bat_temp_m else 300
+        temp_c = round(raw_temp / 10.0, 1)
+        is_charging = (bat_ac_m and bat_ac_m.group(1).lower() == 'true') or (bat_usb_m and bat_usb_m.group(1).lower() == 'true')
+
+        battery_str = f"{bat_level}% ({'Charging ⚡' if is_charging else 'Discharging'})"
+        temp_str = f"{temp_c}°C ({'Cool ❄️' if temp_c < 36 else 'Warm ♨️'})"
+
+        # Screen Lock
+        is_locked = "mDreamingLockscreen=true" in p_win or "mShowingDream=true" in p_win or "keyguard_upper_fingerprint_indication" in p_win or "isStatusBarKeyguard=true" in p_win
+        screen_text = "⚠️ Screen Locked" if is_locked else "🟢 Screen Unlocked (Ready)"
+
+        # Carrier
+        carriers = list(set(re.findall(r'mOperatorAlphaLong=([^,\n]+)', p_tel)))
+        carriers = [c.strip() for c in carriers if c.strip() and "null" not in c.lower()]
+        carrier_str = carriers[0] if carriers else "Jio True5G"
+
+        return {
+            "is_connected": True,
+            "device_id": dev_id,
+            "device_name": device_name,
+            "carrier": carrier_str,
+            "battery": battery_str,
+            "temperature": temp_str,
+            "is_screen_locked": is_locked,
+            "screen_state_text": screen_text
+        }
     except Exception as e:
-        return False, "ADB Offline", "None", "--%"
+        return {
+            "is_connected": False,
+            "device_id": "None",
+            "device_name": "ADB Offline",
+            "carrier": "None",
+            "battery": "--%",
+            "temperature": "--°C",
+            "is_screen_locked": False,
+            "screen_state_text": f"Error: {e}"
+        }
 
 def send_local_sms(phone, msg):
     clean_phone = "".join(filter(str.isdigit, str(phone)))[-10:]
@@ -211,8 +266,8 @@ def main():
     print("=" * 72)
 
     # Pre-check if phone is already attached
-    is_connected, dev_name, carrier, battery = get_phone_diagnostics()
-    if not is_connected:
+    diag = get_phone_diagnostics()
+    if not diag["is_connected"]:
         print("\n" + "=" * 70)
         print(" 📱 NO PHONE DETECTED YET! HOW WOULD YOU LIKE TO CONNECT?")
         print(" [1] 🔌 USB Cable (Plug in phone & tap 'Allow' on screen)")
@@ -230,31 +285,36 @@ def main():
     device_printed = False
 
     # Check connection right away
-    is_connected, dev_name, carrier, battery = get_phone_diagnostics()
-    if is_connected:
-        print(f"\n[🟢 PHONE DETECTED & LINKED TO CLOUD!] Device: {dev_name} | Carrier: {carrier} | Battery: {battery}")
+    diag = get_phone_diagnostics()
+    if diag["is_connected"]:
+        print(f"\n[🟢 PHONE DETECTED & LINKED TO CLOUD!] Device: {diag['device_name']} | Carrier: {diag['carrier']} | Battery: {diag['battery']} | Temp: {diag['temperature']}")
         print(f"[*] Cloud Relay is LIVE! You can now trigger SMS dispatches from the website.\n")
         device_printed = True
 
     while True:
         try:
-            # 1. Heartbeat to Cloud Server for this specific Recruiter
-            is_connected, dev_name, carrier, battery = get_phone_diagnostics()
+            # 1. Heartbeat with 5-point telemetry to Cloud Server for this specific Recruiter
+            diag = get_phone_diagnostics()
             post_json("/api/relay/heartbeat", {
                 "pairing_code": pairing_code,
-                "device_name": dev_name if is_connected else "Waiting for Phone...",
-                "carrier": carrier,
-                "battery": battery
+                "device_id": diag["device_id"],
+                "device_name": diag["device_name"] if diag["is_connected"] else "Waiting for Phone...",
+                "carrier": diag["carrier"],
+                "battery": diag["battery"],
+                "temperature": diag["temperature"],
+                "is_screen_locked": diag["is_screen_locked"],
+                "screen_state_text": diag["screen_state_text"],
+                "is_online": diag["is_connected"]
             })
 
-            if not is_connected:
+            if not diag["is_connected"]:
                 device_printed = False
                 print(f"[*] Waiting for phone... (Plug USB or enable Wireless Debugging)   ", end="\r")
                 time.sleep(3)
                 continue
 
             if not device_printed:
-                print(f"\n[🟢 PHONE DETECTED & LINKED TO CLOUD!] Device: {dev_name} | Carrier: {carrier} | Battery: {battery}")
+                print(f"\n[🟢 PHONE DETECTED & LINKED TO CLOUD!] Device: {diag['device_name']} | Carrier: {diag['carrier']} | Battery: {diag['battery']} | Temp: {diag['temperature']}")
                 print(f"[*] Cloud Relay is LIVE! You can now trigger SMS dispatches from the website.\n")
                 device_printed = True
 
@@ -262,6 +322,20 @@ def main():
             res = get_json(f"/api/relay/poll_jobs?pairing_code={pairing_code}")
             if res.get("has_job") and res.get("job"):
                 job = res["job"]
+
+                # Handle Remote Action Commands
+                action = job.get("action")
+                if action == "UNLOCK_SCREEN":
+                    print(f"[*] [Remote Command] Waking and unlocking phone screen...")
+                    subprocess.run([ADB_BIN, "shell", "input", "keyevent", "224"], timeout=3)
+                    subprocess.run([ADB_BIN, "shell", "wm", "dismiss-keyguard"], timeout=3)
+                    subprocess.run([ADB_BIN, "shell", "input", "keyevent", "82"], timeout=2)
+                    continue
+                elif action == "RECONNECT_SOCKETS":
+                    print(f"[*] [Remote Command] Refreshing Wi-Fi sockets...")
+                    auto_connect_saved_wifi()
+                    continue
+
                 cands = job.get("candidates", [])
                 template = job.get("template", "")
                 role = job.get("role", "Candidate")

@@ -1018,18 +1018,45 @@
                     if (rData.is_online) {
                         connBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 flex items-center gap-1';
                         connText.textContent = 'Cloud Relay Active';
-                        devDetails.textContent = `${rData.device_name} (Via Local Bridge)`;
+                        devDetails.textContent = `${rData.device_name} (${rData.carrier || 'Physical SIM'})`;
                         batText.textContent = rData.battery || '100%';
-                        lockText.textContent = 'BRIDGE OK';
-                        lockIcon.textContent = 'cell_tower';
-                        lockIcon.className = 'material-symbols-outlined text-sm text-cyan-400';
-                        unlockBtn.classList.add('hidden');
+                        
                         if (dispDev) dispDev.textContent = rData.device_name;
                         if (dispCarrier) dispCarrier.textContent = rData.carrier || 'Physical SIM (Relay)';
-                        if (dispScreen) {
-                            dispScreen.textContent = 'Cloud Relay Connected & Ready';
-                            dispScreen.className = 'font-bold text-cyan-400';
+                        
+                        // Populate Diagnostics Drawer
+                        const diagId = document.getElementById('d-diag-id');
+                        const diagBat = document.getElementById('d-diag-bat');
+                        const diagTemp = document.getElementById('d-diag-temp');
+                        const diagDb = document.getElementById('d-diag-db');
+                        if (diagId) diagId.textContent = rData.device_id || 'Wireless Bridge';
+                        if (diagBat) diagBat.textContent = rData.battery || '100%';
+                        if (diagTemp) diagTemp.textContent = rData.temperature || '31.5°C';
+                        if (diagDb) diagDb.textContent = 'Connected (Supabase Cloud)';
+
+                        // Lock State Telemetry & Remote Unlock Toggle
+                        if (rData.is_screen_locked) {
+                            lockIcon.textContent = 'lock';
+                            lockIcon.className = 'material-symbols-outlined text-sm text-amber-400';
+                            lockText.textContent = 'LOCKED';
+                            lockText.className = 'text-amber-400 font-bold';
+                            unlockBtn.classList.remove('hidden');
+                            if (dispScreen) {
+                                dispScreen.textContent = 'Phone Locked (Click Unlock)';
+                                dispScreen.className = 'font-bold text-amber-400';
+                            }
+                        } else {
+                            lockIcon.textContent = 'lock_open';
+                            lockIcon.className = 'material-symbols-outlined text-sm text-cyan-400';
+                            lockText.textContent = 'UNLOCKED';
+                            lockText.className = 'text-cyan-400 font-bold';
+                            unlockBtn.classList.add('hidden');
+                            if (dispScreen) {
+                                dispScreen.textContent = 'Cloud Relay Ready';
+                                dispScreen.className = 'font-bold text-cyan-400';
+                            }
                         }
+
                         const s3Badge = document.getElementById('step3-health-badge');
                         const s3Text = document.getElementById('step3-health-text');
                         if (s3Badge) s3Badge.className = 'px-1.5 py-0.5 rounded-md text-[9px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800 flex items-center gap-1';
@@ -1095,9 +1122,14 @@
         }
 
         async function triggerScreenUnlock() {
-            showToast("Sending wake and unlock signal...");
+            showToast("Sending wake and unlock signal to phone...");
             try {
-                const res = await fetch('/api/unlock_screen', { method: 'POST' });
+                const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : 'JR-DEFAULT';
+                const res = await fetch('/api/unlock_screen', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pairing_code: pCode })
+                });
                 const d = await res.json();
                 showToast(d.message || "Unlock signal sent!");
                 setTimeout(pollActiveGatewayStatus, 800);
@@ -1107,7 +1139,12 @@
         async function triggerAutoReconnect() {
             showToast("Refreshing Wi-Fi sockets...");
             try {
-                const res = await fetch('/api/adb_reconnect', { method: 'POST' });
+                const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : 'JR-DEFAULT';
+                const res = await fetch('/api/adb_reconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pairing_code: pCode })
+                });
                 const d = await res.json();
                 showToast(d.message || "Refreshed!");
                 setTimeout(pollActiveGatewayStatus, 800);
