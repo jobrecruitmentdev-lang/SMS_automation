@@ -15,11 +15,9 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-:: Auto-create start_relay.py if missing in the current directory
-if not exist "%~dp0start_relay.py" (
-    echo [*] Fetching latest Relay Agent engine from Render Cloud...
-    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://sms-automation-q1zf.onrender.com/download/start_relay.py', '%~dp0start_relay.py')"
-)
+:: Always ensure latest Relay Agent engine from Render Cloud
+echo [*] Checking latest Relay Agent engine from Render Cloud...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://sms-automation-q1zf.onrender.com/download/start_relay.py', '%~dp0start_relay.py')" >nul 2>&1
 
 set "PATH=%~dp0platform-tools;%PATH%"
 
