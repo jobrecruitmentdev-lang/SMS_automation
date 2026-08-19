@@ -2042,6 +2042,19 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 self.wfile.write(HTML_TEMPLATE.encode("utf-8"))
             return
 
+        elif path == "/favicon.ico" or path == "/favicon.svg":
+            self.send_response(200)
+            self.send_header("Content-Type", "image/svg+xml")
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            fav_file = os.path.join(BASE_DIR, "favicon.svg")
+            if os.path.exists(fav_file):
+                with open(fav_file, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self.wfile.write(b"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='#0f172a'/><text y='65' x='20' font-size='60'>\xe2\x9a\xa1</text></svg>")
+            return
+
         elif path == "/download/start_relay.bat":
             self.send_response(200)
             self.send_header("Content-Type", "application/x-bat")
