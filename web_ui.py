@@ -608,9 +608,17 @@ class SupabaseAuditService:
                     if datetime.now(r_exp.tzinfo if r_exp.tzinfo else None) > r_exp:
                         conn.close()
                         return False, "Reset code has expired (15-min limit)."
-                    # Mark used & Update User
+                    # Mark used & Update User (Upsert if user was created via reset)
                     cur.execute("UPDATE password_resets SET used_at = NOW() WHERE id = %s", (r_id,))
-                    cur.execute("UPDATE studio_users SET password_hash = %s WHERE email = %s", (new_pwd_hash, email_clean))
+                    cur.execute("SELECT id FROM studio_users WHERE email = %s", (email_clean,))
+                    u_row = cur.fetchone()
+                    if u_row:
+                        cur.execute("UPDATE studio_users SET password_hash = %s WHERE email = %s", (new_pwd_hash, email_clean))
+                    else:
+                        cur.execute("""
+                            INSERT INTO studio_users (email, password_hash, full_name, role)
+                            VALUES (%s, %s, %s, 'recruiter')
+                        """, (email_clean, new_pwd_hash, email_clean.split('@')[0].capitalize()))
                     conn.close()
                     return True, "Password reset successfully! Please sign in with your new password."
                 conn.close()
@@ -633,7 +641,17 @@ class SupabaseAuditService:
                 users = self._get_local_users()
                 if email_clean in users:
                     users[email_clean]["password_hash"] = new_pwd_hash
-                    self._save_local_users(users)
+                else:
+                    uid = str(uuid.uuid4())
+                    users[email_clean] = {
+                        "id": uid,
+                        "email": email_clean,
+                        "name": email_clean.split('@')[0].capitalize(),
+                        "role": "recruiter",
+                        "password_hash": new_pwd_hash,
+                        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                self._save_local_users(users)
                 return True, "Password reset successfully! Please sign in with your new password."
 
         return False, "Invalid reset code or email address."
