@@ -91,8 +91,8 @@ except Exception:
     pass
 
 def ensure_environment_config():
-    """Ensures .env exists with production default values."""
-    if not os.path.exists(ENV_FILE):
+    """Ensures .env exists locally if not present and no system env is found."""
+    if not os.path.exists(ENV_FILE) and not os.environ.get("WORKER_API_KEY"):
         default_env = (
             "WORKER_API_URL=https://jobrecruitment.in/backend/api/worker-api.php\n"
             "WORKER_API_KEY=\n"
@@ -1126,7 +1126,7 @@ def reload_app_config():
     if os.path.exists(ENV_FILE):
         try:
             from dotenv import load_dotenv
-            load_dotenv(ENV_FILE, override=True)
+            load_dotenv(ENV_FILE, override=False)
         except Exception:
             pass
 
