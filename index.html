@@ -65,7 +65,12 @@
 
                 <div class="space-y-1.5">
                     <label class="text-slate-400 font-semibold">Password</label>
-                    <input type="password" id="gate-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                    <div class="relative">
+                        <input type="password" id="gate-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pr-10 text-slate-200 outline-none focus:border-teal-500">
+                        <button type="button" onclick="togglePasswordVisibility('gate-password', 'gate-pwd-eye')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-300 p-1 flex items-center justify-center">
+                            <span id="gate-pwd-eye" class="material-symbols-outlined text-lg">visibility</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="gate-field-role" class="space-y-1.5 hidden">
@@ -760,6 +765,19 @@
 
         // --- MANDATORY AUTH GATEWAY CONTROLLER ---
         let currentGateMode = 'login';
+
+        function togglePasswordVisibility(inputId, eyeIconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(eyeIconId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                if (icon) icon.textContent = 'visibility';
+            }
+        }
 
         function switchAuthGate(mode) {
             currentGateMode = mode;
