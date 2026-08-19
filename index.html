@@ -2083,7 +2083,12 @@
                 if (data.ok) {
                     showToast("Template deleted.");
                     document.getElementById('btn-delete-template').classList.add('hidden');
-                showToast("Delete request failed.", true);
+                    loadCloudTemplates();
+                } else {
+                    showToast(data.message || "Delete request failed.", true);
+                }
+            } catch(e) {
+                showToast("Delete error.", true);
             }
         }
 
