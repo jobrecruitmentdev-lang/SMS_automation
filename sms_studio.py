@@ -18,6 +18,7 @@ import urllib.request
 import threading
 import subprocess
 import webbrowser
+import uuid
 from datetime import datetime, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
