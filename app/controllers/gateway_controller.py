@@ -8,10 +8,13 @@ router = APIRouter(tags=["Android Mobile Gateway & Relay"])
 # 1. Device Registration Routes (Supports all legacy mobile APK variants)
 @router.post("/api/gateway/register")
 @router.post("/device")
+@router.post("/v1/device")
 @router.post("/api/v1/device")
 @router.post("/mobile/v1/device")
+@router.post("/mobile/v1/device/register")
 @router.post("/auth/code")
 @router.post("/auth/login")
+@router.post("/mobile/v1/auth")
 @router.post("/api/relay/register_device")
 def register_device(req: DeviceRegisterRequest):
     p_code = req.pairing_code or req.code or req.login_code or req.id or "JR-DEFAULT"
