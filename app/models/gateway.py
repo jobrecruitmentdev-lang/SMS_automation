@@ -2,6 +2,9 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 
 class DeviceRegisterRequest(BaseModel):
+    username: Optional[str] = None
+    password: Optional[str] = None
+    login: Optional[str] = None
     pairing_code: Optional[str] = None
     code: Optional[str] = None
     login_code: Optional[str] = None
@@ -9,9 +12,11 @@ class DeviceRegisterRequest(BaseModel):
     id: Optional[str] = None
     device_name: Optional[str] = None
     name: Optional[str] = None
+    model: Optional[str] = None
     carrier: Optional[str] = None
     battery: Optional[str] = None
     android_version: Optional[str] = None
+    app_version: Optional[str] = None
     sim_slot: Optional[int] = 0
 
 class DeviceHeartbeatRequest(BaseModel):

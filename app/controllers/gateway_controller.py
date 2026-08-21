@@ -17,7 +17,7 @@ router = APIRouter(tags=["Android Mobile Gateway & Relay"])
 @router.post("/mobile/v1/auth")
 @router.post("/api/relay/register_device")
 def register_device(req: DeviceRegisterRequest):
-    p_code = req.pairing_code or req.code or req.login_code or req.id or "JR-DEFAULT"
+    p_code = req.username or req.login or req.pairing_code or req.code or req.login_code or req.id or "JR-DEFAULT"
     return gateway_service.register_device(p_code, req.dict())
 
 # 2. Heartbeat Telemetry
