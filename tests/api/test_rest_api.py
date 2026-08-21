@@ -73,3 +73,25 @@ class TestStudioRESTApi:
         resp2 = requests.get(f"{api_server}/download/jobrecruitment-companion.apk", timeout=4)
         assert resp2.status_code == 200
         assert resp2.headers.get("content-type") == "application/vnd.android.package-archive"
+
+    def test_relay_status_pairing_code_detection(self, api_server):
+        # Heartbeat from phone with pairing code JR-275900
+        hb_payload = {
+            "pairing_code": "JR-275900",
+            "device_name": "Samsung Galaxy S24",
+            "carrier": "Jio True5G",
+            "battery": "88%",
+            "is_online": True
+        }
+        hb_resp = requests.post(f"{api_server}/api/gateway/heartbeat", json=hb_payload, timeout=4)
+        assert hb_resp.status_code == 200
+        assert hb_resp.json()["ok"] is True
+
+        # Status check from frontend HUD
+        status_resp = requests.get(f"{api_server}/api/relay/status?pairing_code=JR-275900", timeout=4)
+        assert status_resp.status_code == 200
+        status_data = status_resp.json()
+        assert status_data["is_online"] is True
+        assert status_data["connected"] is True
+        assert status_data["device_name"] == "Samsung Galaxy S24"
+        assert status_data["battery"] == "88%"

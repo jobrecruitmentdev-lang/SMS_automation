@@ -1171,19 +1171,27 @@
             }
         }
 
-        // --- COOKIES & LOCALSTORAGE PERSISTENCE HELPERS ---
+        // --- ROBUST COOKIES & LOCALSTORAGE PERSISTENCE HELPERS ---
         function setCookie(name, val, days = 30) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
-            localStorage.setItem(name, val);
+            try {
+                const d = new Date();
+                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                document.cookie = `${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+                localStorage.setItem(name, val);
+            } catch(e) {}
         }
 
         function getCookie(name) {
-            const local = localStorage.getItem(name);
-            if (local !== null) return local;
-            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-            return match ? decodeURIComponent(match[2]) : '';
+            try {
+                const local = localStorage.getItem(name);
+                if (local && local.trim() !== '') return local;
+                const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+                if (match && match[2]) {
+                    const decoded = decodeURIComponent(match[2]);
+                    if (decoded && decoded.trim() !== '') return decoded;
+                }
+            } catch(e) {}
+            return '';
         }
 
         function persistPrompt() { setCookie('jr_last_prompt', document.getElementById('ai-prompt').value); }
@@ -1460,15 +1468,17 @@
         }
 
         function restoreSessionOrLock() {
-            const raw = getCookie('jr_user_session');
-            if (raw) {
-                try {
+            try {
+                const raw = getCookie('jr_user_session');
+                if (raw && raw.trim() !== '') {
                     currentUser = JSON.parse(raw);
-                    if (currentUser && currentUser.email) {
+                    if (currentUser && (currentUser.email || currentUser.id)) {
                         unlockWorkspace();
                         return;
                     }
-                } catch(e) {}
+                }
+            } catch(e) {
+                console.error("Session restore error:", e);
             }
             lockWorkspace();
         }
@@ -1478,7 +1488,7 @@
             document.getElementById('app-workspace-container').classList.remove('hidden');
             document.body.classList.remove('justify-center');
 
-            document.getElementById('user-display-name').textContent = currentUser.name;
+            document.getElementById('user-display-name').textContent = currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'Recruiter');
             document.getElementById('user-display-role').textContent = currentUser.role || 'Recruiter';
             const initials = (currentUser.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
             document.getElementById('user-initials').textContent = initials;
@@ -1526,6 +1536,10 @@
         let lastMaxMtime = null;
 
         async function checkHotReload() {
+            // Only run hot-reload on localhost/127.0.0.1 (development)
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isLocal) return;
+
             try {
                 const res = await fetch('/api/server_version');
                 const data = await res.json();
@@ -1677,15 +1691,17 @@
                     const uid = currentUser ? (currentUser.id || currentUser.email) : '';
                     const rRes = await fetch(`/api/relay/status?pairing_code=${encodeURIComponent(pCode)}&user_id=${encodeURIComponent(uid)}`);
                     const rData = await rRes.json();
-                    if (rData.is_online) {
+                    const isOnline = Boolean(rData.is_online || rData.connected);
+                    const devName = rData.device_name || rData.device || 'Android Gateway Phone';
+                    if (isOnline) {
                         connBadge.className = 'px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 flex items-center gap-1';
                         connText.textContent = 'Cloud Relay Active';
-                        devDetails.textContent = `${rData.device_name} (${rData.carrier || 'Physical SIM'})`;
+                        devDetails.textContent = `${devName} (${rData.carrier || 'Physical SIM'})`;
                         batText.textContent = rData.battery || '100%';
                         const batMob = document.getElementById('hud-battery-mob');
                         if (batMob) batMob.textContent = rData.battery || '100%';
                         
-                        if (dispDev) dispDev.textContent = rData.device_name;
+                        if (dispDev) dispDev.textContent = devName;
                         if (dispCarrier) dispCarrier.textContent = rData.carrier || 'Physical SIM (Relay)';
                         
                         // Dynamically update SIM Card labels

@@ -42,9 +42,14 @@ class GatewayService:
         
         with relay_lock:
             existing = user_relay_devices.get(p_code, {})
+            dev_name = heartbeat_data.get("device_name") or heartbeat_data.get("name") or existing.get("device_name", "Android Mobile Gateway")
+            dev_id = heartbeat_data.get("device_id") or heartbeat_data.get("id") or existing.get("device_id", "Mobile-Gateway")
             existing.update({
                 "last_heartbeat": time.time(),
                 "is_online": True,
+                "device_name": dev_name,
+                "device": dev_name,
+                "device_id": dev_id,
                 "battery": heartbeat_data.get("battery", existing.get("battery", "100%")),
                 "carrier": heartbeat_data.get("carrier", existing.get("carrier", "SIM 1")),
                 "signal_level": heartbeat_data.get("signal_level", existing.get("signal_level", 4)),
@@ -80,36 +85,49 @@ class GatewayService:
             
             # 2. Check without prefix or alternate formats
             if not dev:
-                raw_code = p_code.replace("JR-", "").replace("JR", "")
+                raw_code = p_code.replace("JR-", "").replace("JR", "").strip()
                 for k, v in user_relay_devices.items():
-                    if k == raw_code or k.replace("JR-", "") == raw_code or k == p_code:
+                    clean_k = k.replace("JR-", "").replace("JR", "").strip()
+                    if k == p_code or clean_k == raw_code or k == f"JR-{raw_code}":
                         dev = v
                         p_code = k
                         break
             
-            # 3. Fallback: If only 1 phone is active on server in last 60 seconds, bind it
+            # 3. Fallback: If only 1 phone is active on server in last 90 seconds, bind it
             if not dev and len(user_relay_devices) == 1:
                 single_k = list(user_relay_devices.keys())[0]
                 single_dev = user_relay_devices[single_k]
-                if time.time() - single_dev.get("last_heartbeat", 0) < 60:
+                if time.time() - single_dev.get("last_heartbeat", 0) < 90:
                     dev = single_dev
                     p_code = single_k
 
             if dev:
                 time_diff = time.time() - dev.get("last_heartbeat", 0)
                 is_active = time_diff < 45
+                dev_name = dev.get("device_name") or dev.get("name") or "Android Mobile Gateway"
+                carrier = dev.get("carrier") or "Physical SIM"
+                battery = dev.get("battery") or "100%"
                 return {
+                    "ok": True,
+                    "is_online": is_active,
                     "connected": is_active,
-                    "device": dev.get("device_name", "Android Mobile Gateway"),
-                    "mode": "Android Background Service",
+                    "device_name": dev_name,
+                    "device": dev_name,
+                    "device_id": dev.get("device_id") or "Mobile-Gateway",
+                    "carrier": carrier,
+                    "battery": battery,
+                    "mode": "Cloud Mobile Gateway (Active)" if is_active else "Standby",
                     "screen_state": dev.get("screen_state_text", "Ready"),
-                    "battery": dev.get("battery", "100%"),
-                    "carrier": dev.get("carrier", "SIM 1"),
+                    "is_screen_locked": False,
+                    "last_heartbeat": dev.get("last_heartbeat", 0),
                     "last_seen_seconds_ago": int(time_diff),
                     "pairing_code": p_code
                 }
         return {
+            "ok": True,
+            "is_online": False,
             "connected": False,
+            "device_name": None,
             "device": None,
             "mode": "Offline",
             "screen_state": "Awaiting App Connection",
