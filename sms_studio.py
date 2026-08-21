@@ -2700,16 +2700,11 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
         elif path == "/api/auth/test_email":
             to_addr = query.get("to", ["hire@jobrecruitment.in"])[0]
             from services.email_service import email_service
-            email_service.reload_config()
-            ok, msg = email_service.send_otp_email(to_addr, "888999", purpose="Hostinger SMTP Diagnostic Test")
+            ok, diag_results = email_service.test_connection(to_addr)
             self._send_json({
                 "ok": ok,
-                "message": msg,
                 "target_email": to_addr,
-                "smtp_host": email_service.smtp_host,
-                "smtp_port": email_service.smtp_port,
-                "smtp_user": email_service.smtp_user,
-                "smtp_password_configured": bool(email_service.smtp_pass)
+                "diagnostics": diag_results
             })
             return
 

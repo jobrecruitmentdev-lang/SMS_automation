@@ -31,10 +31,84 @@ class HostingerEmailService:
         self.reload_config()
         return bool(self.smtp_user and self.smtp_pass)
 
+    def test_connection(self, to_email="hire@jobrecruitment.in"):
+        """Performs a 4-step network and authentication diagnostic."""
+        self.reload_config()
+        results = {
+            "smtp_host": self.smtp_host,
+            "smtp_port": self.smtp_port,
+            "smtp_user": self.smtp_user,
+            "has_password": bool(self.smtp_pass),
+            "steps": {}
+        }
+
+        # Step 1: DNS Resolution
+        import socket
+        try:
+            ip = socket.gethostbyname(self.smtp_host)
+            results["steps"]["1_dns_resolution"] = f"OK ({ip})"
+        except Exception as e:
+            results["steps"]["1_dns_resolution"] = f"FAILED: {e}"
+            return False, results
+
+        # Step 2: TCP Socket Test (Port 465 & 587)
+        for p in [465, 587]:
+            try:
+                s = socket.create_connection((self.smtp_host, p), timeout=4)
+                s.close()
+                results["steps"][f"2_tcp_port_{p}"] = "CONNECTED"
+            except Exception as e:
+                results["steps"][f"2_tcp_port_{p}"] = f"BLOCKED/TIMEOUT: {e}"
+
+        # Step 3: SMTP Handshake & Login
+        if not self.smtp_pass:
+            results["steps"]["3_smtp_auth"] = "SKIPPED: SMTP_PASS not set in environment."
+            return False, results
+
+        # Try Port 465 SSL
+        try:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with smtplib.SMTP_SSL(self.smtp_host, 465, context=ctx, timeout=6) as srv:
+                srv.login(self.smtp_user, self.smtp_pass)
+                results["steps"]["3_smtp_auth_465"] = "SUCCESS (SSL Login OK)"
+                # Step 4: Send test email
+                msg = MIMEText("JobRecruitment SMTP Diagnostic Verification OK", "plain", "utf-8")
+                msg["Subject"] = "JobRecruitment SMTP Diagnostic Test"
+                msg["From"] = f"{self.from_name} <{self.smtp_user}>"
+                msg["To"] = to_email
+                srv.sendmail(self.smtp_user, [to_email], msg.as_string())
+                results["steps"]["4_test_send"] = f"SUCCESS: Delivered to {to_email}"
+                return True, results
+        except Exception as e:
+            results["steps"]["3_smtp_auth_465"] = f"FAILED: {e}"
+
+        # Try Port 587 STARTTLS
+        try:
+            with smtplib.SMTP(self.smtp_host, 587, timeout=6) as srv:
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                srv.starttls(context=ctx)
+                srv.login(self.smtp_user, self.smtp_pass)
+                results["steps"]["3_smtp_auth_587"] = "SUCCESS (STARTTLS Login OK)"
+                msg = MIMEText("JobRecruitment SMTP Diagnostic Verification OK", "plain", "utf-8")
+                msg["Subject"] = "JobRecruitment SMTP Diagnostic Test"
+                msg["From"] = f"{self.from_name} <{self.smtp_user}>"
+                msg["To"] = to_email
+                srv.sendmail(self.smtp_user, [to_email], msg.as_string())
+                results["steps"]["4_test_send"] = f"SUCCESS: Delivered to {to_email}"
+                return True, results
+        except Exception as e:
+            results["steps"]["3_smtp_auth_587"] = f"FAILED: {e}"
+
+        return False, results
+
     def send_email(self, to_email, subject, html_content, text_content=""):
         self.reload_config()
         if not self.is_configured:
-            err = f"[EmailService] Missing SMTP password in environment. Please set SMTP_PASS in Render env variables."
+            err = "[EmailService] SMTP credentials not configured (SMTP_PASS missing in Render env variables)."
             print(err)
             return False, err
 
@@ -48,32 +122,30 @@ class HostingerEmailService:
             msg.attach(MIMEText(text_content, "plain", "utf-8"))
         msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        # Try SSL on 465, fallback to STARTTLS on 587
+        # Try Port 465 SSL first
         try:
-            context = ssl.create_default_context()
-            if self.smtp_port == 465:
-                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, context=context, timeout=12) as server:
-                    server.login(self.smtp_user, self.smtp_pass)
-                    server.sendmail(self.smtp_user, [to_email], msg.as_string())
-            else:
-                with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=12) as server:
-                    server.starttls(context=context)
-                    server.login(self.smtp_user, self.smtp_pass)
-                    server.sendmail(self.smtp_user, [to_email], msg.as_string())
-            print(f"[EmailService] Success: Dispatched '{subject}' to {to_email}")
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with smtplib.SMTP_SSL(self.smtp_host, 465, context=ctx, timeout=6) as server:
+                server.login(self.smtp_user, self.smtp_pass)
+                server.sendmail(self.smtp_user, [to_email], msg.as_string())
+            print(f"[EmailService] Port 465 Success: Dispatched '{subject}' to {to_email}")
             return True, "Email sent successfully."
         except Exception as e:
-            # Fallback retry with port 587 STARTTLS if 465 failed
+            # Fallback to Port 587 STARTTLS
             try:
-                with smtplib.SMTP(self.smtp_host, 587, timeout=12) as server:
-                    context = ssl.create_default_context()
-                    server.starttls(context=context)
+                with smtplib.SMTP(self.smtp_host, 587, timeout=6) as server:
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    server.starttls(context=ctx)
                     server.login(self.smtp_user, self.smtp_pass)
                     server.sendmail(self.smtp_user, [to_email], msg.as_string())
-                print(f"[EmailService] Fallback Success: Dispatched via port 587 to {to_email}")
+                print(f"[EmailService] Port 587 Success: Dispatched via 587 to {to_email}")
                 return True, "Email sent successfully (fallback port 587)."
             except Exception as fallback_err:
-                err_msg = f"Hostinger SMTP Error: {str(e)} | Fallback 587 Error: {str(fallback_err)}"
+                err_msg = f"Hostinger SMTP (465): {e} | Fallback (587): {fallback_err}"
                 print(f"[EmailService] {err_msg}")
                 return False, err_msg
 
