@@ -631,6 +631,7 @@ class SupabaseAuditService:
         # Send via Hostinger SMTP
         from services.email_service import email_service
         email_sent, email_msg = email_service.send_otp_email(email_clean, otp_code, purpose="Sign-In")
+        write_log(f"[Auth] Hostinger OTP to {email_clean} - Sent: {email_sent} - Result: {email_msg}")
 
         # 1. Supabase PostgreSQL Store
         if self.enabled:
@@ -656,7 +657,7 @@ class SupabaseAuditService:
                     VALUES (%s, %s, %s, %s, %s)
                 """, (email_clean, otp_hash, full_name or email_clean.split('@')[0].capitalize(), role, expires_at))
                 conn.close()
-                return True, {"message": f"Verification OTP sent to {email_clean} via Hostinger SMTP.", "email_sent": email_sent, "token": otp_code}
+                return email_sent, {"message": f"Verification OTP sent to {email_clean}." if email_sent else f"Hostinger Email Delivery Failed: {email_msg}", "email_sent": email_sent, "token": otp_code}
             except Exception as e:
                 write_log(f"[Auth] Supabase OTP save error: {e}. Using local store...")
 
@@ -670,7 +671,7 @@ class SupabaseAuditService:
             "used": False
         }
         self._save_local_resets(resets)
-        return True, {"message": f"Verification OTP sent to {email_clean} via Hostinger SMTP.", "email_sent": email_sent, "token": otp_code}
+        return email_sent, {"message": f"Verification OTP sent to {email_clean}." if email_sent else f"Hostinger Email Delivery Failed: {email_msg}", "email_sent": email_sent, "token": otp_code}
 
     def verify_login_otp(self, email, otp_code):
         email_clean = email.lower().strip()
@@ -2694,6 +2695,22 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
         elif path == "/api/campaign_history":
             campaigns = supabase_service.fetch_campaign_history(limit=30)
             self._send_json({"campaigns": campaigns, "connected": supabase_service.enabled})
+            return
+
+        elif path == "/api/auth/test_email":
+            to_addr = query.get("to", ["hire@jobrecruitment.in"])[0]
+            from services.email_service import email_service
+            email_service.reload_config()
+            ok, msg = email_service.send_otp_email(to_addr, "888999", purpose="Hostinger SMTP Diagnostic Test")
+            self._send_json({
+                "ok": ok,
+                "message": msg,
+                "target_email": to_addr,
+                "smtp_host": email_service.smtp_host,
+                "smtp_port": email_service.smtp_port,
+                "smtp_user": email_service.smtp_user,
+                "smtp_password_configured": bool(email_service.smtp_pass)
+            })
             return
 
         elif path in ["/download-apk", "/download/gateway.apk", "/download/JobRecruitment-Gateway.apk", "/download/app-release.apk", "/api/gateway/app-download"]:

@@ -11,21 +11,32 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 class HostingerEmailService:
-    def __init__(self):
-        self.smtp_host = os.getenv("SMTP_HOST", "smtp.hostinger.com")
+    def reload_config(self):
+        self.smtp_host = os.getenv("SMTP_HOST", "smtp.hostinger.com").strip()
         self.smtp_port = int(os.getenv("SMTP_PORT", "465"))
-        self.smtp_user = os.getenv("SMTP_USER", "hire@jobrecruitment.in")
-        self.smtp_pass = os.getenv("SMTP_PASS") or os.getenv("SMTP_PASSWORD") or os.getenv("HOSTINGER_EMAIL_PASS") or ""
-        self.from_name = os.getenv("SMTP_FROM_NAME", "JobRecruitment AI SMS Studio")
+        self.smtp_user = os.getenv("SMTP_USER", "hire@jobrecruitment.in").strip()
+        self.smtp_pass = (
+            os.getenv("SMTP_PASS")
+            or os.getenv("SMTP_PASSWORD")
+            or os.getenv("HOSTINGER_EMAIL_PASS")
+            or os.getenv("HOSTINGER_PASS")
+            or os.getenv("EMAIL_PASS")
+            or os.getenv("MAIL_PASSWORD")
+            or ""
+        ).strip()
+        self.from_name = os.getenv("SMTP_FROM_NAME", "JobRecruitment AI SMS Studio").strip()
 
     @property
     def is_configured(self):
+        self.reload_config()
         return bool(self.smtp_user and self.smtp_pass)
 
     def send_email(self, to_email, subject, html_content, text_content=""):
+        self.reload_config()
         if not self.is_configured:
-            print(f"[EmailService] WARNING: SMTP_PASS not set in environment. Skipping delivery to {to_email}.")
-            return False, "SMTP credentials not configured on server (SMTP_PASS missing)."
+            err = f"[EmailService] Missing SMTP password in environment. Please set SMTP_PASS in Render env variables."
+            print(err)
+            return False, err
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -49,21 +60,22 @@ class HostingerEmailService:
                     server.starttls(context=context)
                     server.login(self.smtp_user, self.smtp_pass)
                     server.sendmail(self.smtp_user, [to_email], msg.as_string())
+            print(f"[EmailService] Success: Dispatched '{subject}' to {to_email}")
             return True, "Email sent successfully."
         except Exception as e:
-            # Fallback retry with port 587 STARTTLS if 465 timed out
-            if self.smtp_port == 465:
-                try:
-                    with smtplib.SMTP(self.smtp_host, 587, timeout=12) as server:
-                        context = ssl.create_default_context()
-                        server.starttls(context=context)
-                        server.login(self.smtp_user, self.smtp_pass)
-                        server.sendmail(self.smtp_user, [to_email], msg.as_string())
-                    return True, "Email sent successfully (fallback port 587)."
-                except Exception as fallback_err:
-                    print(f"[EmailService] Fallback SMTP error: {fallback_err}")
-            print(f"[EmailService] Primary SMTP delivery error: {e}")
-            return False, f"SMTP Error: {str(e)}"
+            # Fallback retry with port 587 STARTTLS if 465 failed
+            try:
+                with smtplib.SMTP(self.smtp_host, 587, timeout=12) as server:
+                    context = ssl.create_default_context()
+                    server.starttls(context=context)
+                    server.login(self.smtp_user, self.smtp_pass)
+                    server.sendmail(self.smtp_user, [to_email], msg.as_string())
+                print(f"[EmailService] Fallback Success: Dispatched via port 587 to {to_email}")
+                return True, "Email sent successfully (fallback port 587)."
+            except Exception as fallback_err:
+                err_msg = f"Hostinger SMTP Error: {str(e)} | Fallback 587 Error: {str(fallback_err)}"
+                print(f"[EmailService] {err_msg}")
+                return False, err_msg
 
     def send_otp_email(self, to_email, otp_code, purpose="Authentication"):
         subject = f"🔐 {otp_code} is your JobRecruitment Verification Code"
