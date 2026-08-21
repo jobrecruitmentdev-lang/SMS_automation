@@ -75,7 +75,26 @@ class GatewayService:
     def get_device_status(self, pairing_code: str) -> dict:
         p_code = (pairing_code or "JR-DEFAULT").strip().upper()
         with relay_lock:
+            # 1. Direct match
             dev = user_relay_devices.get(p_code)
+            
+            # 2. Check without prefix or alternate formats
+            if not dev:
+                raw_code = p_code.replace("JR-", "").replace("JR", "")
+                for k, v in user_relay_devices.items():
+                    if k == raw_code or k.replace("JR-", "") == raw_code or k == p_code:
+                        dev = v
+                        p_code = k
+                        break
+            
+            # 3. Fallback: If only 1 phone is active on server in last 60 seconds, bind it
+            if not dev and len(user_relay_devices) == 1:
+                single_k = list(user_relay_devices.keys())[0]
+                single_dev = user_relay_devices[single_k]
+                if time.time() - single_dev.get("last_heartbeat", 0) < 60:
+                    dev = single_dev
+                    p_code = single_k
+
             if dev:
                 time_diff = time.time() - dev.get("last_heartbeat", 0)
                 is_active = time_diff < 45
