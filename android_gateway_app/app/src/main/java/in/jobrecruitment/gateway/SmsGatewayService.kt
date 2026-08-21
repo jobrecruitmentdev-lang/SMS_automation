@@ -54,7 +54,7 @@ class SmsGatewayService : Service() {
         }
 
         val serverUrl = intent?.getStringExtra("server_url") ?: "https://sms.jobrecruitment.in"
-        val pairingCode = intent?.getStringExtra("pairing_code") ?: "JR-795250"
+        val pairingCode = intent?.getStringExtra("pairing_code") ?: ""
         val preferredSimSlot = intent?.getIntExtra("sim_slot", 0) ?: 0
 
         startForeground(NOTIFICATION_ID, buildNotification("Listening for Cloud Campaigns...", pairingCode))

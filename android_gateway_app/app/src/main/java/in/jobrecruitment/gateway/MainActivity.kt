@@ -40,9 +40,9 @@ class MainActivity : AppCompatActivity() {
         btnToggleService = findViewById(R.id.btnToggleService)
         tvStatus = findViewById(R.id.tvStatus)
 
-        // Restore saved settings
+        // Restore saved settings (Server URL defaults to production cloud; pairing code entered by user)
         etServerUrl.setText(prefs.getString("server_url", "https://sms.jobrecruitment.in"))
-        etPairingCode.setText(prefs.getString("pairing_code", "JR-795250"))
+        etPairingCode.setText(prefs.getString("pairing_code", ""))
 
         populateSimSlots()
         requestPermissionsIfNeed()

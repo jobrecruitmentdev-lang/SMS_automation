@@ -80,7 +80,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:background="#090D16"
-                    android:hint="https://sms-automation-q1zf.onrender.com"
+                    android:hint="https://sms.jobrecruitment.in"
                     android:padding="12dp"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#64748B"

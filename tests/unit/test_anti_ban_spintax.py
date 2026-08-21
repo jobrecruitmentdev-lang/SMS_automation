@@ -1,5 +1,5 @@
 import pytest
-from web_ui import calculate_sms_encoding, evaluate_spintax
+from app.services.ai_service import calculate_sms_encoding, evaluate_spintax
 
 class TestSpintaxEngine:
     def test_single_spintax_resolution(self):

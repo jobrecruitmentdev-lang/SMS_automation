@@ -3,6 +3,7 @@ title JobRecruitment AI SMS Studio (Web UI)
 color 0a
 cd /d "%~dp0"
 set "PATH=%~dp0platform-tools;%PATH%"
+set "PORT=8050"
 
 echo ==============================================================================
 echo      Starting JobRecruitment AI SMS Web Studio...

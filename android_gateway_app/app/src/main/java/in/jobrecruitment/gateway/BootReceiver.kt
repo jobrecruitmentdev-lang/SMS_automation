@@ -9,9 +9,10 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             val prefs = context.getSharedPreferences("jr_gateway_prefs", Context.MODE_PRIVATE)
-            val serverUrl = prefs.getString("server_url", "https://sms-automation-q1zf.onrender.com") ?: return
-            val pairingCode = prefs.getString("pairing_code", "JR-100001") ?: return
+            val serverUrl = prefs.getString("server_url", "https://sms.jobrecruitment.in") ?: "https://sms.jobrecruitment.in"
+            val pairingCode = prefs.getString("pairing_code", "") ?: ""
             val simSlot = prefs.getInt("sim_slot", 0)
+            if (pairingCode.isEmpty()) return
 
             val serviceIntent = Intent(context, SmsGatewayService::class.java).apply {
                 action = SmsGatewayService.ACTION_START

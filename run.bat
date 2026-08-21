@@ -7,7 +7,7 @@ set "PATH=%~dp0platform-tools;%PATH%"
 echo ==============================================================================
 echo      Starting JobRecruitment AI SMS Engine...
 echo ==============================================================================
-python sms_engine.py
+python sms_studio.py
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
