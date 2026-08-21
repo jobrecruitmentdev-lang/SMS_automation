@@ -725,7 +725,7 @@
             <div class="p-4 bg-teal-950/60 border border-teal-800/80 rounded-2xl flex items-center justify-between gap-3">
                 <div>
                     <div class="text-[11px] text-teal-300 font-bold uppercase tracking-wider">Your Personal Recruiter Code:</div>
-                    <div class="text-xl font-mono font-black text-white mt-0.5" id="guide-display-pairing-code">JR-100001</div>
+                    <div class="text-xl font-mono font-black text-teal-300 mt-0.5" id="guide-display-pairing-code">Pairing...</div>
                 </div>
                 <button onclick="navigator.clipboard.writeText(document.getElementById('guide-display-pairing-code').textContent); showToast('Code copied to clipboard!');" class="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold rounded-xl flex items-center gap-1 transition">
                     <span class="material-symbols-outlined text-xs">content_copy</span> Copy Code
@@ -873,7 +873,7 @@
                         start_relay.bat ko double-click karein aur apna Code dalein
                     </div>
                     <p class="text-slate-400 leading-relaxed">
-                        Downloaded file ko run karein aur apna Recruiter Code (<b class="text-teal-300 font-mono" id="guide-display-pairing-code-2">JR-100001</b>) dalein. Enter dabate hi website par <b class="text-emerald-400">[ 🟢 Cloud Relay Active ]</b> show ho jayega!
+                        Downloaded file ko run karein aur apna Recruiter Code (<b class="text-teal-300 font-mono" id="guide-display-pairing-code-2">Pairing...</b>) dalein. Enter dabate hi website par <b class="text-emerald-400">[ 🟢 Cloud Relay Active ]</b> show ho jayega!
                     </p>
                 </div>
             </div>
@@ -1453,7 +1453,12 @@
             const initials = (currentUser.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
             document.getElementById('user-initials').textContent = initials;
             
-            const pCode = currentUser.pairing_code || `JR-${Math.floor(100000 + Math.random() * 900000)}`;
+            if (!currentUser.pairing_code || currentUser.pairing_code === 'JR-100001' || currentUser.pairing_code === 'JR-DEFAULT') {
+                const cleanId = (currentUser.id || currentUser.email || 'USER').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase();
+                currentUser.pairing_code = `JR-${cleanId.padStart(6, '0')}`;
+                setCookie('jr_user_session', JSON.stringify(currentUser));
+            }
+            const pCode = currentUser.pairing_code;
             const pEl = document.getElementById('user-display-pairing-code');
             if (pEl) pEl.textContent = pCode;
             const gEl1 = document.getElementById('guide-display-pairing-code');
@@ -2852,7 +2857,18 @@
             } catch(e) {}
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('hidden');
+            if (id === 'modal-connect-guide' && currentUser) {
+                const pCode = currentUser.pairing_code || (currentUser.id ? `JR-${currentUser.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}` : 'Pairing...');
+                const gEl1 = document.getElementById('guide-display-pairing-code');
+                if (gEl1) gEl1.textContent = pCode;
+                const gEl2 = document.getElementById('guide-display-pairing-code-2');
+                if (gEl2) gEl2.textContent = pCode;
+            }
+        }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
         function showToast(msg, isError = false) {
