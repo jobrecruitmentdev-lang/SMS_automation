@@ -28,3 +28,6 @@ platform-tools/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Obsidian Knowledge Vault
+knowledge-vault/
