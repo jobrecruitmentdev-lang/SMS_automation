@@ -58,10 +58,30 @@ class FastMultiChannelEmailService:
                     "subject": subject,
                     "html": html_content
                 },
-                timeout=3.0
+                timeout=3.5
             )
             if resp.status_code in [200, 201]:
                 return True, "Email dispatched via Resend HTTPS (Fast)."
+            
+            # If custom domain is not yet verified on Resend dashboard, auto-fallback to onboarding domain
+            if resp.status_code in [400, 403] and "onboarding@resend.dev" not in from_sender:
+                fallback_resp = self.session.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {self.resend_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "from": f"{self.from_name} <onboarding@resend.dev>",
+                        "to": [to_email],
+                        "subject": subject,
+                        "html": html_content
+                    },
+                    timeout=3.5
+                )
+                if fallback_resp.status_code in [200, 201]:
+                    return True, "Email dispatched via Resend HTTPS (Onboarding Domain)."
+
             return False, f"Resend error ({resp.status_code}): {resp.text}"
         except Exception as e:
             return False, f"Resend connection error: {e}"
