@@ -1,4 +1,4 @@
-package in.jobrecruitment.gateway
+package `in`.jobrecruitment.gateway
 
 import android.content.BroadcastReceiver
 import android.content.Context
