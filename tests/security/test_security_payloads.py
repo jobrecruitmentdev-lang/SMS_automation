@@ -1,20 +1,20 @@
 import requests
 import pytest
-from sms_gateway import SMSGateway
+from app.services.dispatch_service import clean_phone_number
 from tests.api.test_rest_api import api_server
 
 class TestSecurityAuditAndPayloads:
     def test_clean_phone_sanitization(self):
         # Valid cases
-        assert SMSGateway.clean_phone("+91 98980 11223") == "9898011223"
-        assert SMSGateway.clean_phone("09898011223") == "9898011223"
-        assert SMSGateway.clean_phone("919898011223") == "9898011223"
+        assert clean_phone_number("9898011223") == "+919898011223"
+        assert clean_phone_number("09898011223") == "+919898011223"
+        assert clean_phone_number("919898011223") == "+919898011223"
 
         # Malicious / Injection Payloads must be rejected
-        assert SMSGateway.clean_phone("'; DROP TABLE users; --") is None
-        assert SMSGateway.clean_phone("<script>alert(1)</script>") is None
-        assert SMSGateway.clean_phone("12345") is None
-        assert SMSGateway.clean_phone("1898011223") is None
+        assert clean_phone_number("'; DROP TABLE users; --") is None
+        assert clean_phone_number("<script>alert(1)</script>") is None
+        assert clean_phone_number("12345") is None
+        assert clean_phone_number("1898011223") is None
 
     def test_path_traversal_blocked(self, api_server):
         traversal_paths = [

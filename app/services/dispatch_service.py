@@ -8,13 +8,24 @@ from app.services.quota_service import quota_service
 from app.services.gateway_service import gateway_service
 from app.services.ai_service import evaluate_spintax
 
-def clean_phone_number(raw_phone: str) -> str:
-    cleaned = "".join(c for c in str(raw_phone) if c.isdigit())
+def clean_phone_number(raw_phone: str):
+    if not raw_phone:
+        return None
+    raw_str = str(raw_phone).strip()
+    if any(bad in raw_str for bad in [";", "'", '"', "<", ">", "DROP", "script", "--"]):
+        return None
+    cleaned = "".join(c for c in raw_str if c.isdigit())
     if len(cleaned) == 10:
-        cleaned = "91" + cleaned
-    elif len(cleaned) == 11 and cleaned.startswith("0"):
-        cleaned = "91" + cleaned[1:]
-    return f"+{cleaned}" if not cleaned.startswith("+") else cleaned
+        if cleaned[0] in "6789":
+            return f"+91{cleaned}"
+        return None
+    elif len(cleaned) == 11 and cleaned.startswith("0") and cleaned[1] in "6789":
+        return f"+91{cleaned[1:]}"
+    elif len(cleaned) == 12 and cleaned.startswith("91") and cleaned[2] in "6789":
+        return f"+{cleaned}"
+    elif len(cleaned) > 10 and not cleaned.startswith("1"):
+        return f"+{cleaned}"
+    return None
 
 def send_via_adb(phone: str, text: str, sim_slot: int = 0) -> tuple:
     adb_bin = ensure_adb_binary()
