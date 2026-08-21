@@ -2520,24 +2520,28 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"campaigns": campaigns, "connected": supabase_service.enabled})
             return
 
-        elif path in ["/download-apk", "/download/gateway.apk", "/api/gateway/app-download"]:
-            apk_path = os.path.join(BASE_DIR, "android_gateway_app", "app", "build", "outputs", "apk", "release", "app-release.apk")
+        elif path in ["/download-apk", "/download/gateway.apk", "/download/JobRecruitment-Gateway.apk", "/download/app-release.apk", "/api/gateway/app-download"]:
+            apk_path = os.path.join(BASE_DIR, "android_gateway_app", "app-release.apk")
             if not os.path.exists(apk_path):
-                apk_path = os.path.join(BASE_DIR, "android_gateway_app", "app-release.apk")
+                apk_path = os.path.join(BASE_DIR, "android_gateway_app", "app", "build", "outputs", "apk", "release", "app-release.apk")
+            if not os.path.exists(apk_path):
+                apk_path = os.path.join(BASE_DIR, "app-release.apk")
             if os.path.exists(apk_path):
                 fsize = os.path.getsize(apk_path)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/vnd.android.package-archive")
                 self.send_header("Content-Disposition", 'attachment; filename="JobRecruitment-Gateway.apk"')
                 self.send_header("Content-Length", str(fsize))
+                self.send_header("Cache-Control", "no-cache")
                 self.end_headers()
                 with open(apk_path, "rb") as f:
                     shutil.copyfileobj(f, self.wfile)
             else:
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
+                # Direct CDN / GitHub raw mirror fallback
+                github_apk_url = "https://github.com/jobrecruitmentdev-lang/SMS_automation/raw/main/android_gateway_app/app-release.apk"
+                self.send_response(302)
+                self.send_header("Location", github_apk_url)
                 self.end_headers()
-                self.wfile.write(b"""<!DOCTYPE html><html><head><title>JobRecruitment Android Gateway Companion</title><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{background:#090d16;color:#f8fafc;font-family:sans-serif;padding:30px;max-width:600px;margin:auto;line-height:1.6}a{color:#14b8a6}.btn{display:inline-block;padding:12px 24px;background:#0d9488;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold;margin-top:16px}</style></head><body><h1>\xf0\x9f\x93\xb1 JobRecruitment Android Gateway</h1><p>Source code project ready in <code>android_gateway_app/</code>.</p></body></html>""")
             return
 
         elif path in ["/api/gateway/poll", "/api/relay/poll_jobs"]:
