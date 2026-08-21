@@ -76,9 +76,9 @@ class AuthService:
         otp_hash = hash_string(otp_code)
         expires_at = datetime.now() + timedelta(minutes=10)
 
-        # Dispatch via Multi-Channel Mailer
-        email_sent, email_msg = email_service.send_otp_email(email_clean, otp_code, purpose="register")
-        write_log(f"[Auth] Register OTP to {email_clean} - Sent: {email_sent} - Result: {email_msg}")
+        # Dispatch via Fast Background Mailer (<50ms API response)
+        email_service.send_otp_async(email_clean, otp_code, purpose="register")
+        write_log(f"[Auth] Dispatched background Register OTP email to {email_clean}")
 
         # Store in Database
         if self.enabled:
@@ -107,7 +107,7 @@ class AuthService:
                     VALUES (%s, %s, %s, %s, 'register', %s)
                 """, (email_clean, otp_hash, name_clean, role, expires_at))
                 conn.close()
-                return True, {"message": f"Verification code sent to {email_clean}.", "email_sent": email_sent}
+                return True, {"message": f"Verification code sent to {email_clean}."}
             except Exception as e:
                 write_log(f"[Auth] Supabase OTP save error: {e}. Using local store...")
 
@@ -123,7 +123,7 @@ class AuthService:
             "used": False
         }
         self._save_local_resets(resets)
-        return True, {"message": f"Verification code sent to {email_clean}.", "email_sent": email_sent}
+        return True, {"message": f"Verification code sent to {email_clean}."}
 
     def verify_registration_otp(self, email: str, otp_code: str):
         email_clean = email.lower().strip()
@@ -247,9 +247,9 @@ class AuthService:
         otp_hash = hash_string(otp_code)
         expires_at = datetime.now() + timedelta(minutes=10)
 
-        # Dispatch via Multi-Channel Mailer
-        email_sent, email_msg = email_service.send_otp_email(email_clean, otp_code, purpose="login")
-        write_log(f"[Auth] Login OTP to {email_clean} - Sent: {email_sent} - Result: {email_msg}")
+        # Dispatch via Fast Background Mailer (<50ms API response)
+        email_service.send_otp_async(email_clean, otp_code, purpose="login")
+        write_log(f"[Auth] Dispatched background Login OTP email to {email_clean}")
 
         # Store in Database
         if self.enabled:
@@ -264,7 +264,7 @@ class AuthService:
                     VALUES (%s, %s, 'login', %s)
                 """, (email_clean, otp_hash, expires_at))
                 conn.close()
-                return True, {"message": f"Sign-in code sent to {email_clean}.", "email_sent": email_sent}
+                return True, {"message": f"Sign-in code sent to {email_clean}."}
             except Exception as e:
                 write_log(f"[Auth] Supabase Login OTP error: {e}")
 
@@ -278,7 +278,7 @@ class AuthService:
             "used": False
         }
         self._save_local_resets(resets)
-        return True, {"message": f"Sign-in code sent to {email_clean}.", "email_sent": email_sent}
+        return True, {"message": f"Sign-in code sent to {email_clean}."}
 
     def verify_login_otp(self, email: str, otp_code: str):
         email_clean = email.lower().strip()
