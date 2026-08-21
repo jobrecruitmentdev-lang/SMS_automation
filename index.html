@@ -45,87 +45,98 @@
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <!-- 3-Way Tab Switcher -->
-            <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-[11px] font-bold">
-                <button onclick="switchAuthGate('otp')" id="gate-tab-otp" class="py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center">📩 Email OTP</button>
-                <button onclick="switchAuthGate('login')" id="gate-tab-login" class="py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center">🔑 Password</button>
-                <button onclick="switchAuthGate('signup')" id="gate-tab-signup" class="py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center">📝 Register</button>
+            <!-- 2-Way Tab Switcher -->
+            <div class="grid grid-cols-2 gap-1 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-bold">
+                <button onclick="switchAuthGate('login')" id="gate-tab-login" class="py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center">🔑 Sign In (OTP)</button>
+                <button onclick="switchAuthGate('register')" id="gate-tab-register" class="py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center">📝 Register Recruiter</button>
             </div>
 
-            <!-- OTP Flow Form (Default) -->
-            <div id="gate-flow-otp" class="space-y-3.5 text-xs">
-                <div id="gate-otp-step1" class="space-y-3">
+            <!-- 1. SIGN IN FLOW -->
+            <div id="flow-signin" class="space-y-3.5 text-xs">
+                <div id="signin-step1" class="space-y-3">
                     <div class="space-y-1.5">
-                        <label class="text-slate-400 font-semibold">Work Email</label>
-                        <input type="email" id="gate-otp-email" required placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                        <label class="text-slate-400 font-semibold">Registered Work Email</label>
+                        <input type="email" id="signin-email" required placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
                     </div>
-                    <button type="button" onclick="sendAuthOtp()" id="btn-gate-send-otp" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm flex items-center justify-center gap-2 cursor-pointer">
-                        <span>Send Verification Code</span>
+                    <button type="button" onclick="handleSigninRequestOtp()" id="btn-signin-send-otp" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <span>Send Sign-In Code</span>
                         <span class="material-symbols-outlined text-base">outgoing_mail</span>
                     </button>
                 </div>
 
-                <div id="gate-otp-step2" class="space-y-3 hidden">
+                <div id="signin-step2" class="space-y-3 hidden">
                     <div class="p-3 bg-teal-950/60 border border-teal-800/80 rounded-xl text-[11px] text-teal-300 space-y-0.5">
                         <div class="font-bold flex items-center gap-1">
                             <span class="material-symbols-outlined text-xs">mark_email_read</span>
-                            <span>OTP Dispatched via hire@jobrecruitment.in</span>
+                            <span>Sign-In Code Dispatched via hire@jobrecruitment.in</span>
                         </div>
                         <p class="text-slate-400">Please enter the 6-digit code sent to your email.</p>
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-slate-400 font-semibold">6-Digit Verification OTP</label>
-                        <input type="text" id="gate-otp-code" maxlength="6" placeholder="e.g. 482910" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-lg font-mono tracking-widest text-teal-300 outline-none focus:border-teal-500">
+                        <label class="text-slate-400 font-semibold">6-Digit Verification Code</label>
+                        <input type="text" id="signin-otp-code" maxlength="6" placeholder="e.g. 482910" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-lg font-mono tracking-widest text-teal-300 outline-none focus:border-teal-500">
                     </div>
-                    <button type="button" onclick="verifyAuthOtp()" id="btn-gate-verify-otp" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm flex items-center justify-center gap-2 cursor-pointer">
+                    <button type="button" onclick="handleSigninVerifyOtp()" id="btn-signin-verify-otp" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm flex items-center justify-center gap-2 cursor-pointer">
                         <span>Verify & Sign In</span>
                         <span class="material-symbols-outlined text-base">login</span>
                     </button>
-                    <div class="text-center pt-1">
-                        <button type="button" onclick="sendAuthOtp()" class="text-slate-400 hover:text-teal-300 text-[11px]">Resend Code</button>
+                    <div class="flex items-center justify-between text-[11px] pt-1 px-1">
+                        <button type="button" onclick="resetSigninStep()" class="text-slate-500 hover:text-slate-300">Change Email</button>
+                        <button type="button" id="btn-signin-resend" onclick="handleSigninRequestOtp(true)" class="text-slate-400 hover:text-teal-300">Resend Code</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Password / Register Form -->
-            <form onsubmit="handleGateAuthSubmit(event)" id="gate-flow-password" class="space-y-3.5 text-xs hidden">
-                <div id="gate-field-name" class="space-y-1.5 hidden">
-                    <label class="text-slate-400 font-semibold">Full Name</label>
-                    <input type="text" id="gate-name" placeholder="e.g. Vishwa Patel" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="text-slate-400 font-semibold">Work Email</label>
-                    <input type="email" id="gate-email" required placeholder="recruiter@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
-                </div>
-
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label class="text-slate-400 font-semibold">Password</label>
-                        <button type="button" id="link-forgot-pwd" onclick="openForgotPwdModal()" class="text-[11px] text-teal-400 hover:underline font-medium">Forgot Password?</button>
+            <!-- 2. REGISTER FLOW -->
+            <div id="flow-register" class="space-y-3.5 text-xs hidden">
+                <div id="register-step1" class="space-y-3">
+                    <div class="space-y-1.5">
+                        <label class="text-slate-400 font-semibold">Full Name</label>
+                        <input type="text" id="register-name" required placeholder="e.g. Vishwa Patel" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
                     </div>
-                    <div class="relative">
-                        <input type="password" id="gate-password" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 pr-10 text-slate-200 outline-none focus:border-teal-500">
-                        <button type="button" onclick="togglePasswordVisibility('gate-password', 'gate-pwd-eye')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-300 p-1 flex items-center justify-center">
-                            <span id="gate-pwd-eye" class="material-symbols-outlined text-lg">visibility</span>
-                        </button>
+
+                    <div class="space-y-1.5">
+                        <label class="text-slate-400 font-semibold">Work Email</label>
+                        <input type="email" id="register-email" required placeholder="vishwa@jobrecruitment.in" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-slate-400 font-semibold">Workspace Role</label>
+                        <select id="register-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
+                            <option value="recruiter">Recruiter</option>
+                            <option value="admin">Administrator</option>
+                            <option value="manager">Hiring Manager</option>
+                        </select>
+                    </div>
+
+                    <button type="button" onclick="handleRegisterRequestOtp()" id="btn-register-send-otp" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <span>Register & Send Code</span>
+                        <span class="material-symbols-outlined text-base">person_add</span>
+                    </button>
+                </div>
+
+                <div id="register-step2" class="space-y-3 hidden">
+                    <div class="p-3 bg-teal-950/60 border border-teal-800/80 rounded-xl text-[11px] text-teal-300 space-y-0.5">
+                        <div class="font-bold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">verified</span>
+                            <span>Activation Code Dispatched</span>
+                        </div>
+                        <p class="text-slate-400">Please enter the 6-digit activation code sent to your email.</p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-slate-400 font-semibold">6-Digit Activation Code</label>
+                        <input type="text" id="register-otp-code" maxlength="6" placeholder="e.g. 482910" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-lg font-mono tracking-widest text-teal-300 outline-none focus:border-teal-500">
+                    </div>
+                    <button type="button" onclick="handleRegisterVerifyOtp()" id="btn-register-verify-otp" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm flex items-center justify-center gap-2 cursor-pointer">
+                        <span>Activate & Open Workspace</span>
+                        <span class="material-symbols-outlined text-base">arrow_forward</span>
+                    </button>
+                    <div class="flex items-center justify-between text-[11px] pt-1 px-1">
+                        <button type="button" onclick="resetRegisterStep()" class="text-slate-500 hover:text-slate-300">Change Details</button>
+                        <button type="button" id="btn-register-resend" onclick="handleRegisterRequestOtp(true)" class="text-slate-400 hover:text-teal-300">Resend Code</button>
                     </div>
                 </div>
-
-                <div id="gate-field-role" class="space-y-1.5 hidden">
-                    <label class="text-slate-400 font-semibold">Workspace Role</label>
-                    <select id="gate-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 outline-none focus:border-teal-500">
-                        <option value="recruiter">Recruiter</option>
-                        <option value="admin">Administrator</option>
-                        <option value="manager">Hiring Manager</option>
-                    </select>
-                </div>
-
-                <button type="submit" id="btn-gate-submit" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl transition shadow-xl shadow-teal-500/20 text-sm mt-2 flex items-center justify-center gap-2 cursor-pointer">
-                    <span>Sign In to Workspace</span>
-                    <span class="material-symbols-outlined text-base">arrow_forward</span>
-                </button>
-            </form>
+            </div>
         </div>
 
         <div class="text-[11px] text-slate-500 text-center flex items-center justify-center gap-1.5">
@@ -1233,67 +1244,97 @@
             }
         }
 
+        let resendInterval = null;
+
         function switchAuthGate(mode) {
             currentGateMode = mode;
-            document.getElementById('gate-tab-otp').className = mode === 'otp' ? 'py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
-            document.getElementById('gate-tab-login').className = mode === 'login' ? 'py-2.5 rounded-xl text-slate-200 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
-            document.getElementById('gate-tab-signup').className = mode === 'signup' ? 'py-2.5 rounded-xl text-slate-200 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
+            const isLogin = mode === 'login';
+            document.getElementById('gate-tab-login').className = isLogin ? 'py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
+            document.getElementById('gate-tab-register').className = !isLogin ? 'py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
             
-            document.getElementById('gate-flow-otp').classList.toggle('hidden', mode !== 'otp');
-            document.getElementById('gate-flow-password').classList.toggle('hidden', mode === 'otp');
-
-            const isSignup = mode === 'signup';
-            document.getElementById('gate-field-name').classList.toggle('hidden', !isSignup);
-            document.getElementById('gate-field-role').classList.toggle('hidden', !isSignup);
-            const forgotLink = document.getElementById('link-forgot-pwd');
-            if (forgotLink) forgotLink.classList.toggle('hidden', isSignup);
-            document.getElementById('btn-gate-submit').innerHTML = isSignup ? '<span>Create Recruiter Account</span> <span class="material-symbols-outlined text-base">person_add</span>' : '<span>Sign In to Workspace</span> <span class="material-symbols-outlined text-base">arrow_forward</span>';
+            document.getElementById('flow-signin').classList.toggle('hidden', !isLogin);
+            document.getElementById('flow-register').classList.toggle('hidden', isLogin);
         }
 
-        async function sendAuthOtp() {
-            const email = document.getElementById('gate-otp-email').value.trim();
+        function resetSigninStep() {
+            document.getElementById('signin-step1').classList.remove('hidden');
+            document.getElementById('signin-step2').classList.add('hidden');
+        }
+
+        function resetRegisterStep() {
+            document.getElementById('register-step1').classList.remove('hidden');
+            document.getElementById('register-step2').classList.add('hidden');
+        }
+
+        function startResendCooldown(btnId, defaultLabel) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.disabled = true;
+            let seconds = 60;
+            if (resendInterval) clearInterval(resendInterval);
+            resendInterval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(resendInterval);
+                    btn.disabled = false;
+                    btn.textContent = defaultLabel;
+                } else {
+                    btn.textContent = `Resend in ${seconds}s`;
+                }
+            }, 1000);
+        }
+
+        // --- SIGN IN FLOW ---
+        async function handleSigninRequestOtp(isResend = false) {
+            const email = document.getElementById('signin-email').value.trim();
             if (!email || !email.includes('@')) {
-                showToast("Please enter a valid work email address.", true);
+                showToast("Please enter a valid registered work email.", true);
                 return;
             }
-            const btn = document.getElementById('btn-gate-send-otp');
-            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Sending OTP...';
+            const btn = document.getElementById(isResend ? 'btn-signin-resend' : 'btn-signin-send-otp');
+            const originalText = isResend ? 'Resend Code' : 'Send Sign-In Code';
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Sending...';
             try {
-                const res = await fetch('/api/auth/send_otp', {
+                const res = await fetch('/api/auth/login/request_otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    document.getElementById('gate-otp-step1').classList.add('hidden');
-                    document.getElementById('gate-otp-step2').classList.remove('hidden');
+                    document.getElementById('signin-step1').classList.add('hidden');
+                    document.getElementById('signin-step2').classList.remove('hidden');
                     if (data.token) {
-                        document.getElementById('gate-otp-code').value = data.token;
+                        document.getElementById('signin-otp-code').value = data.token;
                     }
-                    document.getElementById('gate-otp-code').focus();
-                    showToast(data.message || "Verification code generated!");
+                    document.getElementById('signin-otp-code').focus();
+                    startResendCooldown('btn-signin-resend', 'Resend Code');
+                    showToast(data.message || "Sign-in code sent to your email!");
                 } else {
-                    showToast(data.message || "Failed to send OTP.", true);
+                    showToast(data.message || "Could not find account. Please register.", true);
+                    if (data.message && data.message.includes('Register')) {
+                        switchAuthGate('register');
+                        document.getElementById('register-email').value = email;
+                    }
                 }
             } catch(e) {
-                showToast("Network error. Please check your internet connection.", true);
+                showToast("Network connection error.", true);
             } finally {
-                btn.innerHTML = '<span>Send Verification Code</span> <span class="material-symbols-outlined text-base">outgoing_mail</span>';
+                btn.innerHTML = originalText;
             }
         }
 
-        async function verifyAuthOtp() {
-            const email = document.getElementById('gate-otp-email').value.trim();
-            const otp = document.getElementById('gate-otp-code').value.trim();
+        async function handleSigninVerifyOtp() {
+            const email = document.getElementById('signin-email').value.trim();
+            const otp = document.getElementById('signin-otp-code').value.trim();
             if (!otp || otp.length < 4) {
-                showToast("Please enter the verification code sent to your email.", true);
+                showToast("Please enter the 6-digit verification code.", true);
                 return;
             }
-            const btn = document.getElementById('btn-gate-verify-otp');
-            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Verifying...';
+            const btn = document.getElementById('btn-signin-verify-otp');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Authenticating...';
             try {
-                const res = await fetch('/api/auth/verify_otp', {
+                const res = await fetch('/api/auth/login/verify_otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, otp })
@@ -1303,49 +1344,88 @@
                     currentUser = data.user;
                     setCookie('jr_user_session', JSON.stringify(currentUser));
                     unlockWorkspace();
-                    showToast(`Welcome, ${currentUser.name}!`);
+                    showToast(`Welcome back, ${currentUser.name}!`);
                 } else {
-                    showToast(data.message || "Invalid verification code.", true);
+                    showToast(data.message || "Invalid or expired verification code.", true);
                 }
             } catch(e) {
-                showToast("Verification network error.", true);
+                showToast("Authentication network error.", true);
             } finally {
                 btn.innerHTML = '<span>Verify & Sign In</span> <span class="material-symbols-outlined text-base">login</span>';
             }
         }
 
-        async function handleGateAuthSubmit(e) {
-            e.preventDefault();
-            const email = document.getElementById('gate-email').value.trim();
-            const password = document.getElementById('gate-password').value.trim();
-            const name = document.getElementById('gate-name').value.trim();
-            const role = document.getElementById('gate-role').value;
+        // --- REGISTER FLOW ---
+        async function handleRegisterRequestOtp(isResend = false) {
+            const name = document.getElementById('register-name').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const role = document.getElementById('register-role').value;
 
-            const endpoint = currentGateMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
-            const payload = currentGateMode === 'login' ? { email, password } : { email, password, full_name: name, role };
-
-            const btn = document.getElementById('btn-gate-submit');
-            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Authenticating...';
-
+            if (!name || !email || !email.includes('@')) {
+                showToast("Please enter your Full Name and Work Email.", true);
+                return;
+            }
+            const btn = document.getElementById(isResend ? 'btn-register-resend' : 'btn-register-send-otp');
+            const originalText = isResend ? 'Resend Code' : 'Register & Send Code';
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Registering...';
             try {
-                const res = await fetch(endpoint, {
+                const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ full_name: name, email, role })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    document.getElementById('register-step1').classList.add('hidden');
+                    document.getElementById('register-step2').classList.remove('hidden');
+                    if (data.token) {
+                        document.getElementById('register-otp-code').value = data.token;
+                    }
+                    document.getElementById('register-otp-code').focus();
+                    startResendCooldown('btn-register-resend', 'Resend Code');
+                    showToast(data.message || "Verification code sent to your email!");
+                } else {
+                    showToast(data.message || "Registration failed.", true);
+                    if (data.message && data.message.includes('Sign In')) {
+                        switchAuthGate('login');
+                        document.getElementById('signin-email').value = email;
+                    }
+                }
+            } catch(e) {
+                showToast("Network connection error.", true);
+            } finally {
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function handleRegisterVerifyOtp() {
+            const email = document.getElementById('register-email').value.trim();
+            const otp = document.getElementById('register-otp-code').value.trim();
+            if (!otp || otp.length < 4) {
+                showToast("Please enter the 6-digit activation code.", true);
+                return;
+            }
+            const btn = document.getElementById('btn-register-verify-otp');
+            btn.innerHTML = '<span class="material-symbols-outlined text-xs animate-spin">sync</span> Activating...';
+            try {
+                const res = await fetch('/api/auth/register/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp })
                 });
                 const data = await res.json();
                 if (data.ok && data.user) {
                     currentUser = data.user;
                     setCookie('jr_user_session', JSON.stringify(currentUser));
                     unlockWorkspace();
-                    showToast(`Welcome back, ${currentUser.name}!`);
+                    showToast(`Account activated! Welcome, ${currentUser.name}!`);
                 } else {
-                    showToast(data.message || "Authentication failed.", true);
+                    showToast(data.message || "Invalid or expired activation code.", true);
                 }
             } catch(e) {
-                showToast("Network authentication error.", true);
+                showToast("Activation network error.", true);
             } finally {
-                btn.innerHTML = currentGateMode === 'login' ? '<span>Sign In to Workspace</span> <span class="material-symbols-outlined text-base">arrow_forward</span>' : '<span>Create Recruiter Account</span> <span class="material-symbols-outlined text-base">person_add</span>';
+                btn.innerHTML = '<span>Activate & Open Workspace</span> <span class="material-symbols-outlined text-base">arrow_forward</span>';
             }
         }
 
