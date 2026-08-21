@@ -53,8 +53,8 @@ class SmsGatewayService : Service() {
             return START_NOT_STICKY
         }
 
-        val serverUrl = intent?.getStringExtra("server_url") ?: "https://sms-automation-q1zf.onrender.com"
-        val pairingCode = intent?.getStringExtra("pairing_code") ?: "JR-100001"
+        val serverUrl = intent?.getStringExtra("server_url") ?: "https://sms.jobrecruitment.in"
+        val pairingCode = intent?.getStringExtra("pairing_code") ?: "JR-795250"
         val preferredSimSlot = intent?.getIntExtra("sim_slot", 0) ?: 0
 
         startForeground(NOTIFICATION_ID, buildNotification("Listening for Cloud Campaigns...", pairingCode))

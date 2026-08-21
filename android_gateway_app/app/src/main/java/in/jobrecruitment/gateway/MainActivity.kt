@@ -41,8 +41,8 @@ class MainActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
 
         // Restore saved settings
-        etServerUrl.setText(prefs.getString("server_url", "https://sms-automation-q1zf.onrender.com"))
-        etPairingCode.setText(prefs.getString("pairing_code", "JR-100001"))
+        etServerUrl.setText(prefs.getString("server_url", "https://sms.jobrecruitment.in"))
+        etPairingCode.setText(prefs.getString("pairing_code", "JR-795250"))
 
         populateSimSlots()
         requestPermissionsIfNeed()
