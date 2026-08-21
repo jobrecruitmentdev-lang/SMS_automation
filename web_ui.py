@@ -51,11 +51,27 @@ relay_lock = threading.Lock()
 def get_user_pairing_code(user_id_or_email):
     """Generates a stable 6-digit PIN based on user ID / email."""
     if not user_id_or_email:
-        return "JR-100001"
+        return "JR-DEFAULT"
     import hashlib
     h = hashlib.md5(str(user_id_or_email).encode("utf-8")).hexdigest()
     pin = int(h[:6], 16) % 900000 + 100000
     return f"JR-{pin}"
+
+def get_tenant_dispatch_state(pairing_code):
+    """Returns isolated dispatch progress tracking per recruiter device."""
+    p_code = (pairing_code or "JR-DEFAULT").strip().upper()
+    with relay_lock:
+        if p_code not in user_dispatch_states:
+            user_dispatch_states[p_code] = {
+                "is_running": False,
+                "total": 0,
+                "current_index": 0,
+                "sent_count": 0,
+                "failed_count": 0,
+                "logs": [],
+                "last_log": "Idle"
+            }
+        return user_dispatch_states[p_code]
 
 # Prepend local platform-tools to PATH
 if os.path.exists(PLATFORM_TOOLS_DIR):
@@ -2644,16 +2660,22 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/dispatch_status":
-            with dispatch_lock:
-                last_log = current_dispatch["logs"][-1] if current_dispatch["logs"] else "Idle"
+            p_code = query.get("pairing_code", [""])[0] or query.get("code", [""])[0]
+            if not p_code:
+                uid = query.get("user_id", [""])[0] or query.get("email", [""])[0]
+                p_code = get_user_pairing_code(uid) if uid else "JR-DEFAULT"
+            st = get_tenant_dispatch_state(p_code)
+            with relay_lock:
+                last_log = st["logs"][-1] if st["logs"] else "Idle"
                 self._send_json({
-                    "is_running": current_dispatch["is_running"],
-                    "total": current_dispatch["total"],
-                    "current_index": current_dispatch["current_index"],
-                    "sent_count": current_dispatch["sent_count"],
-                    "failed_count": current_dispatch["failed_count"],
+                    "is_running": st["is_running"],
+                    "total": st["total"],
+                    "current_index": st["current_index"],
+                    "sent_count": st["sent_count"],
+                    "failed_count": st["failed_count"],
                     "last_log": last_log,
-                    "logs": current_dispatch["logs"]
+                    "logs": st["logs"],
+                    "pairing_code": p_code
                 })
             return
 
@@ -2853,19 +2875,20 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             p_code = data.get("pairing_code", "JR-DEFAULT").strip().upper()
             log_line = data.get("log_line", "")
             is_sent = data.get("is_sent", True)
-            with dispatch_lock:
-                current_dispatch["current_index"] = data.get("current_index", current_dispatch["current_index"])
+            with relay_lock:
+                st = get_tenant_dispatch_state(p_code)
+                st["current_index"] = data.get("current_index", st["current_index"])
                 if is_sent:
-                    current_dispatch["sent_count"] += 1
+                    st["sent_count"] += 1
                     quota_service.record_sent(1)
                 else:
-                    current_dispatch["failed_count"] += 1
+                    st["failed_count"] += 1
                 if log_line:
-                    current_dispatch["logs"].append(log_line)
-                    current_dispatch["last_log"] = log_line
+                    st["logs"].append(log_line)
+                    st["last_log"] = log_line
                 if data.get("is_finished"):
-                    current_dispatch["is_running"] = False
-            self._send_json({"ok": True})
+                    st["is_running"] = False
+            self._send_json({"ok": True, "pairing_code": p_code})
             return
 
         elif path == "/api/validate_sms":
@@ -3101,28 +3124,41 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/stop_dispatch":
-            with dispatch_lock:
-                current_dispatch["is_running"] = False
-                current_dispatch["logs"].append("🛑 Emergency Stop Triggered by Recruiter.")
-            p_code = data.get("pairing_code") or "JR-DEFAULT"
+            p_code = data.get("pairing_code")
+            if not p_code:
+                uid = data.get("user_id") or data.get("email")
+                p_code = get_user_pairing_code(uid) if uid else "JR-DEFAULT"
+            p_code = p_code.strip().upper()
+            
             with relay_lock:
+                st = get_tenant_dispatch_state(p_code)
+                st["is_running"] = False
+                st["logs"].append("🛑 Emergency Stop Triggered by Recruiter.")
                 if p_code in user_relay_jobs:
                     user_relay_jobs[p_code] = []
-            write_log("DISPATCH STOPPED: Emergency abort requested by user.")
-            self._send_json({"ok": True, "message": "Dispatch queue halted successfully."})
+            write_log(f"DISPATCH STOPPED: Emergency abort requested for {p_code}.")
+            self._send_json({"ok": True, "message": f"Dispatch queue halted for {p_code}.", "pairing_code": p_code})
             return
 
         elif path == "/api/start_dispatch":
-            with dispatch_lock:
-                if current_dispatch["is_running"]:
-                    self._send_json({"ok": False, "message": "A dispatch campaign is already running in background."}, code=409)
-                    return
-
             candidates = data.get("candidates", [])
             template = data.get("template", "")
             role = data.get("role", "")
             location = data.get("location", "")
             company = data.get("company", "Job Recruitment")
+
+            # Identify Recruiter / Pairing Code
+            p_code = data.get("pairing_code")
+            if not p_code:
+                user_id = data.get("user_id") or data.get("email")
+                p_code = get_user_pairing_code(user_id) if user_id else "JR-DEFAULT"
+            p_code = p_code.strip().upper()
+
+            st = get_tenant_dispatch_state(p_code)
+            with relay_lock:
+                if st["is_running"]:
+                    self._send_json({"ok": False, "message": f"A dispatch campaign is already running for {p_code}."}, code=409)
+                    return
 
             if not candidates or not template:
                 self._send_json({"ok": False, "message": "Candidates and template are required."}, code=400)
@@ -3143,19 +3179,13 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 location=location
             )
 
-            # Identify Recruiter / Pairing Code
-            p_code = data.get("pairing_code")
-            if not p_code:
-                user_id = data.get("user_id") or data.get("email")
-                p_code = get_user_pairing_code(user_id) if user_id else "JR-DEFAULT"
-
             # Check if this specific Recruiter's Local Relay is active
             with relay_lock:
                 dev = user_relay_devices.get(p_code, {})
                 relay_online = (time.time() - dev.get("last_heartbeat", 0)) < 15 and dev.get("is_online", False)
 
             if relay_online and not gateway_service.is_connected():
-                # Enqueue for this specific recruiter's local daemon
+                # Enqueue for this specific recruiter's phone gateway
                 with relay_lock:
                     if p_code not in user_relay_jobs:
                         user_relay_jobs[p_code] = []
@@ -3170,30 +3200,35 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                         "delay": DISPATCH_DELAY,
                         "pairing_code": p_code
                     })
-                with dispatch_lock:
-                    current_dispatch["is_running"] = True
-                    current_dispatch["total"] = len(candidates)
-                    current_dispatch["current_index"] = 0
-                    current_dispatch["sent_count"] = 0
-                    current_dispatch["failed_count"] = 0
-                    current_dispatch["logs"] = [f"Job queued for Recruiter's Local Phone ({dev.get('device_name', 'Relay Phone')})..."]
+                    st["is_running"] = True
+                    st["total"] = len(candidates)
+                    st["current_index"] = 0
+                    st["sent_count"] = 0
+                    st["failed_count"] = 0
+                    st["logs"] = [f"Job queued for Recruiter's Phone ({dev.get('device_name', 'Relay Phone')})..."]
                 self._send_json({"status": "started", "mode": "cloud_relay", "pairing_code": p_code, "campaign_id": campaign_id})
                 return
 
-            def run_dispatch():
-                with dispatch_lock:
-                    current_dispatch["is_running"] = True
-                    current_dispatch["total"] = len(candidates)
-                    current_dispatch["current_index"] = 0
-                    current_dispatch["sent_count"] = 0
-                    current_dispatch["failed_count"] = 0
-                    current_dispatch["logs"] = []
+            def run_dispatch(tenant_code=p_code):
+                t_st = get_tenant_dispatch_state(tenant_code)
+                with relay_lock:
+                    t_st["is_running"] = True
+                    t_st["total"] = len(candidates)
+                    t_st["current_index"] = 0
+                    t_st["sent_count"] = 0
+                    t_st["failed_count"] = 0
+                    t_st["logs"] = []
 
-                write_log(f"Starting SMS campaign '{campaign_title}' for {len(candidates)} candidate(s)...")
+                write_log(f"Starting SMS campaign '{campaign_title}' for {tenant_code} ({len(candidates)} candidates)...")
 
                 greetings_pool = ["Hi", "Hello", "Dear", "Greetings"]
 
                 for i, c in enumerate(candidates, 1):
+                    with relay_lock:
+                        if not t_st["is_running"]:
+                            write_log(f"Campaign aborted mid-flight for {tenant_code}.")
+                            break
+
                     c_name = c.get("name") or "Candidate"
                     c_phone = c.get("phone")
                     
@@ -3201,13 +3236,11 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                     chosen_salutation = greetings_pool[(i - 1) % len(greetings_pool)]
                     cand_msg = template.replace("{name}", c_name).replace("{role}", role).replace("{location}", location).replace("{company}", company)
                     
-                    # Ensure dynamic greeting replacement if message starts with standard salutations
                     for g in ["Hi", "Hello", "Dear", "Greetings"]:
                         if cand_msg.startswith(f"{g} "):
                             cand_msg = f"{chosen_salutation} " + cand_msg[len(g) + 1:]
                             break
                     
-                    # 2. Authentic Company Sign-Off (If not already present)
                     if "JobRecruitment" not in cand_msg and "HR" not in cand_msg:
                         cand_msg = f"{cand_msg} - HR Team, JobRecruitment.in"
 
@@ -3225,7 +3258,7 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                             role=role or c.get("role", "Candidate"),
                             msg=final_msg,
                             status=status_str,
-                            carrier="Jio True5G",
+                            carrier="Physical SIM",
                             gateway_mode=SMS_MODE,
                             error_reason=err_reason,
                             campaign_id=campaign_id
@@ -3233,34 +3266,32 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                     except Exception:
                         pass
                     
-                    with dispatch_lock:
-                        current_dispatch["current_index"] = i
+                    with relay_lock:
+                        t_st["current_index"] = i
                         if ok:
-                            current_dispatch["sent_count"] += 1
+                            t_st["sent_count"] += 1
                             quota_service.record_sent(1)
                             log_line = f"[{i}/{len(candidates)}] Sent to {c_name} (+91-{c_phone})"
-                            current_dispatch["logs"].append(log_line)
-                            write_log(f"SUCCESS: {log_line}")
+                            t_st["logs"].append(log_line)
+                            write_log(f"[{tenant_code}] SUCCESS: {log_line}")
                         else:
-                            current_dispatch["failed_count"] += 1
+                            t_st["failed_count"] += 1
                             log_line = f"[{i}/{len(candidates)}] Failed for {c_name} (+91-{c_phone}): {resp}"
-                            current_dispatch["logs"].append(log_line)
-                            write_log(f"ERROR: {log_line}")
+                            t_st["logs"].append(log_line)
+                            write_log(f"[{tenant_code}] ERROR: {log_line}")
 
                     if i < len(candidates):
                         import random
-                        # 3. Human Pacing Randomizer (Jio Firewall Anti-Throttling)
                         human_jitter = random.uniform(DISPATCH_DELAY, DISPATCH_DELAY + 4.0)
                         time.sleep(human_jitter)
 
-                with dispatch_lock:
-                    current_dispatch["is_running"] = False
-                    supabase_service.update_campaign_stats(campaign_id, current_dispatch["sent_count"], current_dispatch["failed_count"])
-                write_log(f"Campaign Finished: {current_dispatch['sent_count']} sent, {current_dispatch['failed_count']} failed.")
+                with relay_lock:
+                    t_st["is_running"] = False
+                    supabase_service.update_campaign_stats(campaign_id, t_st["sent_count"], t_st["failed_count"])
+                write_log(f"[{tenant_code}] Campaign Finished: {t_st['sent_count']} sent, {t_st['failed_count']} failed.")
 
-            t = threading.Thread(target=run_dispatch, daemon=True)
-            t.start()
-            self._send_json({"status": "started"})
+            threading.Thread(target=run_dispatch, daemon=True).start()
+            self._send_json({"status": "started", "mode": "direct_gateway", "pairing_code": p_code, "campaign_id": campaign_id})
             return
 
         self.send_response(404)

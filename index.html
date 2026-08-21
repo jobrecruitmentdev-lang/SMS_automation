@@ -2557,9 +2557,10 @@
         }
 
         async function pollDispatchProgress() {
+            const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : '';
             const interval = setInterval(async () => {
                 try {
-                    const res = await fetch('/api/dispatch_status');
+                    const res = await fetch(`/api/dispatch_status?pairing_code=${encodeURIComponent(pCode)}`);
                     const data = await res.json();
                     
                     const logBox = document.getElementById('live-log-box');
