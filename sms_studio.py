@@ -604,6 +604,156 @@ class SupabaseAuditService:
 
         return False, "No account found with this email. Please register first."
 
+    def create_login_otp(self, email, full_name="", role="recruiter"):
+        email_clean = email.lower().strip()
+        import hashlib
+        import secrets
+        otp_code = str(secrets.randbelow(900000) + 100000) # 6-digit numeric OTP e.g. 482910
+        otp_hash = hashlib.sha256(otp_code.encode("utf-8")).hexdigest()
+        expires_at = datetime.now() + timedelta(minutes=10)
+
+        # Send via Hostinger SMTP
+        from services.email_service import email_service
+        email_sent, email_msg = email_service.send_otp_email(email_clean, otp_code, purpose="Sign-In")
+
+        # 1. Supabase PostgreSQL Store
+        if self.enabled:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(self.db_url, connect_timeout=6)
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS studio_otps (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        email VARCHAR(150) NOT NULL,
+                        otp_hash VARCHAR(255) NOT NULL,
+                        full_name VARCHAR(100),
+                        role VARCHAR(20) DEFAULT 'recruiter',
+                        expires_at TIMESTAMPTZ NOT NULL,
+                        used_at TIMESTAMPTZ,
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    );
+                """)
+                cur.execute("""
+                    INSERT INTO studio_otps (email, otp_hash, full_name, role, expires_at)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (email_clean, otp_hash, full_name or email_clean.split('@')[0].capitalize(), role, expires_at))
+                conn.close()
+                return True, {"message": f"Verification OTP sent to {email_clean} via Hostinger SMTP.", "email_sent": email_sent, "token": otp_code}
+            except Exception as e:
+                write_log(f"[Auth] Supabase OTP save error: {e}. Using local store...")
+
+        # 2. Local Fallback
+        resets = self._get_local_resets()
+        resets[f"otp_{email_clean}"] = {
+            "otp_hash": otp_hash,
+            "full_name": full_name or email_clean.split('@')[0].capitalize(),
+            "role": role,
+            "expires_at": expires_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "used": False
+        }
+        self._save_local_resets(resets)
+        return True, {"message": f"Verification OTP sent to {email_clean} via Hostinger SMTP.", "email_sent": email_sent, "token": otp_code}
+
+    def verify_login_otp(self, email, otp_code):
+        email_clean = email.lower().strip()
+        otp_clean = str(otp_code).strip()
+        import hashlib, uuid
+        otp_hash = hashlib.sha256(otp_clean.encode("utf-8")).hexdigest()
+
+        # 1. Supabase Verification
+        if self.enabled:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(self.db_url, connect_timeout=6)
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id, full_name, role, expires_at, used_at
+                    FROM studio_otps
+                    WHERE email = %s AND otp_hash = %s
+                    ORDER BY created_at DESC LIMIT 1
+                """, (email_clean, otp_hash))
+                row = cur.fetchone()
+                if row:
+                    otp_id, f_name, role, exp_dt, used_dt = row
+                    if used_dt is not None:
+                        conn.close()
+                        return False, "This OTP has already been used. Please request a new one."
+                    if datetime.now(exp_dt.tzinfo if exp_dt.tzinfo else None) > exp_dt:
+                        conn.close()
+                        return False, "OTP expired (10-min limit). Please request a new one."
+                    
+                    # Mark OTP as used
+                    cur.execute("UPDATE studio_otps SET used_at = NOW() WHERE id = %s", (otp_id,))
+                    
+                    # Upsert User
+                    cur.execute("SELECT id, email, full_name, role FROM studio_users WHERE email = %s", (email_clean,))
+                    u_row = cur.fetchone()
+                    if u_row:
+                        user_id_str, u_email, u_name, u_role = str(u_row[0]), u_row[1], u_row[2], u_row[3]
+                    else:
+                        cur.execute("""
+                            INSERT INTO studio_users (email, password_hash, full_name, role)
+                            VALUES (%s, %s, %s, %s)
+                            RETURNING id, email, full_name, role
+                        """, (email_clean, "OTP_AUTHENTICATED", f_name or "Recruiter", role or "recruiter"))
+                        new_u = cur.fetchone()
+                        user_id_str, u_email, u_name, u_role = str(new_u[0]), new_u[1], new_u[2], new_u[3]
+                    
+                    conn.close()
+                    return True, {
+                        "id": user_id_str,
+                        "email": u_email,
+                        "name": u_name,
+                        "role": u_role,
+                        "pairing_code": get_user_pairing_code(user_id_str)
+                    }
+                conn.close()
+            except Exception as e:
+                write_log(f"[Auth] Supabase OTP verify error: {e}")
+
+        # 2. Local Fallback
+        resets = self._get_local_resets()
+        k = f"otp_{email_clean}"
+        if k in resets:
+            rec = resets[k]
+            if rec.get("otp_hash") == otp_hash:
+                if rec.get("used"):
+                    return False, "This OTP has already been used."
+                exp = datetime.strptime(rec.get("expires_at"), "%Y-%m-%d %H:%M:%S")
+                if datetime.now() > exp:
+                    return False, "OTP has expired."
+                rec["used"] = True
+                self._save_local_resets(resets)
+                
+                users = self._get_local_users()
+                if email_clean in users:
+                    u = users[email_clean]
+                    uid = u["id"]
+                    name = u["name"]
+                    role = u.get("role", "recruiter")
+                else:
+                    uid = str(uuid.uuid4())
+                    name = rec.get("full_name") or email_clean.split('@')[0].capitalize()
+                    role = rec.get("role", "recruiter")
+                    users[email_clean] = {
+                        "id": uid, "email": email_clean, "name": name, "role": role,
+                        "password_hash": "OTP_AUTH", "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    self._save_local_users(users)
+                
+                return True, {
+                    "id": uid,
+                    "email": email_clean,
+                    "name": name,
+                    "role": role,
+                    "pairing_code": get_user_pairing_code(uid)
+                }
+
+        return False, "Invalid OTP code. Please check your email or request a new OTP."
+
     def create_password_reset(self, email):
         email_clean = email.lower().strip()
         import hashlib
@@ -611,6 +761,10 @@ class SupabaseAuditService:
         raw_token = secrets.token_hex(4).upper() # 8-character clean alphanumeric code e.g. A9B2C3D4
         token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
         expires_at = datetime.now() + timedelta(minutes=15)
+
+        # Dispatch via Hostinger SMTP
+        from services.email_service import email_service
+        email_sent, email_msg = email_service.send_password_reset_email(email_clean, raw_token)
 
         # 1. Supabase PostgreSQL Store
         if self.enabled:
@@ -634,7 +788,7 @@ class SupabaseAuditService:
                     VALUES (%s, %s, %s)
                 """, (email_clean, token_hash, expires_at))
                 conn.close()
-                return True, {"message": "Reset code generated.", "token": raw_token}
+                return True, {"message": f"Reset code sent to {email_clean} via Hostinger SMTP.", "email_sent": email_sent, "token": raw_token}
             except Exception as e:
                 write_log(f"[Auth] Supabase reset creation error: {e}. Using local store...")
 
@@ -646,7 +800,7 @@ class SupabaseAuditService:
             "used": False
         }
         self._save_local_resets(resets)
-        return True, {"message": "Reset code generated.", "token": raw_token}
+        return True, {"message": f"Reset code sent to {email_clean} via Hostinger SMTP.", "email_sent": email_sent, "token": raw_token}
 
     def reset_password(self, email, token, new_password):
         email_clean = email.lower().strip()
@@ -2721,6 +2875,27 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             metrics = calculate_sms_encoding(spun_text)
             metrics["spun_preview"] = spun_text
             self._send_json(metrics)
+            return
+
+        elif path == "/api/auth/send_otp":
+            email = data.get("email", "").strip()
+            name = data.get("full_name", "").strip()
+            role = data.get("role", "recruiter").strip()
+            if not email:
+                self._send_json({"ok": False, "message": "Email is required to send verification OTP."}, code=400)
+                return
+            ok, res = supabase_service.create_login_otp(email, name, role)
+            self._send_json({"ok": ok, "message": res.get("message") if ok else res, "token": res.get("token")})
+            return
+
+        elif path == "/api/auth/verify_otp":
+            email = data.get("email", "").strip()
+            otp = data.get("otp", "").strip()
+            if not email or not otp:
+                self._send_json({"ok": False, "message": "Email and 6-digit OTP are required."}, code=400)
+                return
+            ok, res = supabase_service.verify_login_otp(email, otp)
+            self._send_json({"ok": ok, "user" if ok else "message": res})
             return
 
         elif path == "/api/auth/login":
