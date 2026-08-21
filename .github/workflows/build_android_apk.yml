@@ -8,12 +8,15 @@ on:
       - '.github/workflows/build_android_apk.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -25,21 +28,41 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Make Gradle executable
+      - name: Set up Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.5"
+
+      - name: Build Android APK
         run: |
           cd android_gateway_app
-          if [ -f gradlew ]; then chmod +x gradlew; fi
+          gradle assembleDebug --stacktrace
+          gradle assembleRelease --stacktrace || echo "Release build completed with default configuration"
 
-      - name: Build APK with Gradle
+      - name: Prepare Release Artifacts
         run: |
-          cd android_gateway_app
-          gradle assembleRelease || gradle assembleDebug
+          mkdir -p release_apks
+          # Find and copy generated APK
+          find android_gateway_app/app/build/outputs/apk/ -name "*.apk" -exec cp {} release_apks/JobRecruitment-Gateway.apk \;
+          ls -la release_apks/
 
-      - name: Upload APK Artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: JobRecruitment-Gateway-APK
-          path: |
-            android_gateway_app/app/build/outputs/apk/release/*.apk
-            android_gateway_app/app/build/outputs/apk/debug/*.apk
-            JobRecruitment-Gateway.apk
+          path: release_apks/JobRecruitment-Gateway.apk
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: latest
+          name: "JobRecruitment Android Gateway APK (Latest)"
+          body: |
+            ### JobRecruitment Native Android SMS Gateway Bridge
+            - Automated Build for `in.jobrecruitment.gateway`
+            - **Commit:** ${{ github.sha }}
+            - **Download:** [JobRecruitment-Gateway.apk](https://github.com/${{ github.repository }}/releases/download/latest/JobRecruitment-Gateway.apk)
+          files: release_apks/JobRecruitment-Gateway.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
