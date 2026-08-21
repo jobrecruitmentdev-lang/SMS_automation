@@ -2646,16 +2646,19 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": ok, "user" if ok else "message": res})
             return
 
-        elif path == "/api/gateway/register":
-            p_code = data.get("pairing_code", "JR-DEFAULT").strip().upper()
-            dev_name = data.get("device_name", "Android Mobile Gateway")
+        elif path in ["/api/gateway/register", "/device", "/api/v1/device", "/mobile/v1/device", "/auth/code", "/auth/login", "/api/relay/register_device"]:
+            raw_code = data.get("pairing_code") or data.get("code") or data.get("login_code") or "JR-DEFAULT"
+            p_code = str(raw_code).strip().upper()
+            if not p_code.startswith("JR-") and len(p_code) >= 4:
+                p_code = f"JR-{p_code}" if not p_code.startswith("JR") else p_code
+            dev_name = data.get("device_name") or data.get("name") or "Android Mobile Gateway"
             sim_slot = data.get("sim_slot", 0)
             token = str(uuid.uuid4())
             with relay_lock:
                 user_relay_devices[p_code] = {
                     "last_heartbeat": time.time(),
                     "is_online": True,
-                    "device_id": data.get("device_id", "Mobile-App"),
+                    "device_id": data.get("device_id") or data.get("id") or "Mobile-App",
                     "device_name": dev_name,
                     "carrier": data.get("carrier", f"SIM {sim_slot+1}"),
                     "battery": data.get("battery", "100%"),
@@ -2663,7 +2666,16 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                     "android_version": data.get("android_version", "Android"),
                     "screen_state_text": "Native Background Service (Ready)"
                 }
-            self._send_json({"ok": True, "token": token, "pairing_code": p_code, "message": "Gateway registered successfully!"})
+            self._send_json({
+                "ok": True,
+                "token": token,
+                "access_token": token,
+                "id": p_code,
+                "device_id": p_code,
+                "pairing_code": p_code,
+                "status": "active",
+                "message": "Gateway registered successfully!"
+            })
             return
 
         elif path in ["/api/gateway/heartbeat", "/api/relay/heartbeat"]:
