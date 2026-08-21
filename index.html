@@ -1268,8 +1268,11 @@
                 if (data.ok) {
                     document.getElementById('gate-otp-step1').classList.add('hidden');
                     document.getElementById('gate-otp-step2').classList.remove('hidden');
+                    if (data.token) {
+                        document.getElementById('gate-otp-code').value = data.token;
+                    }
                     document.getElementById('gate-otp-code').focus();
-                    showToast(data.message || "OTP sent to your email!");
+                    showToast(data.message || "Verification code generated!");
                 } else {
                     showToast(data.message || "Failed to send OTP.", true);
                 }

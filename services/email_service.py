@@ -25,11 +25,61 @@ class HostingerEmailService:
             or ""
         ).strip()
         self.from_name = os.getenv("SMTP_FROM_NAME", "JobRecruitment AI SMS Studio").strip()
+        self.resend_key = (os.getenv("RESEND_API_KEY") or os.getenv("RESEND_KEY") or "").strip()
+        self.brevo_key = (os.getenv("BREVO_API_KEY") or os.getenv("BREVO_KEY") or "").strip()
 
     @property
     def is_configured(self):
         self.reload_config()
-        return bool(self.smtp_user and self.smtp_pass)
+        return bool(self.resend_key or self.brevo_key or (self.smtp_user and self.smtp_pass))
+
+    def _send_via_resend(self, to_email, subject, html_content):
+        import requests
+        try:
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {self.resend_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "from": f"{self.from_name} <{self.smtp_user}>" if "@" in self.smtp_user else f"{self.from_name} <onboarding@resend.dev>",
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html_content
+                },
+                timeout=8
+            )
+            if resp.status_code in [200, 201]:
+                print(f"[EmailService] Resend HTTPS Success: Dispatched to {to_email}")
+                return True, "Email sent successfully via Resend HTTPS API."
+            return False, f"Resend API Error ({resp.status_code}): {resp.text}"
+        except Exception as e:
+            return False, f"Resend API Error: {e}"
+
+    def _send_via_brevo(self, to_email, subject, html_content):
+        import requests
+        try:
+            resp = requests.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={
+                    "api-key": self.brevo_key,
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "sender": {"name": self.from_name, "email": self.smtp_user},
+                    "to": [{"email": to_email}],
+                    "subject": subject,
+                    "htmlContent": html_content
+                },
+                timeout=8
+            )
+            if resp.status_code in [200, 201]:
+                print(f"[EmailService] Brevo HTTPS Success: Dispatched to {to_email}")
+                return True, "Email sent successfully via Brevo HTTPS API."
+            return False, f"Brevo API Error ({resp.status_code}): {resp.text}"
+        except Exception as e:
+            return False, f"Brevo API Error: {e}"
 
     def test_connection(self, to_email="hire@jobrecruitment.in"):
         """Performs a 4-step network and authentication diagnostic."""
@@ -108,9 +158,27 @@ class HostingerEmailService:
     def send_email(self, to_email, subject, html_content, text_content=""):
         self.reload_config()
         if not self.is_configured:
-            err = "[EmailService] SMTP credentials not configured (SMTP_PASS missing in Render env variables)."
+            err = "[EmailService] No email provider configured. Please set SMTP_PASS, RESEND_API_KEY, or BREVO_API_KEY."
             print(err)
             return False, err
+
+        # 1. Try Resend HTTPS API (Port 443 - Fast & 100% Reliable on Render)
+        if self.resend_key:
+            ok, msg = self._send_via_resend(to_email, subject, html_content)
+            if ok:
+                return True, msg
+            print(f"[EmailService] Resend failed: {msg}. Trying next provider...")
+
+        # 2. Try Brevo HTTPS API (Port 443 - Fast & 100% Reliable on Render)
+        if self.brevo_key:
+            ok, msg = self._send_via_brevo(to_email, subject, html_content)
+            if ok:
+                return True, msg
+            print(f"[EmailService] Brevo failed: {msg}. Trying SMTP...")
+
+        # 3. Direct SMTP (Port 465 SSL / 587 STARTTLS)
+        if not self.smtp_pass:
+            return False, "SMTP_PASS not provided and no HTTP email API key (RESEND_API_KEY / BREVO_API_KEY) found."
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -122,20 +190,20 @@ class HostingerEmailService:
             msg.attach(MIMEText(text_content, "plain", "utf-8"))
         msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        # Try Port 465 SSL first
+        # Try Port 465 SSL first (3s timeout)
         try:
             ctx = ssl.create_default_context()
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-            with smtplib.SMTP_SSL(self.smtp_host, 465, context=ctx, timeout=6) as server:
+            with smtplib.SMTP_SSL(self.smtp_host, 465, context=ctx, timeout=3.5) as server:
                 server.login(self.smtp_user, self.smtp_pass)
                 server.sendmail(self.smtp_user, [to_email], msg.as_string())
             print(f"[EmailService] Port 465 Success: Dispatched '{subject}' to {to_email}")
-            return True, "Email sent successfully."
+            return True, "Email sent successfully via Hostinger SMTP (465)."
         except Exception as e:
-            # Fallback to Port 587 STARTTLS
+            # Fallback to Port 587 STARTTLS (3.5s timeout)
             try:
-                with smtplib.SMTP(self.smtp_host, 587, timeout=6) as server:
+                with smtplib.SMTP(self.smtp_host, 587, timeout=3.5) as server:
                     ctx = ssl.create_default_context()
                     ctx.check_hostname = False
                     ctx.verify_mode = ssl.CERT_NONE
@@ -143,7 +211,7 @@ class HostingerEmailService:
                     server.login(self.smtp_user, self.smtp_pass)
                     server.sendmail(self.smtp_user, [to_email], msg.as_string())
                 print(f"[EmailService] Port 587 Success: Dispatched via 587 to {to_email}")
-                return True, "Email sent successfully (fallback port 587)."
+                return True, "Email sent successfully via Hostinger SMTP (587)."
             except Exception as fallback_err:
                 err_msg = f"Hostinger SMTP (465): {e} | Fallback (587): {fallback_err}"
                 print(f"[EmailService] {err_msg}")

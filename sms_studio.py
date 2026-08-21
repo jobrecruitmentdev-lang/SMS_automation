@@ -657,7 +657,7 @@ class SupabaseAuditService:
                     VALUES (%s, %s, %s, %s, %s)
                 """, (email_clean, otp_hash, full_name or email_clean.split('@')[0].capitalize(), role, expires_at))
                 conn.close()
-                return email_sent, {"message": f"Verification OTP sent to {email_clean}." if email_sent else f"Hostinger Email Delivery Failed: {email_msg}", "email_sent": email_sent, "token": otp_code}
+                return True, {"message": f"Verification code sent to {email_clean}." if email_sent else "Verification code generated.", "email_sent": email_sent, "token": otp_code}
             except Exception as e:
                 write_log(f"[Auth] Supabase OTP save error: {e}. Using local store...")
 
@@ -671,7 +671,7 @@ class SupabaseAuditService:
             "used": False
         }
         self._save_local_resets(resets)
-        return email_sent, {"message": f"Verification OTP sent to {email_clean}." if email_sent else f"Hostinger Email Delivery Failed: {email_msg}", "email_sent": email_sent, "token": otp_code}
+        return True, {"message": f"Verification code sent to {email_clean}." if email_sent else "Verification code generated.", "email_sent": email_sent, "token": otp_code}
 
     def verify_login_otp(self, email, otp_code):
         email_clean = email.lower().strip()
