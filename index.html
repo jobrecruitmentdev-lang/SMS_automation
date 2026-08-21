@@ -515,18 +515,42 @@
                     <!-- Left: Control & Telemetry (6 cols) -->
                     <div class="lg:col-span-6 space-y-4">
                         <!-- Hardware Pre-Flight Card -->
-                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5 text-xs">
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs">
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-400">Target Device:</span>
                                 <span class="font-bold text-slate-200 font-mono" id="disp-device-name">Samsung SM-G781B</span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-400">SIM Carrier & Signal:</span>
-                                <span class="font-bold text-teal-400" id="disp-carrier">Jio True5G (Signal: 4/4)</span>
+                                <span class="text-slate-400">Active Carrier & Signal:</span>
+                                <span class="font-bold text-teal-400" id="disp-carrier">Jio 5G / Vi</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-400">Anti-Spam Pacing:</span>
                                 <span class="font-bold text-emerald-400">4.0s - 8.0s Dynamic Jitter Delay</span>
+                            </div>
+
+                            <!-- SIM Card Selection (SIM 1 / SIM 2) -->
+                            <div class="pt-2 border-t border-slate-800/80 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Select Outgoing Cellular SIM:</span>
+                                    <span class="text-[10px] text-teal-400 font-mono font-bold" id="sim-active-indicator">Active: SIM 1</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2" id="sim-selection-group">
+                                    <label id="sim-card-0" onclick="updateSelectedSim(0)" class="flex items-center gap-2.5 p-2.5 bg-teal-950/40 border border-teal-500/80 rounded-xl cursor-pointer hover:bg-teal-950/60 transition">
+                                        <input type="radio" name="dispatch-sim-slot" value="0" checked class="accent-teal-400">
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-teal-300 text-xs truncate" id="sim1-title">SIM 1 (Jio)</div>
+                                            <div class="text-[10px] text-teal-500/80 font-mono">Slot 1 • Primary</div>
+                                        </div>
+                                    </label>
+                                    <label id="sim-card-1" onclick="updateSelectedSim(1)" class="flex items-center gap-2.5 p-2.5 bg-slate-900 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-800/80 transition">
+                                        <input type="radio" name="dispatch-sim-slot" value="1" class="accent-teal-400">
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-slate-300 text-xs truncate" id="sim2-title">SIM 2 (Idea/Airtel)</div>
+                                            <div class="text-[10px] text-slate-500 font-mono">Slot 2 • Secondary</div>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -1664,6 +1688,17 @@
                         if (dispDev) dispDev.textContent = rData.device_name;
                         if (dispCarrier) dispCarrier.textContent = rData.carrier || 'Physical SIM (Relay)';
                         
+                        // Dynamically update SIM Card labels
+                        const sim1Title = document.getElementById('sim1-title');
+                        const sim2Title = document.getElementById('sim2-title');
+                        if (rData.carrier && rData.carrier.includes('/')) {
+                            const cParts = rData.carrier.split('/');
+                            if (sim1Title) sim1Title.textContent = `SIM 1 (${cParts[0].trim()})`;
+                            if (sim2Title) sim2Title.textContent = `SIM 2 (${cParts[1].trim()})`;
+                        } else if (rData.carrier) {
+                            if (sim1Title) sim1Title.textContent = `SIM 1 (${rData.carrier})`;
+                        }
+
                         // Populate Diagnostics Drawer
                         const diagId = document.getElementById('d-diag-id');
                         const diagBat = document.getElementById('d-diag-bat');
@@ -2503,9 +2538,32 @@
             finally { btn.innerHTML = '<span class="material-symbols-outlined text-xs">bolt</span> Generate Message'; }
         }
 
-        // --- DISPATCH RUNNER WITH PRE-FLIGHT GUARD ---
+        // --- DISPATCH RUNNER WITH PRE-FLIGHT GUARD & SIM SELECTION ---
+        let selectedSimSlot = parseInt(localStorage.getItem('jr_selected_sim_slot') || '0', 10);
         let pendingDispatchBatch = [];
         let pendingDispatchTitle = "";
+
+        function updateSelectedSim(slot) {
+            selectedSimSlot = slot;
+            localStorage.setItem('jr_selected_sim_slot', slot.toString());
+            const card0 = document.getElementById('sim-card-0');
+            const card1 = document.getElementById('sim-card-1');
+            const ind = document.getElementById('sim-active-indicator');
+            if (card0 && card1) {
+                if (slot === 0) {
+                    card0.className = "flex items-center gap-2.5 p-2.5 bg-teal-950/40 border border-teal-500/80 rounded-xl cursor-pointer hover:bg-teal-950/60 transition";
+                    card1.className = "flex items-center gap-2.5 p-2.5 bg-slate-900 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-800/80 transition";
+                    const r0 = card0.querySelector('input'); if (r0) r0.checked = true;
+                    if (ind) ind.textContent = "Active: SIM 1";
+                } else {
+                    card1.className = "flex items-center gap-2.5 p-2.5 bg-teal-950/40 border border-teal-500/80 rounded-xl cursor-pointer hover:bg-teal-950/60 transition";
+                    card0.className = "flex items-center gap-2.5 p-2.5 bg-slate-900 border border-slate-800 rounded-xl cursor-pointer hover:bg-slate-800/80 transition";
+                    const r1 = card1.querySelector('input'); if (r1) r1.checked = true;
+                    if (ind) ind.textContent = "Active: SIM 2";
+                }
+            }
+            showToast(`Active Outgoing SIM switched to SIM ${slot + 1}`);
+        }
 
         async function startSingleTestRun() {
             const selected = Array.from(selectedCandidateKeys).map(k => {
@@ -2551,13 +2609,14 @@
                 .replace(/{location}/g, activeJobContext.location || 'Ahmedabad');
             document.getElementById('preflight-msg-box').textContent = sampleMsg;
 
-            // Check hardware screen lock telemetry
+            // Check hardware and SIM slot telemetry
             try {
                 const pCode = currentUser ? (currentUser.pairing_code || document.getElementById('user-display-pairing-code').textContent) : '';
                 const uid = currentUser ? (currentUser.id || currentUser.email) : '';
                 const rRes = await fetch(`/api/relay/status?pairing_code=${encodeURIComponent(pCode)}&user_id=${encodeURIComponent(uid)}`);
                 const rData = await rRes.json();
-                document.getElementById('preflight-device').textContent = rData.device_name || 'Physical SIM';
+                const simName = (selectedSimSlot === 0 ? 'SIM 1 (Primary)' : 'SIM 2 (Secondary)');
+                document.getElementById('preflight-device').textContent = `${rData.device_name || 'Phone'} • ${simName}`;
                 const lockNotice = document.getElementById('preflight-lock-notice');
                 if (rData.is_screen_locked) {
                     lockNotice.classList.remove('hidden');
@@ -2585,7 +2644,7 @@
             document.getElementById('btn-stop-dispatch').classList.remove('hidden');
 
             const logBox = document.getElementById('live-log-box');
-            logBox.innerHTML = '<div class="text-teal-400">⚡ Initializing hardware dispatch queue...</div>';
+            logBox.innerHTML = `<div class="text-teal-400">⚡ Initializing hardware dispatch queue (SIM ${selectedSimSlot + 1})...</div>`;
 
             try {
                 const pCode = currentUser ? (currentUser.pairing_code || `JR-${currentUser.id}`) : "JR-DEFAULT";
@@ -2600,7 +2659,8 @@
                         company: activeJobContext.company,
                         user_id: currentUser ? currentUser.id : null,
                         email: currentUser ? currentUser.email : null,
-                        pairing_code: pCode
+                        pairing_code: pCode,
+                        sim_slot: selectedSimSlot
                     })
                 });
                 const data = await res.json();
