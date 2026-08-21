@@ -113,7 +113,21 @@ def drain_messages(request: Request, pairing_code: str = Query(None), code: str 
         })
     
     if "poll" in request.url.path:
-        return {"ok": True, "has_job": len(jobs) > 0, "jobs": jobs, "pairing_code": p_code}
+        cands = [{"phone": j.get("phone", ""), "name": j.get("name", "Candidate")} for j in jobs]
+        tmpl = jobs[0].get("message", "") if jobs else ""
+        return {
+            "ok": True,
+            "has_job": len(jobs) > 0,
+            "job": {
+                "candidates": cands,
+                "template": tmpl,
+                "role": "Candidate",
+                "company": "Job Recruitment",
+                "delay": 5.0
+            },
+            "jobs": jobs,
+            "pairing_code": p_code
+        }
     
     # Capcom app expects JSON array of messages or dict
     if "mobile/v1/messages" in request.url.path:

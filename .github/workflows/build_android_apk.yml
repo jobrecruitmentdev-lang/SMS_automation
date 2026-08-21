@@ -1,0 +1,45 @@
+name: Build JobRecruitment Android Gateway APK
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'android_gateway_app/**'
+      - '.github/workflows/build_android_apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradle executable
+        run: |
+          cd android_gateway_app
+          if [ -f gradlew ]; then chmod +x gradlew; fi
+
+      - name: Build APK with Gradle
+        run: |
+          cd android_gateway_app
+          gradle assembleRelease || gradle assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JobRecruitment-Gateway-APK
+          path: |
+            android_gateway_app/app/build/outputs/apk/release/*.apk
+            android_gateway_app/app/build/outputs/apk/debug/*.apk
+            JobRecruitment-Gateway.apk
