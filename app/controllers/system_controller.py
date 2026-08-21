@@ -10,9 +10,22 @@ router = APIRouter(tags=["System & Static Downloads"])
 def health_check():
     return {"status": "ok", "app": settings.PROJECT_NAME, "version": settings.VERSION}
 
+import time
+
+SERVER_START_TIME = time.time()
+
 @router.get("/api/server_version")
 def server_version():
-    return {"version": settings.VERSION, "service": "FastAPI ASGI Cloud Engine"}
+    index_mtime = 0
+    index_path = os.path.join(BASE_DIR, "index.html")
+    if os.path.exists(index_path):
+        index_mtime = os.path.getmtime(index_path)
+    return {
+        "version": settings.VERSION,
+        "service": "FastAPI ASGI Cloud Engine",
+        "server_start_time": SERVER_START_TIME,
+        "max_mtime": index_mtime
+    }
 
 @router.get("/download/android-relay-agent.bat")
 def download_bat():
