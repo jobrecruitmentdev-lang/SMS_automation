@@ -107,7 +107,7 @@ class AuthService:
                     VALUES (%s, %s, %s, %s, 'register', %s)
                 """, (email_clean, otp_hash, name_clean, role, expires_at))
                 conn.close()
-                return True, {"message": f"Verification code sent to {email_clean}.", "email_sent": email_sent, "token": otp_code}
+                return True, {"message": f"Verification code sent to {email_clean}.", "email_sent": email_sent}
             except Exception as e:
                 write_log(f"[Auth] Supabase OTP save error: {e}. Using local store...")
 
@@ -123,7 +123,7 @@ class AuthService:
             "used": False
         }
         self._save_local_resets(resets)
-        return True, {"message": f"Verification code sent to {email_clean}.", "email_sent": email_sent, "token": otp_code}
+        return True, {"message": f"Verification code sent to {email_clean}.", "email_sent": email_sent}
 
     def verify_registration_otp(self, email: str, otp_code: str):
         email_clean = email.lower().strip()
@@ -264,7 +264,7 @@ class AuthService:
                     VALUES (%s, %s, 'login', %s)
                 """, (email_clean, otp_hash, expires_at))
                 conn.close()
-                return True, {"message": f"Sign-in code sent to {email_clean}.", "email_sent": email_sent, "token": otp_code}
+                return True, {"message": f"Sign-in code sent to {email_clean}.", "email_sent": email_sent}
             except Exception as e:
                 write_log(f"[Auth] Supabase Login OTP error: {e}")
 
@@ -278,7 +278,7 @@ class AuthService:
             "used": False
         }
         self._save_local_resets(resets)
-        return True, {"message": f"Sign-in code sent to {email_clean}.", "email_sent": email_sent, "token": otp_code}
+        return True, {"message": f"Sign-in code sent to {email_clean}.", "email_sent": email_sent}
 
     def verify_login_otp(self, email: str, otp_code: str):
         email_clean = email.lower().strip()

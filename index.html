@@ -1304,9 +1304,7 @@
                 if (data.ok) {
                     document.getElementById('signin-step1').classList.add('hidden');
                     document.getElementById('signin-step2').classList.remove('hidden');
-                    if (data.token) {
-                        document.getElementById('signin-otp-code').value = data.token;
-                    }
+                    document.getElementById('signin-otp-code').value = '';
                     document.getElementById('signin-otp-code').focus();
                     startResendCooldown('btn-signin-resend', 'Resend Code');
                     showToast(data.message || "Sign-in code sent to your email!");
@@ -1378,9 +1376,7 @@
                 if (data.ok) {
                     document.getElementById('register-step1').classList.add('hidden');
                     document.getElementById('register-step2').classList.remove('hidden');
-                    if (data.token) {
-                        document.getElementById('register-otp-code').value = data.token;
-                    }
+                    document.getElementById('register-otp-code').value = '';
                     document.getElementById('register-otp-code').focus();
                     startResendCooldown('btn-register-resend', 'Resend Code');
                     showToast(data.message || "Verification code sent to your email!");
