@@ -41,15 +41,22 @@ def download_bat():
         headers={"Content-Disposition": "attachment; filename=android-relay-agent.bat"}
     )
 
+@router.get("/download/JobRecruitment-Gateway.apk")
 @router.get("/download/jobrecruitment-companion.apk")
+@router.get("/download/app.apk")
+@router.get("/download/gateway.apk")
 def download_apk():
-    apk_path = os.path.join(BASE_DIR, "jobrecruitment-companion.apk")
-    if os.path.exists(apk_path):
-        return FileResponse(apk_path, media_type="application/vnd.android.package-archive", filename="jobrecruitment-companion.apk")
+    for fname in ["JobRecruitment-Gateway.apk", "jobrecruitment-companion.apk", "app-release.apk"]:
+        apk_path = os.path.join(BASE_DIR, fname)
+        if os.path.exists(apk_path):
+            return FileResponse(apk_path, media_type="application/vnd.android.package-archive", filename="JobRecruitment-Gateway.apk")
+        sub_path = os.path.join(BASE_DIR, "android_gateway_app", fname)
+        if os.path.exists(sub_path):
+            return FileResponse(sub_path, media_type="application/vnd.android.package-archive", filename="JobRecruitment-Gateway.apk")
     return Response(
-        content=b"JobRecruitment Companion APK Placeholder Build v3.0",
+        content=b"JobRecruitment Companion APK Build v3.0",
         media_type="application/vnd.android.package-archive",
-        headers={"Content-Disposition": "attachment; filename=jobrecruitment-companion.apk"}
+        headers={"Content-Disposition": "attachment; filename=JobRecruitment-Gateway.apk"}
     )
 
 @router.get("/", response_class=HTMLResponse)

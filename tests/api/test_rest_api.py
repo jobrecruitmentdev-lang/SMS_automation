@@ -65,7 +65,11 @@ class TestStudioRESTApi:
         assert "jobs" in data
 
     def test_download_apk_route(self, api_server):
-        resp = requests.get(f"{api_server}/download/jobrecruitment-companion.apk", timeout=4)
+        resp = requests.get(f"{api_server}/download/JobRecruitment-Gateway.apk", timeout=4)
         assert resp.status_code == 200
         assert resp.headers.get("content-type") == "application/vnd.android.package-archive"
-        assert len(resp.content) > 0
+        assert len(resp.content) > 1000
+
+        resp2 = requests.get(f"{api_server}/download/jobrecruitment-companion.apk", timeout=4)
+        assert resp2.status_code == 200
+        assert resp2.headers.get("content-type") == "application/vnd.android.package-archive"

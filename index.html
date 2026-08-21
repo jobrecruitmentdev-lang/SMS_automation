@@ -776,10 +776,20 @@
                             </div>
                         </div>
                     </div>
+                    <div class="p-3.5 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2 text-[11px] text-slate-300">
+                        <div class="font-bold text-teal-400 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">settings_suggest</span> 2-Step Setup inside the App:
+                        </div>
+                        <div class="space-y-1 text-slate-400">
+                            <div>• <b>Step 1:</b> Server URL ➔ <code class="text-teal-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">https://sms.jobrecruitment.in</code></div>
+                            <div>• <b>Step 2:</b> Recruiter Code / Private Token ➔ <code class="text-teal-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800" id="guide-display-pairing-code-app">Pairing...</code></div>
+                            <div>• Tap <b>"START SERVICE"</b> ➔ Your phone is live and ready 24/7!</div>
+                        </div>
+                    </div>
                     <div class="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-xl text-emerald-300 text-[11px] space-y-1">
                         <div class="font-bold">✨ Why this is 100x easier:</div>
                         <div>✓ No developer options or ADB needed.</div>
-                        <div>✓ Works while phone screen is locked or asleep.</div>
+                        <div>✓ Works while phone screen is locked or asleep in your pocket.</div>
                         <div>✓ Select SIM 1 (Jio) or SIM 2 (Airtel) directly from the app.</div>
                     </div>
                 </div>
@@ -1461,6 +1471,8 @@
             if (gEl1) gEl1.textContent = pCode;
             const gEl2 = document.getElementById('guide-display-pairing-code-2');
             if (gEl2) gEl2.textContent = pCode;
+            const gElApp = document.getElementById('guide-display-pairing-code-app');
+            if (gElApp) gElApp.textContent = pCode;
 
             // Load studio data once unlocked
             loadAdminJobs();
@@ -2863,6 +2875,8 @@
                 if (gEl1) gEl1.textContent = pCode;
                 const gEl2 = document.getElementById('guide-display-pairing-code-2');
                 if (gEl2) gEl2.textContent = pCode;
+                const gElApp = document.getElementById('guide-display-pairing-code-app');
+                if (gElApp) gElApp.textContent = pCode;
             }
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
