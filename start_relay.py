@@ -25,7 +25,7 @@ try:
 except Exception:
     pass
 
-CLOUD_SERVER_URL = os.getenv("CLOUD_SERVER_URL", "https://sms-automation-q1zf.onrender.com")
+CLOUD_SERVER_URL = os.getenv("CLOUD_SERVER_URL", "https://sms.jobrecruitment.in")
 
 def find_local_adb():
     base = os.path.dirname(os.path.abspath(__file__))
@@ -305,7 +305,7 @@ def main():
         try:
             # 1. Heartbeat with 5-point telemetry to Cloud Server for this specific Recruiter
             diag = get_phone_diagnostics()
-            post_json("/api/relay/heartbeat", {
+            post_json("/api/gateway/heartbeat", {
                 "pairing_code": pairing_code,
                 "device_id": diag["device_id"],
                 "device_name": diag["device_name"] if diag["is_connected"] else "Waiting for Phone...",
@@ -329,7 +329,7 @@ def main():
                 device_printed = True
 
             # 2. Poll for pending jobs specifically for this Recruiter
-            res = get_json(f"/api/relay/poll_jobs?pairing_code={pairing_code}")
+            res = get_json(f"/api/gateway/poll?pairing_code={pairing_code}")
             if res.get("has_job") and res.get("job"):
                 job = res["job"]
 
