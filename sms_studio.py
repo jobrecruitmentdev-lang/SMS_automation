@@ -2627,8 +2627,12 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         length = int(self.headers.get('content-length', 0))
-        body = self.rfile.read(length).decode('utf-8')
-        data = json.loads(body) if body else {}
+        body = self.rfile.read(length).decode('utf-8', errors='ignore') if length > 0 else ""
+        try:
+            data = json.loads(body) if body else {}
+        except Exception:
+            self._send_json({"ok": False, "message": "Invalid JSON payload."}, code=400)
+            return
 
         if path == "/api/auth/signup":
             email = data.get("email", "")
