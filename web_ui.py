@@ -161,6 +161,76 @@ def write_log(text):
     return entry
 
 # ==============================================================================
+# 2.5. SPINTAX & GSM-7 / UCS-2 ANTI-BAN ENCODING ENGINE
+# ==============================================================================
+GSM_7_CHARSET = set(
+    "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?"
+    "¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`abcdefghijklmnopqrstuvwxyzäöñüà"
+    "\f^{}\\[~]|€"
+)
+
+def calculate_sms_encoding(text: str):
+    """
+    Calculates GSM-7 vs UCS-2 encoding, character count, segment count, and anti-ban metrics.
+    Time Complexity: O(N) single-pass. Space Complexity: O(1).
+    """
+    if not text:
+        return {"chars": 0, "encoding": "GSM-7", "segments": 0, "chars_left": 160, "is_unicode": False}
+    
+    is_unicode = False
+    for ch in text:
+        if ch not in GSM_7_CHARSET:
+            is_unicode = True
+            break
+            
+    char_len = len(text)
+    if is_unicode:
+        encoding = "UCS-2 (Unicode)"
+        max_single = 70
+        max_concat = 67
+    else:
+        encoding = "GSM-7 (Standard)"
+        max_single = 160
+        max_concat = 153
+        
+    if char_len <= max_single:
+        segments = 1 if char_len > 0 else 0
+        chars_left = max_single - char_len
+    else:
+        segments = (char_len + max_concat - 1) // max_concat
+        chars_left = (segments * max_concat) - char_len
+        
+    return {
+        "chars": char_len,
+        "encoding": encoding,
+        "segments": segments,
+        "chars_left": chars_left,
+        "is_unicode": is_unicode
+    }
+
+def evaluate_spintax(template: str, seed: int = 0) -> str:
+    """
+    Evaluates spintax patterns like {Hi|Hello|Dear} in O(L) time.
+    """
+    if not template:
+        return ""
+    import random
+    rng = random.Random(seed)
+    
+    def _spin_replace(match):
+        choices = match.group(1).split('|')
+        return rng.choice(choices)
+    
+    pattern = re.compile(r'\{([^{}]+?\|[^{}]+?)\}')
+    result = template
+    for _ in range(5):
+        if not pattern.search(result):
+            break
+        result = pattern.sub(_spin_replace, result)
+    return result
+
+
+# ==============================================================================
 # 3. SERVICE LAYER: QUOTA & TRAI COMPLIANCE (180 SMS/Day + Midnight Reset)
 # ==============================================================================
 class QuotaService:
@@ -2450,12 +2520,30 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"campaigns": campaigns, "connected": supabase_service.enabled})
             return
 
-        elif path == "/api/relay/poll_jobs":
-            # Cloud Relay agent polling for pending dispatch jobs for this specific recruiter
+        elif path in ["/download-apk", "/download/gateway.apk", "/api/gateway/app-download"]:
+            apk_path = os.path.join(BASE_DIR, "android_gateway_app", "app", "build", "outputs", "apk", "release", "app-release.apk")
+            if not os.path.exists(apk_path):
+                apk_path = os.path.join(BASE_DIR, "android_gateway_app", "app-release.apk")
+            if os.path.exists(apk_path):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/vnd.android.package-archive")
+                self.send_header("Content-Disposition", 'attachment; filename="JobRecruitment-Gateway.apk"')
+                self.end_headers()
+                with open(apk_path, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b"""<!DOCTYPE html><html><head><title>JobRecruitment Android Gateway Companion</title><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{background:#090d16;color:#f8fafc;font-family:sans-serif;padding:30px;max-width:600px;margin:auto;line-height:1.6}a{color:#14b8a6}.btn{display:inline-block;padding:12px 24px;background:#0d9488;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold;margin-top:16px}</style></head><body><h1>\xf0\x9f\x93\xb1 JobRecruitment Android Gateway</h1><p>Source code project ready in <code>android_gateway_app/</code>.</p><p>Build APK with Android Studio or run <code>gradlew assembleRelease</code> to generate standalone .apk file.</p></body></html>""")
+            return
+
+        elif path in ["/api/gateway/poll", "/api/relay/poll_jobs"]:
+            # Android Companion App & Relay agent polling for pending dispatch jobs
             p_code = query.get("pairing_code", [""])[0] or query.get("code", [""])[0] or "JR-DEFAULT"
             with relay_lock:
                 if p_code not in user_relay_devices:
-                    user_relay_devices[p_code] = {"is_online": True, "last_heartbeat": time.time(), "device_name": "Relay Agent", "carrier": "Physical SIM", "battery": "100%"}
+                    user_relay_devices[p_code] = {"is_online": True, "last_heartbeat": time.time(), "device_name": "Mobile Gateway APK", "carrier": "Cellular Radio", "battery": "100%"}
                 else:
                     user_relay_devices[p_code]["last_heartbeat"] = time.time()
                     user_relay_devices[p_code]["is_online"] = True
@@ -2548,32 +2636,52 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": ok, "user" if ok else "message": res})
             return
 
-        elif path == "/api/relay/heartbeat":
-            p_code = data.get("pairing_code", "JR-DEFAULT")
+        elif path == "/api/gateway/register":
+            p_code = data.get("pairing_code", "JR-DEFAULT").strip().upper()
+            dev_name = data.get("device_name", "Android Mobile Gateway")
+            sim_slot = data.get("sim_slot", 0)
+            token = str(uuid.uuid4())
+            with relay_lock:
+                user_relay_devices[p_code] = {
+                    "last_heartbeat": time.time(),
+                    "is_online": True,
+                    "device_id": data.get("device_id", "Mobile-App"),
+                    "device_name": dev_name,
+                    "carrier": data.get("carrier", f"SIM {sim_slot+1}"),
+                    "battery": data.get("battery", "100%"),
+                    "token": token,
+                    "android_version": data.get("android_version", "Android"),
+                    "screen_state_text": "Native Background Service (Ready)"
+                }
+            self._send_json({"ok": True, "token": token, "pairing_code": p_code, "message": "Gateway registered successfully!"})
+            return
+
+        elif path in ["/api/gateway/heartbeat", "/api/relay/heartbeat"]:
+            p_code = data.get("pairing_code", "JR-DEFAULT").strip().upper()
             with relay_lock:
                 user_relay_devices[p_code] = {
                     "last_heartbeat": time.time(),
                     "is_online": data.get("is_online", True),
-                    "device_id": data.get("device_id", "None"),
-                    "device_name": data.get("device_name", "Local Relay Phone"),
+                    "device_id": data.get("device_id", "Mobile-App"),
+                    "device_name": data.get("device_name", "Mobile Gateway Phone"),
                     "carrier": data.get("carrier", "Physical SIM"),
                     "battery": data.get("battery", "100%"),
                     "temperature": data.get("temperature", "--°C"),
                     "is_screen_locked": data.get("is_screen_locked", False),
-                    "screen_state_text": data.get("screen_state_text", "Ready")
+                    "screen_state_text": data.get("screen_state_text", "Native Service Active (Ready)")
                 }
             self._send_json({"ok": True, "pairing_code": p_code})
             return
 
-        elif path == "/api/relay/report_status":
-            # Update dispatch status from local relay execution
-            p_code = data.get("pairing_code", "JR-DEFAULT")
+        elif path in ["/api/gateway/report", "/api/relay/report_status"]:
+            p_code = data.get("pairing_code", "JR-DEFAULT").strip().upper()
             log_line = data.get("log_line", "")
             is_sent = data.get("is_sent", True)
             with dispatch_lock:
                 current_dispatch["current_index"] = data.get("current_index", current_dispatch["current_index"])
                 if is_sent:
                     current_dispatch["sent_count"] += 1
+                    quota_service.record_sent(1)
                 else:
                     current_dispatch["failed_count"] += 1
                 if log_line:
@@ -2582,6 +2690,15 @@ class StudioHTTPHandler(BaseHTTPRequestHandler):
                 if data.get("is_finished"):
                     current_dispatch["is_running"] = False
             self._send_json({"ok": True})
+            return
+
+        elif path == "/api/validate_sms":
+            raw_text = data.get("text", "")
+            seed = int(data.get("seed", 0))
+            spun_text = evaluate_spintax(raw_text, seed)
+            metrics = calculate_sms_encoding(spun_text)
+            metrics["spun_preview"] = spun_text
+            self._send_json(metrics)
             return
 
         elif path == "/api/auth/login":

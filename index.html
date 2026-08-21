@@ -670,17 +670,72 @@
                 </button>
             </div>
 
-            <!-- 1-Click Brand Selector Tabs -->
+            <!-- 1-Click Method Selector Tabs -->
             <div class="space-y-2">
-                <div class="text-[11px] text-slate-400 font-bold uppercase">Select Your Phone Brand:</div>
-                <div class="grid grid-cols-5 gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-[11px] font-bold">
-                    <button onclick="switchBrandTab('samsung')" id="btab-samsung" class="py-2 rounded-xl text-teal-300 bg-slate-800 shadow text-center">Samsung</button>
-                    <button onclick="switchBrandTab('xiaomi')" id="btab-xiaomi" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Xiaomi/Poco</button>
-                    <button onclick="switchBrandTab('vivo')" id="btab-vivo" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Vivo/iQOO</button>
-                    <button onclick="switchBrandTab('oneplus')" id="btab-oneplus" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">OnePlus/Realme</button>
-                    <button onclick="switchBrandTab('other')" id="btab-other" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Pixel/Moto</button>
+                <div class="text-[11px] text-slate-400 font-bold uppercase">Choose Gateway Method:</div>
+                <div class="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold">
+                    <button onclick="switchConnectMethod('app')" id="cmtab-app" class="py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center flex items-center justify-center gap-1.5">
+                        <span>📱 Android App (No PC/Cables)</span>
+                        <span class="px-1.5 py-0.2 text-[9px] bg-teal-500 text-slate-950 rounded-full uppercase font-black">Easiest</span>
+                    </button>
+                    <button onclick="switchConnectMethod('pc')" id="cmtab-pc" class="py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center">
+                        💻 PC / USB Cable Relay
+                    </button>
                 </div>
             </div>
+
+            <!-- METHOD 1: ANDROID COMPANION APP (ZERO CABLES) -->
+            <div id="cguide-app" class="space-y-3.5 text-xs text-slate-300">
+                <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="font-bold text-teal-300 text-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-teal-400">bolt</span>
+                        1-Click Android App (Runs 24/7 in Background • Screen Locked)
+                    </div>
+                    <p class="text-slate-400 leading-relaxed">
+                        Apne Android phone me <b>JobRecruitment Companion APK</b> install karein. Yeh background service phone ke pocket me hone par bhi campaigns dispatch karega:
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2 flex flex-col justify-between">
+                            <div>
+                                <div class="text-white font-bold">Option A: Direct APK Download</div>
+                                <div class="text-[11px] text-slate-400 mt-1">Directly download on your phone browser or transfer via WhatsApp/Drive.</div>
+                            </div>
+                            <a href="/download-apk" download class="w-full py-2.5 bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-slate-950 font-black rounded-xl text-center flex items-center justify-center gap-1.5 shadow-lg shadow-teal-500/20">
+                                <span class="material-symbols-outlined text-sm">download</span> Download APK (3MB)
+                            </a>
+                        </div>
+                        <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2 flex flex-col justify-between">
+                            <div>
+                                <div class="text-white font-bold">Option B: Open Mobile Setup</div>
+                                <div class="text-[11px] text-slate-400 mt-1">Open this dashboard on your mobile browser to pair instantly.</div>
+                            </div>
+                            <div class="text-teal-400 font-mono text-[11px] p-2 bg-slate-950 rounded-lg border border-slate-800 break-all text-center">
+                                sms.jobrecruitment.in
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-xl text-emerald-300 text-[11px] space-y-1">
+                        <div class="font-bold">✨ Why this is 100x easier:</div>
+                        <div>✓ No developer options or ADB needed.</div>
+                        <div>✓ Works while phone screen is locked or asleep.</div>
+                        <div>✓ Select SIM 1 (Jio) or SIM 2 (Airtel) directly from the app.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METHOD 2: PC / USB RELAY (LEGACY) -->
+            <div id="cguide-pc" class="space-y-3.5 text-xs text-slate-300 hidden">
+                <!-- 1-Click Brand Selector Tabs -->
+                <div class="space-y-2">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase">Select Your Phone Brand:</div>
+                    <div class="grid grid-cols-5 gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-[11px] font-bold">
+                        <button onclick="switchBrandTab('samsung')" id="btab-samsung" class="py-2 rounded-xl text-teal-300 bg-slate-800 shadow text-center">Samsung</button>
+                        <button onclick="switchBrandTab('xiaomi')" id="btab-xiaomi" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Xiaomi/Poco</button>
+                        <button onclick="switchBrandTab('vivo')" id="btab-vivo" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Vivo/iQOO</button>
+                        <button onclick="switchBrandTab('oneplus')" id="btab-oneplus" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">OnePlus/Realme</button>
+                        <button onclick="switchBrandTab('other')" id="btab-other" class="py-2 rounded-xl text-slate-400 hover:text-slate-200 text-center">Pixel/Moto</button>
+                    </div>
+                </div>
 
             <!-- Brand-Specific Visual Instructions -->
             <div class="space-y-3.5 text-xs text-slate-300">
@@ -990,6 +1045,20 @@
         let currentGateMode = 'login';
         let savedTemplatesList = [];
         let rawSupabaseLogs = [];
+
+        // --- GATEWAY METHOD SWITCHER (APP vs PC) ---
+        function switchConnectMethod(method) {
+            const isApp = method === 'app';
+            const tabApp = document.getElementById('cmtab-app');
+            const tabPc = document.getElementById('cmtab-pc');
+            const guideApp = document.getElementById('cguide-app');
+            const guidePc = document.getElementById('cguide-pc');
+            
+            if (tabApp) tabApp.className = isApp ? 'py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center flex items-center justify-center gap-1.5' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center flex items-center justify-center gap-1.5';
+            if (tabPc) tabPc.className = !isApp ? 'py-2.5 rounded-xl text-teal-300 bg-slate-800 shadow text-center' : 'py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-center';
+            if (guideApp) guideApp.classList.toggle('hidden', !isApp);
+            if (guidePc) guidePc.classList.toggle('hidden', isApp);
+        }
 
         // --- BRAND SELECTOR CONTROLLER ---
         function switchBrandTab(brand) {
@@ -2116,8 +2185,20 @@
         function updatePreview() {
             const body = document.getElementById('sms-body').value;
             const len = body.length;
-            const credits = Math.max(1, Math.ceil(len / 160));
-            document.getElementById('char-count').textContent = `${len}c (${credits} Cr)`;
+            
+            // GSM-7 vs UCS-2 Unicode (Emoji/Hindi) Real-Time Detection
+            const GSM_7_REGEX = /^[@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !"#¤%&'()*+,\-./0-9:;<=>?¡A-ZÄÖÑÜ`a-zäöñüà\f^{}\\[~\]|€]*$/;
+            const isUnicode = len > 0 && !GSM_7_REGEX.test(body);
+            const maxSingle = isUnicode ? 70 : 160;
+            const maxConcat = isUnicode ? 67 : 153;
+            const credits = len === 0 ? 0 : (len <= maxSingle ? 1 : Math.ceil(len / maxConcat));
+
+            const countEl = document.getElementById('char-count');
+            if (countEl) {
+                countEl.textContent = `${len}c (${credits} Cr • ${isUnicode ? '⚠️ UCS-2 Unicode' : 'GSM-7'})`;
+                countEl.className = isUnicode ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold';
+                countEl.title = isUnicode ? 'Contains Hindi characters or emojis: splits every 70 characters (UCS-2)' : 'Standard 160 characters per SMS credit (GSM-7)';
+            }
 
             // URL Validator Badge
             const urlBadge = document.getElementById('url-validator-badge');
@@ -2135,8 +2216,14 @@
                 }
             }
 
+            // Spintax & Variable Evaluation for Live Preview
+            let evaluatedBody = body.replace(/\{([^{}]+?\|[^{}]+?)\}/g, (match, choicesStr) => {
+                const choices = choicesStr.split('|');
+                return choices[0]; // Display primary variation in preview
+            });
+
             const sampleName = (currentCandidates[0] && currentCandidates[0].name) || 'Omear';
-            let rendered = body
+            let rendered = evaluatedBody
                 .replace(/{name}/g, sampleName)
                 .replace(/{role}/g, activeJobContext.role || 'Candidate')
                 .replace(/{location}/g, activeJobContext.location || 'Ahmedabad')
